@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5. Sınıf Geometri Laboratuvarı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5', // Logo ana rengine yakın canlı indigo
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        accent: {
+                            500: '#f97316', // Turuncu aksan
+                            600: '#ea580c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f5f9; 
+            overscroll-behavior: none;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+        
+        #app-frame {
+            width: 100%;
+            max-width: 940px;
+            height: 90vh;
+            max-height: 600px;
+            background-color: white;
+            box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.15);
+            border-radius: 1rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border: 1px solid #e0e7ff;
+        }
+
+        /* Canvas: Tam Boyut ve Tıklama Garantisi */
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            background-color: #ffffff;
+            background-image: 
+                linear-gradient(#e0e7ff 1px, transparent 1px),
+                linear-gradient(90deg, #e0e7ff 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: -1px -1px;
+            touch-action: none;
+            pointer-events: auto !important;
+            z-index: 1; 
+        }
+        .tool-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tool-btn:hover {
+            transform: translateY(-2px);
+        }
+        .tool-btn.active {
+            background-color: #4f46e5;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+            border-color: #4338ca;
+        }
+        .tool-group-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+            margin-top: 1rem;
+            width: 100%;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .intro-card {
+            transition: all 0.2s ease;
+        }
+        .intro-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .intro-card:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-frame">
+        
+        <!-- Header -->
+        <header class="bg-white border-b border-indigo-100 h-16 shadow-sm z-20 shrink-0 px-4 flex items-center justify-between relative">
+            <!-- Üst çizgi aksanı -->
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 via-brand-600 to-accent-500"></div>
+
+            <div class="flex items-center gap-3">
+                <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="E12 Logo" class="h-10 w-auto object-contain hover:scale-105 transition-transform">
+                <div>
+                    <h1 class="text-lg font-bold text-gray-800 leading-tight tracking-tight">Geometri Laboratuvarı</h1>
+                    <p class="text-[10px] text-brand-500 font-medium">Temel Geometrik Kavramlar</p>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex flex-1 mx-8 justify-center min-w-0">
+                 <div class="text-xs text-brand-700 bg-brand-50 px-4 py-2 rounded-full border border-brand-100 flex items-center shadow-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[400px] min-w-0">
+                    <i class="fas fa-lightbulb mr-2 text-accent-500 text-sm shrink-0"></i>
+                    <span id="instruction-text" class="font-semibold truncate block">Bir araç seçin ve çizim alanına tıklayın.</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="goHome()" class="bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 px-3 py-2 rounded-lg text-xs font-bold transition-colors border border-gray-200 flex items-center gap-2 shadow-sm" title="Ana Menü">
+                    <i class="fas fa-home text-sm"></i>
+                </button>
+                <button onclick="toggleHelp()" class="bg-white text-brand-600 hover:bg-brand-50 hover:text-brand-700 px-4 py-2 rounded-lg text-xs font-bold transition-colors border border-brand-200 flex items-center gap-2 whitespace-nowrap shadow-sm">
+                    <i class="fas fa-question-circle text-sm"></i> <span class="hidden sm:inline">Yardım</span>
+                </button>
+                <button onclick="clearCanvas()" class="bg-white text-red-500 hover:bg-red-50 hover:text-red-600 px-4 py-2 rounded-lg text-xs font-bold transition-colors border border-red-200 flex items-center gap-2 whitespace-nowrap shadow-sm">
+                    <i class="fas fa-trash-alt text-sm"></i> <span class="hidden sm:inline">Temizle</span>
+                </button>
+            </div>
+        </header>
+    
+        <!-- Main Content -->
+        <div class="flex flex-1 relative overflow-hidden">
+            
+            <!-- Sidebar Tools -->
+            <div class="w-16 md:w-20 bg-white border-r border-indigo-50 flex flex-col items-center py-2 gap-3 z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] overflow-y-auto scrollbar-hide">
+                
+                <!-- SADECE TEMEL ARAÇLAR -->
+                <div id="tools-basic" class="flex flex-col items-center w-full">
+                    <div class="tool-group-label mt-2">Araçlar</div>
+                    
+                    <button onclick="setTool('point')" id="btn-point" class="tool-btn active w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white text-gray-500 hover:bg-brand-50 hover:text-brand-600 flex flex-col items-center justify-center gap-0.5 border border-gray-200 mb-2">
+                        <i class="fas fa-circle text-[8px]"></i>
+                        <span class="text-[9px] font-bold">Nokta</span>
+                    </button>
+        
+                    <button onclick="setTool('segment')" id="btn-segment" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white text-gray-500 hover:bg-brand-50 hover:text-brand-600 flex flex-col items-center justify-center gap-0.5 border border-gray-200 mb-2">
+                        <i class="fas fa-grip-lines text-sm"></i>
+                        <span class="text-[9px] font-bold">Çizgi</span>
+                    </button>
+        
+                    <button onclick="setTool('line')" id="btn-line" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white text-gray-500 hover:bg-brand-50 hover:text-brand-600 flex flex-col items-center justify-center gap-0.5 border border-gray-200 mb-2">
+                        <i class="fas fa-arrows-alt-h text-sm"></i>
+                        <span class="text-[9px] font-bold">Doğru</span>
+                    </button>
+        
+                     <button onclick="setTool('ray')" id="btn-ray" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white text-gray-500 hover:bg-brand-50 hover:text-brand-600 flex flex-col items-center justify-center gap-0.5 border border-gray-200 mb-2">
+                        <i class="fas fa-long-arrow-alt-right text-sm"></i>
+                        <span class="text-[9px] font-bold">Işın</span>
+                    </button>
+                </div>
+    
+                <div class="h-px w-10 bg-indigo-100 my-2"></div>
+    
+                <button onclick="undo()" class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 flex flex-col items-center justify-center gap-0.5 border border-red-100 transition-colors shadow-sm">
+                    <i class="fas fa-undo text-sm"></i>
+                    <span class="text-[9px] font-bold">Geri</span>
+                </button>
+    
+            </div>
+    
+            <!-- Canvas Area -->
+            <div class="flex-1 relative bg-slate-50 overflow-hidden" id="canvas-container">
+                <canvas id="geometryCanvas"></canvas>
+                
+                <!-- Info Box -->
+                <div id="info-box" class="absolute bottom-6 right-6 bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-indigo-100 max-w-[220px] hidden pointer-events-none transform transition-all duration-300 translate-y-2 z-30 group">
+                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent-500 rounded-r-full"></div>
+                    <div class="flex items-start gap-3">
+                        <div class="bg-brand-100 p-2 rounded-lg text-brand-600 shrink-0">
+                            <i class="fas fa-info text-xs"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-xs mb-1 uppercase tracking-wide" id="info-title">Bilgi</h3>
+                            <p class="text-xs text-gray-600 leading-snug" id="info-desc">Açıklama burada.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1. GİRİŞ EKRANI -->
+        <div id="intro-screen" class="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8">
+            <div class="mb-8 animate-[bounce_2s_infinite]">
+                <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="E12 Logo" class="h-28 w-auto object-contain drop-shadow-lg">
+            </div>
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">Geometri Laboratuvarı</h1>
+            <p class="text-gray-600 mb-10 max-w-lg leading-relaxed text-lg">
+                Bu dijital atölyede <strong>Nokta, Doğru, Işın ve Doğru Parçası</strong> kavramlarını çizerek ve deneyerek öğrenebilirsin.
+            </p>
+            
+            <!-- Tek Başlatma Butonu -->
+            <button onclick="startSimulation()" class="intro-card group bg-white border border-brand-100 rounded-2xl p-8 flex flex-col items-center justify-center gap-4 cursor-pointer text-brand-600 hover:border-brand-300 shadow-lg shadow-brand-500/10 w-72 transform transition-all">
+                <div class="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center shadow-inner text-3xl group-hover:scale-110 transition-transform duration-300 group-hover:bg-brand-100">
+                    <i class="fas fa-play text-brand-600 pl-1"></i>
+                </div>
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold mb-1 text-gray-800 group-hover:text-brand-700 transition-colors">Hadi Başlayalım</h2>
+                    <p class="text-sm text-gray-500">Çizim alanına git</p>
+                </div>
+            </button>
+        </div>
+
+        <!-- 2. YARDIM MODALI -->
+        <div id="help-modal" class="absolute inset-0 z-[60] bg-brand-900/40 hidden flex items-center justify-center backdrop-blur-sm">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-6 flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out] border border-white/50">
+                
+                <div class="bg-gradient-to-r from-brand-50 to-white border-b border-brand-100 p-5 flex justify-between items-center shrink-0">
+                    <h2 class="text-xl font-bold text-brand-900 flex items-center gap-3">
+                        <i class="fas fa-book-open text-accent-500"></i> Kullanım Rehberi
+                    </h2>
+                    <button onclick="toggleHelp()" class="text-gray-400 hover:text-red-500 transition-colors w-10 h-10 rounded-full hover:bg-red-50 flex items-center justify-center">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="p-8 overflow-y-auto bg-white">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Sol Kolon -->
+                        <div class="space-y-6">
+                            <div class="flex gap-4 group">
+                                <div class="w-12 h-12 bg-white border-2 border-brand-100 rounded-xl flex items-center justify-center shrink-0 text-brand-600 shadow-sm group-hover:scale-105 transition-transform"><i class="fas fa-circle text-sm"></i></div>
+                                <div><h4 class="font-bold text-base text-gray-800">Nokta</h4><p class="text-sm text-gray-500 leading-snug">Ekranın herhangi bir yerine tıkla. Büyük harfle isimlendirilir.</p></div>
+                            </div>
+                            <div class="flex gap-4 group">
+                                <div class="w-12 h-12 bg-white border-2 border-brand-100 rounded-xl flex items-center justify-center shrink-0 text-brand-600 shadow-sm group-hover:scale-105 transition-transform"><i class="fas fa-grip-lines text-lg"></i></div>
+                                <div><h4 class="font-bold text-base text-gray-800">Doğru Parçası</h4><p class="text-sm text-gray-500 leading-snug">Başlangıç noktasına tıkla, sürükle ve bırak. İki ucu sınırlıdır.</p></div>
+                            </div>
+                        </div>
+                        <!-- Sağ Kolon -->
+                        <div class="space-y-6">
+                            <div class="flex gap-4 group">
+                                <div class="w-12 h-12 bg-white border-2 border-brand-100 rounded-xl flex items-center justify-center shrink-0 text-brand-600 shadow-sm group-hover:scale-105 transition-transform"><i class="fas fa-arrows-alt-h text-lg"></i></div>
+                                <div><h4 class="font-bold text-base text-gray-800">Doğru</h4><p class="text-sm text-gray-500 leading-snug">İki nokta belirle. İki yöne sonsuza giden çizgidir.</p></div>
+                            </div>
+                            <div class="flex gap-4 group">
+                                <div class="w-12 h-12 bg-white border-2 border-brand-100 rounded-xl flex items-center justify-center shrink-0 text-brand-600 shadow-sm group-hover:scale-105 transition-transform"><i class="fas fa-long-arrow-alt-right text-lg"></i></div>
+                                <div><h4 class="font-bold text-base text-gray-800">Işın</h4><p class="text-sm text-gray-500 leading-snug">Bir noktadan başlayıp tek bir yöne sonsuza giden çizgidir.</p></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 p-4 bg-orange-50 rounded-xl border border-orange-100 text-sm text-orange-800 flex gap-3 justify-center shadow-sm">
+                        <i class="fas fa-lightbulb text-orange-500 mt-1 text-lg"></i>
+                        <span><strong>İpucu:</strong> Hata yaparsan "Geri" butonunu kullanabilir veya "Temizle" ile sayfayı silebilirsin.</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-5 border-t border-gray-100 flex justify-end">
+                    <button onclick="toggleHelp()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-8 rounded-xl text-sm transition-all shadow-lg shadow-brand-500/20 transform hover:scale-105">
+                        Anladım, Kapat
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Yapılandırma ---
+        const GRID_SIZE = 40; 
+        const POINT_RADIUS = 6;
+        const SNAP_THRESHOLD = 15;
+        const ALPHABET = "ABCDEFGHIJKLMNOPRSTUVYZ";
+        
+        // --- Durum Değişkenleri ---
+        let currentTool = 'point'; 
+        let shapes = []; 
+        let tempShape = null; 
+        let alphabetIndex = 0;
+        
+        let isDrawing = false;
+        let startPoint = null;
+
+        // --- DOM ---
+        const canvas = document.getElementById('geometryCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+        const instructionText = document.getElementById('instruction-text');
+        const infoBox = document.getElementById('info-box');
+
+        // --- Init ---
+        function resizeCanvas() {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            if (width > 0 && height > 0) {
+                canvas.width = width;
+                canvas.height = height;
+                draw();
+            } else {
+                canvas.width = 860; 
+                canvas.height = 450;
+                draw();
+            }
+        }
+        
+        window.addEventListener('load', resizeCanvas);
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- UI Functions ---
+        function startSimulation() {
+            const intro = document.getElementById('intro-screen');
+            // Intro Ekranını Kaldırma ve Tıklamaları Açma
+            intro.style.pointerEvents = "none";
+            intro.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+            intro.style.opacity = "0";
+            intro.style.transform = "scale(1.05)";
+            
+            // Canvas'ı Hazırlama
+            setTimeout(() => {
+                intro.style.display = "none";
+                resizeCanvas(); 
+            }, 500);
+            
+            clearCanvas();
+        }
+
+        function goHome() {
+            const intro = document.getElementById('intro-screen');
+            intro.style.display = "flex";
+            intro.style.pointerEvents = "auto"; 
+            intro.style.transform = "scale(1)";
+            
+            requestAnimationFrame(() => {
+                intro.style.opacity = "1";
+            });
+            clearCanvas();
+        }
+
+        function toggleHelp() {
+            const modal = document.getElementById('help-modal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            const btn = document.getElementById(`btn-${tool}`);
+            if(btn) btn.classList.add('active');
+
+            tempShape = null;
+            isDrawing = false;
+            startPoint = null;
+
+            const instructions = {
+                'point': 'Kağıda nokta koymak için tıklayın.',
+                'segment': 'Doğru parçası çizmek için sürükleyip bırakın.',
+                'line': 'Doğru çizmek için iki nokta belirleyin.',
+                'ray': 'Işın çizmek için başlangıçtan yöne doğru çekin.'
+            };
+            instructionText.innerText = instructions[tool] || '';
+            draw();
+        }
+
+        // --- Matematik & Yardımcılar ---
+        function getMousePos(evt) {
+            // [DÜZELTİLDİ] Güvenilir koordinat hesaplama
+            let x, y;
+            
+            if (evt.touches && evt.touches.length > 0) {
+                const rect = canvas.getBoundingClientRect();
+                x = evt.touches[0].clientX - rect.left;
+                y = evt.touches[0].clientY - rect.top;
+            } else {
+                if (typeof evt.offsetX !== 'undefined') {
+                    x = evt.offsetX;
+                    y = evt.offsetY;
+                } else {
+                    const rect = canvas.getBoundingClientRect();
+                    x = evt.clientX - rect.left;
+                    y = evt.clientY - rect.top;
+                }
+            }
+            
+            let scaleX = 1;
+            let scaleY = 1;
+            if (canvas.clientWidth > 0 && canvas.clientHeight > 0) {
+                scaleX = canvas.width / canvas.clientWidth;
+                scaleY = canvas.height / canvas.clientHeight;
+            }
+
+            return { 
+                x: x * scaleX, 
+                y: y * scaleY 
+            };
+        }
+
+        function snapToGrid(pos) {
+            const snapX = Math.round(pos.x / GRID_SIZE) * GRID_SIZE;
+            const snapY = Math.round(pos.y / GRID_SIZE) * GRID_SIZE;
+            const dist = Math.sqrt(Math.pow(pos.x - snapX, 2) + Math.pow(pos.y - snapY, 2));
+            return (dist < SNAP_THRESHOLD) ? { x: snapX, y: snapY, snapped: true } : { x: pos.x, y: pos.y, snapped: false };
+        }
+
+        function getNextLabel() {
+            const label = ALPHABET[alphabetIndex % ALPHABET.length] + (Math.floor(alphabetIndex / ALPHABET.length) || "");
+            alphabetIndex++;
+            return label;
+        }
+
+        function dist(p1, p2) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
+        // --- Event Handlers ---
+        function handleStart(rawPos) {
+            const pos = snapToGrid(rawPos);
+
+            if (currentTool === 'point') {
+                addPoint(pos);
+            } else {
+                isDrawing = true;
+                startPoint = pos;
+                tempShape = { type: currentTool, start: startPoint, end: startPoint };
+            }
+            draw();
+        }
+
+        function handleMove(rawPos) {
+            const pos = snapToGrid(rawPos);
+            if (!isDrawing) return;
+            tempShape.end = pos;
+            draw();
+        }
+
+        function handleEnd() {
+            if (!isDrawing) return;
+            if (dist(tempShape.start, tempShape.end) < 5) {
+                isDrawing = false;
+                tempShape = null;
+                draw();
+                return;
+            }
+            
+            const p1Label = getNextLabel();
+            const p2Label = getNextLabel();
+            shapes.push({ type: 'point', x: tempShape.start.x, y: tempShape.start.y, label: p1Label });
+            shapes.push({ type: 'point', x: tempShape.end.x, y: tempShape.end.y, label: p2Label });
+            shapes.push({ ...tempShape, labels: [p1Label, p2Label] });
+            
+            if(currentTool === 'segment') showInfo('Doğru Parçası', `Uzunluğu ölçülebilen parça. [${p1Label}${p2Label}]`);
+            if(currentTool === 'line') showInfo('Doğru', `İki yöne sonsuza uzayan çizgi. ${p1Label}${p2Label} Doğrusu`);
+            if(currentTool === 'ray') showInfo('Işın', `Başlangıcı belli, bir yöne sonsuza giden çizgi. [${p1Label}${p2Label}`);
+
+            isDrawing = false;
+            tempShape = null;
+            startPoint = null;
+            draw();
+        }
+
+        function addPoint(pos) {
+            shapes.push({ type: 'point', x: pos.x, y: pos.y, label: getNextLabel() });
+            draw();
+        }
+
+        // Event Listeners
+        canvas.addEventListener('mousedown', e => handleStart(getMousePos(e)));
+        canvas.addEventListener('mousemove', e => handleMove(getMousePos(e)));
+        window.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); handleStart(getMousePos(e)); }, {passive: false});
+        canvas.addEventListener('touchmove', e => { e.preventDefault(); handleMove(getMousePos(e)); }, {passive: false});
+        window.addEventListener('touchend', handleEnd);
+
+        // --- Çizim Motoru ---
+        function drawArrow(fromx, fromy, tox, toy) {
+            const headlen = 10;
+            const angle = Math.atan2(toy - fromy, tox - fromx);
+            ctx.beginPath();
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(tox, toy);
+            ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+            ctx.stroke();
+        }
+
+        function drawShape(s, isPreview = false) {
+            // Renk Paleti Güncellemesi
+            const MAIN_COLOR = '#4338ca'; // Brand 700
+            const PREVIEW_COLOR = '#6366f1'; // Brand 500
+            const ACCENT_COLOR = '#f59e0b'; // Amber
+            const POINT_COLOR = '#ef4444'; // Red 500
+
+            ctx.strokeStyle = isPreview ? PREVIEW_COLOR : MAIN_COLOR;
+            ctx.lineWidth = isPreview ? 2 : 3;
+            ctx.lineCap = 'round';
+            ctx.fillStyle = MAIN_COLOR;
+
+            if (s.type === 'point' || s.type === 'temp_dot') {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, POINT_RADIUS, 0, Math.PI * 2);
+                
+                if (s.type === 'temp_dot') {
+                    ctx.fillStyle = ACCENT_COLOR;
+                    ctx.fill();
+                } else {
+                    // Normal noktalar: Beyaz iç, Kırmızı dış (Daha belirgin)
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = POINT_COLOR;
+                    ctx.stroke();
+                }
+
+                if (s.label) {
+                    ctx.font = "bold 15px 'Segoe UI', sans-serif";
+                    ctx.fillStyle = "#1e293b"; // Slate 800
+                    ctx.fillText(s.label, s.x + 10, s.y - 10);
+                }
+                return;
+            }
+
+            const d = dist(s.start, s.end);
+            if (d < 1) return;
+
+            let startDraw = { ...s.start };
+            let endDraw = { ...s.end };
+            const extension = 1000;
+
+            if (s.type === 'line') {
+                const ratio = extension / d;
+                const dx = s.end.x - s.start.x;
+                const dy = s.end.y - s.start.y;
+                startDraw.x -= dx * ratio;
+                startDraw.y -= dy * ratio;
+                endDraw.x += dx * ratio;
+                endDraw.y += dy * ratio;
+            } else if (s.type === 'ray') {
+                const ratio = extension / d;
+                const dx = s.end.x - s.start.x;
+                const dy = s.end.y - s.start.y;
+                endDraw.x += dx * ratio;
+                endDraw.y += dy * ratio;
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(startDraw.x, startDraw.y);
+            ctx.lineTo(endDraw.x, endDraw.y);
+            ctx.stroke();
+
+            if (!isPreview) {
+                const dx = s.end.x - s.start.x;
+                const dy = s.end.y - s.start.y;
+                const unitX = dx/d;
+                const unitY = dy/d;
+
+                if (s.type === 'ray') {
+                     drawArrow(s.start.x, s.start.y, s.end.x + unitX * 25, s.end.y + unitY * 25);
+                } else if (s.type === 'line') {
+                    drawArrow(s.start.x, s.start.y, s.end.x + unitX * 25, s.end.y + unitY * 25);
+                    drawArrow(s.end.x, s.end.y, s.start.x - unitX * 25, s.start.y - unitY * 25);
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const layers = {
+                mid: shapes.filter(s => ['segment', 'line', 'ray'].includes(s.type)),
+                top: shapes.filter(s => ['point', 'temp_dot'].includes(s.type))
+            };
+            layers.mid.forEach(s => drawShape(s));
+            if (tempShape) drawShape(tempShape, true);
+            layers.top.forEach(s => drawShape(s));
+        }
+
+        function undo() {
+            if (shapes.length > 0) {
+                const last = shapes[shapes.length - 1];
+                if (!last) return;
+                
+                if (last.type === 'point') {
+                    shapes.pop();
+                    if(last.label && alphabetIndex > 0) alphabetIndex--;
+                } else {
+                    // Çizgi/Işın için en az 3 eleman olmalı (Nokta1, Nokta2, Çizgi)
+                    if (shapes.length >= 3) {
+                        shapes.pop(); shapes.pop(); shapes.pop(); 
+                        if (alphabetIndex >= 2) alphabetIndex -= 2;
+                        else alphabetIndex = 0;
+                    }
+                }
+                draw();
+            }
+        }
+
+        function clearCanvas() {
+            shapes = [];
+            alphabetIndex = 0;
+            setTool('point');
+            infoBox.classList.add('hidden');
+            draw();
+        }
+
+        function showInfo(title, desc) {
+            const titleEl = document.getElementById('info-title');
+            const descEl = document.getElementById('info-desc');
+            titleEl.textContent = title;
+            descEl.textContent = desc;
+            infoBox.classList.remove('hidden');
+            infoBox.classList.remove('opacity-0');
+            infoBox.classList.remove('translate-y-2');
+            setTimeout(() => {
+                infoBox.classList.add('opacity-0');
+                infoBox.classList.add('translate-y-2');
+            }, 6000);
+        }
+
+        setTimeout(resizeCanvas, 100);
+        setTool('point');
+
+    </script>
+</body>
+</html>
