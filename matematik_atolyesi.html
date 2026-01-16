@@ -5,29 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>5. Sınıf Matematik Çizim Atölyesi</title>
     
-    <!-- Google Fonts: Montserrat -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&subset=latin,latin-ext&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS (CDN) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Montserrat', 'sans-serif'],
+                        sans: ['Montserrat', 'system-ui', '-apple-system', 'sans-serif'],
                     },
                     colors: {
                         brand: {
                             50: '#fef2f2',
                             100: '#fee2e2',
                             500: '#ef4444',
-                            600: '#dc2626', // Ana Logo Rengi (Kırmızı)
+                            600: '#dc2626', 
                             700: '#b91c1c',
                             800: '#991b1b',
                         }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     }
                 }
             }
@@ -95,7 +98,6 @@
         }
         .grid-bg-none { background-image: none; }
 
-        /* Giriş Ekranı Animasyonu */
         #intro-screen {
             transition: opacity 0.5s ease-out, visibility 0.5s;
         }
@@ -104,6 +106,26 @@
             visibility: hidden;
             pointer-events: none;
         }
+
+        .modal-content {
+            transition: all 0.3s ease-out;
+        }
+
+        /* Görev Kartı Animasyonu */
+        #task-card {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .hidden-card {
+            transform: translateY(-150%) translateX(-50%);
+            opacity: 0;
+        }
+        .visible-card {
+            transform: translateY(0) translateX(-50%);
+            opacity: 1;
+        }
+        
+        .feedback-success { color: #16a34a; font-weight: bold; }
+        .feedback-error { color: #dc2626; font-weight: bold; }
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row p-2 md:p-4 gap-4 relative">
@@ -111,89 +133,65 @@
     <!-- Giriş Ekranı (Intro Screen) -->
     <div id="intro-screen" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 text-center">
         <div class="max-w-2xl w-full bg-white">
-            <!-- Logo -->
             <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="e12 Logosu" class="h-20 mx-auto mb-8 object-contain">
-            
             <h1 class="text-3xl md:text-4xl font-bold text-brand-700 mb-4">Matematik Çizim Atölyesi</h1>
-            <p class="text-gray-600 mb-8 text-lg">Temel geometrik çizim araçlarını keşfetmeye hazır mısın?</p>
+            <p class="text-gray-600 mb-8 text-lg">İnternet bağlantısı gerektirmeyen, akıllı çizim araçları.</p>
 
-            <!-- Yönergeler -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 text-left">
-                <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 flex flex-col items-center text-center group hover:shadow-md transition-shadow">
-                    <!-- Ruler Icon -->
-                    <div class="mb-3 text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/>
-                            <path d="m14.5 12.5 2-2"/>
-                            <path d="m11.5 9.5 2-2"/>
-                            <path d="m8.5 6.5 2-2"/>
-                            <path d="m17.5 15.5 2-2"/>
-                        </svg>
-                    </div>
-                    <h3 class="font-bold text-blue-800 mb-1">Cetvel</h3>
-                    <p class="text-sm text-blue-600">Doğru parçaları çiz ve uzunluklarını ölç.</p>
+                <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 flex flex-col items-center text-center">
+                    <span class="text-4xl mb-3">📏</span>
+                    <h3 class="font-bold text-blue-800">Cetvel</h3>
+                    <p class="text-xs text-blue-600">Uzunluk ölçme</p>
                 </div>
-                <div class="bg-orange-50 p-5 rounded-xl border border-orange-100 flex flex-col items-center text-center group hover:shadow-md transition-shadow">
-                    <!-- Protractor Icon -->
-                    <div class="mb-3 text-orange-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 19H2a10 10 0 0 1 20 0Z" />
-                            <path d="M12 19V14" />
-                            <path d="M12 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
-                            <path d="M2 19h20" />
-                            <path d="M18.3 12.7 17 14" />
-                            <path d="M5.7 12.7 7 14" />
-                        </svg>
-                    </div>
-                    <h3 class="font-bold text-orange-800 mb-1">Açıölçer</h3>
-                    <p class="text-sm text-orange-600">Açıları oluştur, ölç ve çeşitlerini tanı.</p>
+                <div class="bg-orange-50 p-5 rounded-xl border border-orange-100 flex flex-col items-center text-center">
+                    <span class="text-4xl mb-3">📐</span>
+                    <h3 class="font-bold text-orange-800">Açıölçer</h3>
+                    <p class="text-xs text-orange-600">Açı çizme</p>
                 </div>
-                <div class="bg-purple-50 p-5 rounded-xl border border-purple-100 flex flex-col items-center text-center group hover:shadow-md transition-shadow">
-                    <!-- Compass Icon -->
-                    <div class="mb-3 text-purple-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="5" r="2"/>
-                            <path d="m9.47 7.15-4 10.4"/>
-                            <path d="m14.53 7.16 4 10.4"/>
-                            <path d="M6.17 14h11.66"/>
-                        </svg>
-                    </div>
-                    <h3 class="font-bold text-purple-800 mb-1">Pergel</h3>
-                    <p class="text-sm text-purple-600">Merkezi belirle ve çemberler çiz.</p>
+                <div class="bg-purple-50 p-5 rounded-xl border border-purple-100 flex flex-col items-center text-center">
+                    <span class="text-4xl mb-3">📍</span>
+                    <h3 class="font-bold text-purple-800">Pergel</h3>
+                    <p class="text-xs text-purple-600">Çember çizme</p>
                 </div>
             </div>
 
-            <!-- Başlat Butonu -->
             <button onclick="startSimulation()" class="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-brand-600 font-lg rounded-full hover:bg-brand-700 hover:shadow-lg hover:-translate-y-1 focus:outline-none ring-offset-2 focus:ring-2 ring-brand-500">
                 Atölyeye Gir
-                <div class="absolute inset-0 rounded-full ring-2 ring-white/20 group-hover:ring-white/40"></div>
             </button>
         </div>
-        
-        <!-- Footer Info -->
         <div class="absolute bottom-6 text-xs text-gray-400">
-            5. Sınıf Matematik &bull; Geometrik Çizimlerde Araç ve Teknoloji
+            5. Sınıf Matematik - Geometrik Çizimler (Çevrimdışı Sürüm)
         </div>
     </div>
 
-    <!-- Sidebar (Tools) -->
+    <!-- Silme Onay Modalı -->
+    <div id="delete-modal" class="fixed inset-0 z-50 bg-black/60 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm flex flex-col overflow-hidden transform transition-all scale-95 modal-content" id="delete-modal-content">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🗑️</div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Sayfayı Temizle</h3>
+                <p class="text-gray-600">Tüm çizimler silinecek.</p>
+            </div>
+            <div class="bg-gray-50 p-4 flex gap-3 justify-center border-t border-gray-100">
+                <button onclick="closeDeleteModal()" class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl font-bold transition-colors">İptal</button>
+                <button onclick="performClearCanvas()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-colors shadow-lg">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar (Araçlar) -->
     <div class="flex flex-col gap-4 w-full md:w-64 bg-white rounded-2xl shadow-lg p-4 h-auto md:h-full overflow-y-auto z-10">
         
-        <!-- Header with Logo -->
         <div class="text-center pb-4 border-b border-gray-100 flex flex-col items-center">
             <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="e12 Logosu" class="h-12 mb-2 object-contain">
             <h1 class="text-lg font-bold text-brand-800">Çizim Atölyesi</h1>
-            <p class="text-xs text-gray-500 font-medium">Araçlarını seç ve tasarla!</p>
         </div>
 
-        <!-- Main Tools -->
         <div class="flex flex-col gap-2">
             <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Araçlar</label>
             
             <button onclick="setTool('ruler')" id="btn-ruler" class="tool-btn active flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 text-left w-full group">
-                <span class="text-2xl bg-blue-100 p-2 rounded-lg group-hover:scale-110 transition-transform flex items-center justify-center text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>
-                </span>
+                <span class="text-2xl flex items-center justify-center text-blue-600" id="icon-ruler">📏</span>
                 <div>
                     <div class="font-bold text-gray-700 text-sm">Cetvel</div>
                     <div class="text-[10px] text-gray-400 font-medium">Uzunluk ölçer</div>
@@ -201,9 +199,7 @@
             </button>
 
             <button onclick="setTool('protractor')" id="btn-protractor" class="tool-btn flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 text-left w-full group">
-                <span class="text-2xl bg-orange-100 p-2 rounded-lg group-hover:scale-110 transition-transform flex items-center justify-center text-orange-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19H2a10 10 0 0 1 20 0Z"/><path d="M12 19V14"/><path d="M12 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M2 19h20"/><path d="M18.3 12.7 17 14"/><path d="M5.7 12.7 7 14"/></svg>
-                </span>
+                <span class="text-2xl flex items-center justify-center text-orange-600" id="icon-protractor">📐</span>
                 <div>
                     <div class="font-bold text-gray-700 text-sm">Açıölçer</div>
                     <div class="text-[10px] text-gray-400 font-medium">İç açı ölçer</div>
@@ -211,9 +207,7 @@
             </button>
 
             <button onclick="setTool('compass')" id="btn-compass" class="tool-btn flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 text-left w-full group">
-                <span class="text-2xl bg-purple-100 p-2 rounded-lg group-hover:scale-110 transition-transform flex items-center justify-center text-purple-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="m9.47 7.15-4 10.4"/><path d="m14.53 7.16 4 10.4"/><path d="M6.17 14h11.66"/></svg>
-                </span>
+                <span class="text-2xl flex items-center justify-center text-purple-600" id="icon-compass">📍</span>
                 <div>
                     <div class="font-bold text-gray-700 text-sm">Pergel</div>
                     <div class="text-[10px] text-gray-400 font-medium">Çember çizer</div>
@@ -221,11 +215,22 @@
             </button>
         </div>
 
-        <!-- Settings -->
+        <!-- Görevler Butonu -->
         <div class="flex flex-col gap-2 mt-2">
-            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Ayarlar</label>
-            
-            <!-- Colors -->
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1 flex items-center gap-1">
+                <span>Alıştırmalar</span>
+            </label>
+            <button onclick="startTaskMode()" class="flex items-center gap-3 p-3 rounded-xl border border-green-100 bg-green-50 hover:bg-green-100 text-left w-full group transition-all shadow-sm">
+                <span class="text-xl bg-white p-1.5 rounded-lg shadow-sm">📝</span>
+                <div>
+                    <div class="font-bold text-green-800 text-sm">Görev Başlat</div>
+                </div>
+            </button>
+        </div>
+
+        <!-- Ayarlar -->
+        <div class="flex flex-col gap-2 mt-2">
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Renk & Izgara</label>
             <div class="flex gap-2 p-2 bg-gray-50 rounded-xl justify-center">
                 <div onclick="setColor('#dc2626', this)" class="color-btn active bg-red-600" title="Kırmızı"></div>
                 <div onclick="setColor('#1e40af', this)" class="color-btn bg-blue-800" title="Mavi"></div>
@@ -234,8 +239,6 @@
                 <div onclick="setColor('#9333ea', this)" class="color-btn bg-purple-600" title="Mor"></div>
                 <div onclick="setColor('#1f2937', this)" class="color-btn bg-gray-800" title="Siyah"></div>
             </div>
-
-            <!-- Toggle Grid -->
             <button onclick="toggleGrid()" class="flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:bg-gray-50 text-gray-600 text-sm font-semibold">
                 <span>Kareli Defter</span>
                 <div class="w-8 h-4 bg-brand-500 rounded-full relative transition-colors" id="grid-toggle-bg">
@@ -244,12 +247,12 @@
             </button>
         </div>
 
-        <!-- Actions -->
+        <!-- Alt Butonlar -->
         <div class="mt-auto flex gap-2 pt-4 border-t border-gray-100">
             <button onclick="undoShape()" class="flex-1 py-3 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm transition-colors flex items-center justify-center gap-2">
                 <span>↩️</span> Geri Al
             </button>
-            <button onclick="clearCanvas()" class="flex-1 py-3 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-sm transition-colors flex items-center justify-center gap-2">
+            <button onclick="openDeleteModal()" class="flex-1 py-3 px-4 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 font-bold text-sm transition-colors flex items-center justify-center gap-2">
                 <span>🗑️</span> Sil
             </button>
         </div>
@@ -258,10 +261,37 @@
     <!-- Canvas Area -->
     <div class="flex-1 relative h-full bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col">
         
-        <!-- Top Info Bar -->
-        <div class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-6 py-2 rounded-full shadow-sm border border-brand-100 pointer-events-none z-10 flex items-center gap-2">
-            <span id="current-tool-icon" class="text-xl flex items-center"></span>
+        <!-- Üst Bilgi Çubuğu (Varsayılan) -->
+        <div id="default-info-bar" class="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm px-6 py-2 rounded-full shadow-sm border border-brand-100 pointer-events-none z-10 flex items-center gap-2 transition-all">
+            <span id="current-tool-icon-top" class="text-xl">📏</span>
             <span id="instruction-text" class="text-sm font-semibold text-brand-800">Başlangıç noktasına tıkla ve sürükle</span>
+        </div>
+
+        <!-- GÖREV KUTUCUĞU -->
+        <div id="task-card" class="absolute top-4 left-1/2 -translate-x-1/2 w-11/12 max-w-lg bg-white rounded-xl shadow-xl border-2 border-green-500 z-20 hidden-card p-0 overflow-hidden">
+            <div class="bg-green-50 px-4 py-2 border-b border-green-100 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wider">GÖREV</span>
+                    <span id="task-counter" class="text-green-800 font-bold text-sm">1 / 5</span>
+                </div>
+                <button onclick="endTaskMode()" class="text-gray-400 hover:text-red-500 text-sm font-bold px-2">Çıkış</button>
+            </div>
+            <div class="p-5 text-center">
+                <p id="task-question" class="text-lg font-bold text-gray-800 mb-4 leading-relaxed">
+                    Soru yükleniyor...
+                </p>
+                <div id="feedback-area" class="text-sm mb-4 h-6"></div>
+                <div class="flex justify-center gap-3" id="task-buttons">
+                    <button onclick="checkAnswer()" class="inline-flex items-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                        <span>Kontrol Et</span>
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </button>
+                    <button onclick="nextTask()" id="btn-next-task" class="hidden inline-flex items-center px-6 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                        <span>Sıradaki Soru</span>
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div id="canvas-container" class="w-full h-full grid-bg relative transition-all duration-300">
@@ -271,22 +301,44 @@
 
     <!-- JavaScript Uygulama Mantığı -->
     <script>
-        // --- İkon Tanımları (SVG Strings) ---
+        // --- Soru Bankası (Validasyonlu) ---
+        // type: line (uzunluk cm), angle (derece), circle (yarıçap cm)
+        const questionBank = [
+            { text: "Cetvel aracını kullanarak 5 cm uzunluğunda bir doğru parçası çiziniz.", check: {type: 'line', val: 5} },
+            { text: "Cetvel aracını kullanarak 8.5 cm uzunluğunda bir doğru parçası çiziniz.", check: {type: 'line', val: 8.5} },
+            { text: "Ekrana 3 cm uzunluğunda bir doğru parçası çiziniz.", check: {type: 'line', val: 3} },
+            { text: "Cetvel yardımıyla 7 cm uzunluğunda bir doğru parçası çiziniz.", check: {type: 'line', val: 7} },
+            { text: "Açıölçer aracını kullanarak 90 derecelik bir dik açı çiziniz.", check: {type: 'angle', val: 90} },
+            { text: "Açıölçer ile 45 derecelik bir dar açı oluşturunuz.", check: {type: 'angle', val: 45} },
+            { text: "Açıölçer kullanarak 120 derecelik bir geniş açı çiziniz.", check: {type: 'angle', val: 120} },
+            { text: "30 derecelik bir açı çiziniz.", check: {type: 'angle', val: 30} },
+            { text: "150 derecelik bir geniş açı çiziniz.", check: {type: 'angle', val: 150} },
+            { text: "180 derecelik bir doğru açı çiziniz.", check: {type: 'angle', val: 180} },
+            { text: "60 derecelik bir açı çiziniz.", check: {type: 'angle', val: 60} },
+            { text: "Pergel aracını seçerek yarıçapı 4 cm olan bir çember çiziniz.", check: {type: 'circle', val: 4} },
+            { text: "Yarıçapı 2.5 cm olan küçük bir çember çiziniz.", check: {type: 'circle', val: 2.5} },
+            { text: "Çapı 10 cm olan (yani yarıçapı 5 cm olan) büyük bir çember çiziniz.", check: {type: 'circle', val: 5} },
+            { text: "Yarıçapı 3 cm olan bir çember çiziniz.", check: {type: 'circle', val: 3} }
+        ];
+
+        // --- Değişkenler ---
+        let currentTasks = [];
+        let taskIndex = 0;
+        let isTaskMode = false;
+        let solutionShape = null; // Doğru cevabı göstermek için
+
+        // --- İkon SVG'leri ---
         const svgIcons = {
-            ruler: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-600"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>`,
-            protractor: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-orange-600"><path d="M22 19H2a10 10 0 0 1 20 0Z"/><path d="M12 19V14"/><path d="M12 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M2 19h20"/><path d="M18.3 12.7 17 14"/><path d="M5.7 12.7 7 14"/></svg>`,
-            compass: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-purple-600"><circle cx="12" cy="5" r="2"/><path d="m9.47 7.15-4 10.4"/><path d="m14.53 7.16 4 10.4"/><path d="M6.17 14h11.66"/></svg>`
+            ruler: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>`,
+            protractor: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19H2a10 10 0 0 1 20 0Z"/><path d="M12 19V14"/><path d="M12 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M2 19h20"/><path d="M18.3 12.7 17 14"/><path d="M5.7 12.7 7 14"/></svg>`,
+            compass: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="m9.47 7.15-4 10.4"/><path d="m14.53 7.16 4 10.4"/><path d="M6.17 14h11.66"/></svg>`
         };
 
-        // --- Giriş Ekranı Kontrolü ---
+        // --- Giriş Ekranı ---
         function startSimulation() {
             const intro = document.getElementById('intro-screen');
             intro.classList.add('hidden-intro');
-            
-            // Canvas boyutunu animasyon bittikten sonra tekrar güncelle ki düzgün görünsün
-            setTimeout(() => {
-                resizeCanvas();
-            }, 100);
+            setTimeout(() => { resizeCanvas(); }, 100);
         }
 
         // --- Yapılandırma ---
@@ -298,25 +350,184 @@
         let currentColor = '#dc2626';
         let isGridOn = true;
         let isDrawing = false;
-        
         let protractorState = 0; 
-        
         let startPoint = { x: 0, y: 0 }; 
         let currentPoint = { x: 0, y: 0 }; 
         let referencePoint = { x: 0, y: 0 }; 
-        
         const PIXELS_PER_CM = 37.8;
         let shapes = [];
 
-        // --- Boyutlandırma ---
         function resizeCanvas() {
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
             draw();
         }
         window.addEventListener('resize', resizeCanvas);
-        // İlk yüklemede çalıştır
         setTimeout(resizeCanvas, 100);
+
+        // --- Görev Modu Mantığı ---
+        function startTaskMode() {
+            // Rastgele 5 soru seç
+            const shuffled = [...questionBank].sort(() => 0.5 - Math.random());
+            currentTasks = shuffled.slice(0, 5);
+            taskIndex = 0;
+            isTaskMode = true;
+
+            // Ekranı temizle
+            performClearCanvas(); 
+            shapes = [];
+            protractorState = 0;
+            draw();
+
+            // UI Değişiklikleri
+            document.getElementById('default-info-bar').style.opacity = '0';
+            const taskCard = document.getElementById('task-card');
+            taskCard.classList.remove('hidden-card');
+            taskCard.classList.add('visible-card');
+
+            showCurrentTask();
+        }
+
+        function showCurrentTask() {
+            const task = currentTasks[taskIndex];
+            document.getElementById('task-counter').innerText = `Soru ${taskIndex + 1} / 5`;
+            document.getElementById('task-question').innerText = task.text;
+            
+            // Feedback alanını temizle
+            const feedback = document.getElementById('feedback-area');
+            feedback.innerHTML = "";
+            solutionShape = null; // Çözümü sıfırla
+            
+            // Butonları ayarla
+            document.getElementById('btn-next-task').classList.add('hidden');
+            
+            draw(); // Çözüm çizimini temizlemek için redraw
+        }
+
+        function checkAnswer() {
+            const task = currentTasks[taskIndex];
+            const feedback = document.getElementById('feedback-area');
+            
+            let isCorrect = false;
+            let tolerance = 0;
+
+            // Ekrandaki son şekli veya ilgili tüm şekilleri kontrol et
+            // Basitlik için son çizilen veya herhangi bir uygun şekil var mı diye bakalım
+            if(shapes.length === 0) {
+                feedback.innerHTML = "<span class='feedback-error'>Lütfen önce bir çizim yapın!</span>";
+                return;
+            }
+
+            if (task.check.type === 'line') {
+                tolerance = 0.5; // cm
+                // Herhangi bir çizgi istenen uzunlukta mı?
+                const found = shapes.find(s => {
+                    if(s.type !== 'line') return false;
+                    const len = Math.sqrt(Math.pow(s.end.x - s.start.x, 2) + Math.pow(s.end.y - s.start.y, 2)) / PIXELS_PER_CM;
+                    return Math.abs(len - task.check.val) <= tolerance;
+                });
+                if(found) isCorrect = true;
+            
+            } else if (task.check.type === 'angle') {
+                tolerance = 5; // derece
+                const found = shapes.find(s => {
+                    if(s.type !== 'angle-custom') return false;
+                    // Açı hesabı
+                    const baseAngle = Math.atan2(s.refPoint.y - s.center.y, s.refPoint.x - s.center.x);
+                    const currAngle = Math.atan2(s.endPoint.y - s.center.y, s.endPoint.x - s.center.x);
+                    let diff = currAngle - baseAngle;
+                    while (diff <= -Math.PI) diff += 2*Math.PI;
+                    while (diff > Math.PI) diff -= 2*Math.PI;
+                    const deg = Math.abs(diff * 180 / Math.PI);
+                    return Math.abs(deg - task.check.val) <= tolerance;
+                });
+                if(found) isCorrect = true;
+
+            } else if (task.check.type === 'circle') {
+                tolerance = 0.3; // cm
+                const found = shapes.find(s => {
+                    if(s.type !== 'circle') return false;
+                    const r = s.radius / PIXELS_PER_CM;
+                    return Math.abs(r - task.check.val) <= tolerance;
+                });
+                if(found) isCorrect = true;
+            }
+
+            if (isCorrect) {
+                feedback.innerHTML = "<span class='feedback-success'>🎉 Harika! Doğru çizdin.</span>";
+                document.getElementById('btn-next-task').classList.remove('hidden');
+            } else {
+                feedback.innerHTML = `<span class='feedback-error'>Henüz tam olmadı. Doğrusu (${task.check.val}) yeşil renkte gösteriliyor.</span>`;
+                showSolution(task); // Doğru cevabı göster
+                document.getElementById('btn-next-task').classList.remove('hidden'); // Yanlışsa da geçebilsin
+            }
+        }
+
+        function showSolution(task) {
+            // Doğru cevabı temsil eden bir "hayalet" şekil oluştur
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            if (task.check.type === 'line') {
+                const lenPx = task.check.val * PIXELS_PER_CM;
+                solutionShape = {
+                    type: 'line',
+                    start: {x: centerX - lenPx/2, y: centerY},
+                    end: {x: centerX + lenPx/2, y: centerY},
+                    color: '#22c55e', // Yeşil
+                    isSolution: true
+                };
+            } else if (task.check.type === 'angle') {
+                const rad = task.check.val * Math.PI / 180;
+                const len = 100;
+                solutionShape = {
+                    type: 'angle-custom',
+                    center: {x: centerX, y: centerY},
+                    refPoint: {x: centerX + len, y: centerY},
+                    endPoint: {x: centerX + Math.cos(-rad)*len, y: centerY + Math.sin(-rad)*len}, // Canvas Y ters
+                    color: '#22c55e',
+                    isSolution: true
+                };
+            } else if (task.check.type === 'circle') {
+                const rPx = task.check.val * PIXELS_PER_CM;
+                solutionShape = {
+                    type: 'circle',
+                    center: {x: centerX, y: centerY},
+                    radius: rPx,
+                    color: '#22c55e',
+                    isSolution: true,
+                    isAnimating: false
+                };
+            }
+            draw();
+        }
+
+        function nextTask() {
+            shapes = [];
+            solutionShape = null; // Çözümü temizle
+            protractorState = 0;
+            draw();
+
+            taskIndex++;
+            if (taskIndex >= currentTasks.length) {
+                alert("Tebrikler! Tüm görevleri tamamladın.");
+                endTaskMode();
+            } else {
+                showCurrentTask();
+            }
+        }
+
+        function endTaskMode() {
+            isTaskMode = false;
+            document.getElementById('default-info-bar').style.opacity = '1';
+            const taskCard = document.getElementById('task-card');
+            taskCard.classList.remove('visible-card');
+            taskCard.classList.add('hidden-card');
+            shapes = [];
+            solutionShape = null;
+            draw();
+            setTool('ruler');
+        }
 
         // --- Araç Seçimi & UI ---
         function setTool(tool) {
@@ -327,23 +538,22 @@
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${tool}`).classList.add('active');
             
-            // İkonları SVG olarak güncelle
-            document.getElementById('current-tool-icon').innerHTML = svgIcons[tool];
+            const iconHTML = svgIcons[tool];
+            document.getElementById('icon-' + tool).innerHTML = iconHTML; 
+            document.getElementById('current-tool-icon-top').innerHTML = iconHTML; 
             
             updateInstruction();
             draw();
         }
 
-        // Başlangıçta ikonun yüklenmesi için
-        setTool('ruler');
+        setTool('ruler'); // Başlangıç
 
         function updateInstruction() {
+            if(isTaskMode) return;
             const el = document.getElementById('instruction-text');
-            if (currentTool === 'ruler') {
-                el.innerText = 'Çizgi çizmek için tıkla ve sürükle';
-            } else if (currentTool === 'compass') {
-                el.innerText = 'Merkezi seç ve yarıçapı aç';
-            } else if (currentTool === 'protractor') {
+            if (currentTool === 'ruler') el.innerText = 'Çizgi çizmek için tıkla ve sürükle';
+            else if (currentTool === 'compass') el.innerText = 'Merkezi seç ve yarıçapı aç';
+            else if (currentTool === 'protractor') {
                 if (protractorState === 0) el.innerText = '1. Adım: Başlangıç kolunu çizmek için sürükle';
                 else if (protractorState === 1) el.innerText = 'Bırakınca başlangıç kolu oluşacak';
                 else if (protractorState === 2) el.innerText = '2. Adım: Açıyı belirlemek için fareyi hareket ettir ve tıkla';
@@ -382,13 +592,34 @@
             }
         }
 
-        function clearCanvas() {
-            if(confirm("Tüm sayfa temizlenecek. Emin misin?")) {
-                shapes = [];
-                protractorState = 0;
-                updateInstruction();
-                draw();
-            }
+        function openDeleteModal() {
+            const modal = document.getElementById('delete-modal');
+            const content = document.getElementById('delete-modal-content');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            requestAnimationFrame(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            });
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('delete-modal');
+            const content = document.getElementById('delete-modal-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function performClearCanvas() {
+            shapes = [];
+            protractorState = 0;
+            updateInstruction();
+            draw();
+            closeDeleteModal();
         }
 
         // --- Fare Olayları ---
@@ -411,17 +642,14 @@
                     endPoint: pos,
                     color: currentColor 
                 });
-                
                 protractorState = 0;
                 updateInstruction();
                 draw();
                 return;
             }
-
             isDrawing = true;
             startPoint = pos;
             currentPoint = pos;
-
             if (currentTool === 'protractor') {
                 protractorState = 1; 
                 updateInstruction();
@@ -453,7 +681,16 @@
             if (currentTool === 'ruler') {
                 shapes.push({ type: 'line', start: startPoint, end: currentPoint, color: currentColor });
             } else if (currentTool === 'compass') {
-                shapes.push({ type: 'circle', center: startPoint, radius: dist, color: currentColor });
+                const newShape = { 
+                    type: 'circle', 
+                    center: startPoint, 
+                    radius: dist, 
+                    color: currentColor, 
+                    animationAngle: 0, 
+                    isAnimating: true 
+                };
+                shapes.push(newShape);
+                animateCircle(newShape);
             } else if (currentTool === 'protractor') {
                 if (protractorState === 1) {
                     referencePoint = { ...currentPoint };
@@ -468,82 +705,103 @@
         canvas.addEventListener('mousedown', (e) => startAction(getMousePos(e)));
         canvas.addEventListener('mousemove', (e) => moveAction(getMousePos(e)));
         window.addEventListener('mouseup', endAction);
-        
         canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startAction(getTouchPos(e)); }, {passive: false});
         canvas.addEventListener('touchmove', (e) => { e.preventDefault(); moveAction(getTouchPos(e)); }, {passive: false});
         window.addEventListener('touchend', endAction);
 
-        // --- Çizim Motoru ---
+        // --- Çizim ve Animasyon ---
+        function animateCircle(shape) {
+            function step() {
+                if (!shape.isAnimating) return;
+                shape.animationAngle += 0.04; 
+                if (shape.animationAngle >= 2 * Math.PI) {
+                    shape.animationAngle = 2 * Math.PI;
+                    shape.isAnimating = false;
+                }
+                draw();
+                if (shape.isAnimating) {
+                    requestAnimationFrame(step);
+                }
+            }
+            requestAnimationFrame(step);
+        }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
 
+            // Mevcut Şekiller
             shapes.forEach(shape => {
                 ctx.strokeStyle = shape.color;
-                
                 if (shape.type === 'line') {
-                    ctx.beginPath();
-                    ctx.moveTo(shape.start.x, shape.start.y);
-                    ctx.lineTo(shape.end.x, shape.end.y);
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                    drawDot(shape.start, shape.color);
-                    drawDot(shape.end, shape.color);
-
+                    ctx.beginPath(); ctx.moveTo(shape.start.x, shape.start.y); ctx.lineTo(shape.end.x, shape.end.y);
+                    ctx.lineWidth = 3; ctx.stroke(); drawDot(shape.start, shape.color); drawDot(shape.end, shape.color);
                 } else if (shape.type === 'circle') {
-                    ctx.beginPath();
-                    ctx.arc(shape.center.x, shape.center.y, shape.radius, 0, 2 * Math.PI);
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    drawDot(shape.center, shape.color);
-                
+                    let endAngle = shape.isAnimating ? shape.animationAngle : 2 * Math.PI;
+                    ctx.beginPath(); ctx.arc(shape.center.x, shape.center.y, shape.radius, 0, endAngle);
+                    ctx.lineWidth = 2; ctx.stroke(); drawDot(shape.center, shape.color);
+                    if (shape.isAnimating) {
+                        const tx = shape.center.x + Math.cos(endAngle) * shape.radius;
+                        const ty = shape.center.y + Math.sin(endAngle) * shape.radius;
+                        drawCompassTool(shape.center, {x: tx, y: ty}, shape.color);
+                    }
                 } else if (shape.type === 'angle-custom') {
                     drawAngleShape(shape.center, shape.refPoint, shape.endPoint, shape.color, false);
                 }
             });
 
-            if (currentTool === 'ruler' && isDrawing) {
-                drawActiveRuler();
-            } else if (currentTool === 'compass' && isDrawing) {
-                drawActiveCompass();
-            } else if (currentTool === 'protractor') {
-                if (protractorState === 1 && isDrawing) {
-                    drawReferenceLinePreview();
-                } else if (protractorState === 2) {
-                    drawAngleMeasurementPreview();
+            // Çözüm Şekli (Varsa)
+            if (solutionShape) {
+                ctx.save();
+                ctx.strokeStyle = solutionShape.color;
+                ctx.setLineDash([10, 10]); // Kesikli çizgi
+                ctx.lineWidth = 4;
+                ctx.globalAlpha = 0.7; // Biraz saydam
+
+                if (solutionShape.type === 'line') {
+                    ctx.beginPath();
+                    ctx.moveTo(solutionShape.start.x, solutionShape.start.y);
+                    ctx.lineTo(solutionShape.end.x, solutionShape.end.y);
+                    ctx.stroke();
+                    drawLabel("Olması Gereken", solutionShape.start.x, solutionShape.start.y - 30, '#16a34a');
+                } else if (solutionShape.type === 'angle-custom') {
+                    drawAngleShape(solutionShape.center, solutionShape.refPoint, solutionShape.endPoint, solutionShape.color, false);
+                    drawLabel("Olması Gereken", solutionShape.endPoint.x, solutionShape.endPoint.y - 30, '#16a34a');
+                } else if (solutionShape.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(solutionShape.center.x, solutionShape.center.y, solutionShape.radius, 0, 2*Math.PI);
+                    ctx.stroke();
+                    drawLabel("Olması Gereken", solutionShape.center.x + solutionShape.radius, solutionShape.center.y, '#16a34a');
                 }
+                ctx.restore();
+            }
+
+            if (currentTool === 'ruler' && isDrawing) drawActiveRuler();
+            else if (currentTool === 'compass' && isDrawing) drawActiveCompass();
+            else if (currentTool === 'protractor') {
+                if (protractorState === 1 && isDrawing) drawReferenceLinePreview();
+                else if (protractorState === 2) drawAngleMeasurementPreview();
             }
         }
 
-        // --- Yardımcı Çizim Fonksiyonları ---
-
+        // --- Helper Çizim Fonksiyonları ---
         function drawDot(pos, color) {
-            ctx.beginPath();
-            ctx.arc(pos.x, pos.y, 4, 0, 2 * Math.PI);
-            ctx.fillStyle = color;
-            ctx.fill();
-            ctx.beginPath(); 
-            ctx.arc(pos.x, pos.y, 1.5, 0, 2 * Math.PI);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
+            ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, 2 * Math.PI); ctx.fillStyle = color; ctx.fill();
+            ctx.beginPath(); ctx.arc(pos.x, pos.y, 1.5, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill();
         }
 
         function drawLabel(text, x, y, color = '#374151') {
             ctx.save();
-            ctx.font = "600 14px Montserrat";
+            ctx.font = "600 14px Montserrat, sans-serif";
             const metrics = ctx.measureText(text);
             const p = 6; 
-            
             ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
             ctx.shadowColor = "rgba(0,0,0,0.1)";
             ctx.shadowBlur = 4;
             ctx.beginPath();
             ctx.roundRect(x + 10, y + 10, metrics.width + p*2, 24, 6);
             ctx.fill();
-            
             ctx.shadowBlur = 0;
             ctx.fillStyle = color;
             ctx.textBaseline = 'top';
@@ -551,254 +809,89 @@
             ctx.restore();
         }
 
-        // --- Yeni Açı Mantığı Çizimi (En Kısa Yol) ---
-        
+        function drawCompassTool(center, tip, color) {
+            const midX = (center.x + tip.x) / 2;
+            const midY = (center.y + tip.y) / 2;
+            const topY = midY - 120; 
+            ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(midX, topY); ctx.lineTo(tip.x, tip.y); 
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = '#7e22ce'; ctx.lineWidth = 6; ctx.stroke();
+            ctx.beginPath(); ctx.arc(midX, topY, 8, 0, Math.PI*2); ctx.fillStyle = '#581c87'; ctx.fill();
+            ctx.beginPath(); ctx.arc(tip.x, tip.y, 2, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill();
+        }
+
         function drawAngleShape(center, refPt, endPt, color, isPreview) {
-            // Referans Kolu
-            ctx.beginPath();
-            ctx.moveTo(center.x, center.y);
-            ctx.lineTo(refPt.x, refPt.y);
-            ctx.strokeStyle = color; 
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Açı Kolu
-            ctx.beginPath();
-            ctx.moveTo(center.x, center.y);
-            ctx.lineTo(endPt.x, endPt.y);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Açı Hesapla
+            ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(refPt.x, refPt.y); ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(endPt.x, endPt.y); ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
             const baseAngle = Math.atan2(refPt.y - center.y, refPt.x - center.x);
             const currentAngle = Math.atan2(endPt.y - center.y, endPt.x - center.x);
-            
             let diff = currentAngle - baseAngle;
-            // En kısa yol için normalize et: [-PI, PI] aralığına sıkıştır
-            while (diff <= -Math.PI) diff += 2*Math.PI;
-            while (diff > Math.PI) diff -= 2*Math.PI;
-
-            // Yay Çiz
-            ctx.beginPath();
-            // Eğer fark negatifse, canvas arc yönü true (CCW) olmalı ki kısa yolu çizsin
-            ctx.arc(center.x, center.y, 30, baseAngle, baseAngle + diff, diff < 0);
-            ctx.strokeStyle = color;
-            ctx.stroke();
-
+            while (diff <= -Math.PI) diff += 2*Math.PI; while (diff > Math.PI) diff -= 2*Math.PI;
+            ctx.beginPath(); ctx.arc(center.x, center.y, 30, baseAngle, baseAngle + diff, diff < 0); ctx.strokeStyle = color; ctx.stroke();
             drawDot(center, color);
-            
-            // Sayısal değeri açının gösterildiği yere (açıortay üzerine) yaz
             let degrees = Math.abs(diff * 180 / Math.PI);
-            
-            // Etiket konumunu hesapla
             let midAngle = baseAngle + (diff / 2);
-            let labelDist = 60; // Yaydan biraz dışarıda
-            // drawLabel fonksiyonu x+10, y+10 ofsetli çizdiği için konumu hafifçe ayarlıyoruz (-25)
+            let labelDist = 60;
             let lx = center.x + Math.cos(midAngle) * labelDist - 25;
             let ly = center.y + Math.sin(midAngle) * labelDist - 25;
-
             drawLabel(`${Math.round(degrees)}°`, lx, ly, color);
         }
 
-        // --- Aktif Araç Çizimleri ---
-
         function drawReferenceLinePreview() {
-            ctx.beginPath();
-            ctx.moveTo(startPoint.x, startPoint.y);
-            ctx.lineTo(currentPoint.x, currentPoint.y);
-            ctx.strokeStyle = currentColor;
-            ctx.lineWidth = 3;
-            ctx.setLineDash([5, 5]); 
-            ctx.stroke();
-            ctx.setLineDash([]);
-            
-            drawDot(startPoint, currentColor);
-            drawLabel("Başlangıç Kolu", currentPoint.x, currentPoint.y, currentColor);
+            ctx.beginPath(); ctx.moveTo(startPoint.x, startPoint.y); ctx.lineTo(currentPoint.x, currentPoint.y); ctx.strokeStyle = currentColor; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+            drawDot(startPoint, currentColor); drawLabel("Başlangıç Kolu", currentPoint.x, currentPoint.y, currentColor);
         }
 
         function drawAngleMeasurementPreview() {
-            // 1. Referans Kolu
-            ctx.beginPath();
-            ctx.moveTo(startPoint.x, startPoint.y);
-            ctx.lineTo(referencePoint.x, referencePoint.y);
-            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // 2. Aktif Kol
-            ctx.beginPath();
-            ctx.moveTo(startPoint.x, startPoint.y);
-            ctx.lineTo(currentPoint.x, currentPoint.y);
-            ctx.strokeStyle = currentColor;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // 3. İletkiyi Referans Koluna Hizala
+            ctx.beginPath(); ctx.moveTo(startPoint.x, startPoint.y); ctx.lineTo(referencePoint.x, referencePoint.y); ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 3; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(startPoint.x, startPoint.y); ctx.lineTo(currentPoint.x, currentPoint.y); ctx.strokeStyle = currentColor; ctx.lineWidth = 3; ctx.stroke();
             const baseAngle = Math.atan2(referencePoint.y - startPoint.y, referencePoint.x - startPoint.x);
-            
-            ctx.save();
-            ctx.translate(startPoint.x, startPoint.y);
-            ctx.rotate(baseAngle); 
-            
-            // --- İletki Görseli ---
+            ctx.save(); ctx.translate(startPoint.x, startPoint.y); ctx.rotate(baseAngle); 
             const r = 130;
-            
-            // Daire
-            ctx.beginPath();
-            ctx.arc(0, 0, r, 0, 2*Math.PI);
-            ctx.fillStyle = 'rgba(255, 237, 213, 0.5)';
-            ctx.fill();
-            ctx.strokeStyle = '#ea580c';
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            // Dereceler
-            ctx.font = '10px Montserrat';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#7c2d12';
-
+            ctx.beginPath(); ctx.arc(0, 0, r, 0, 2*Math.PI); ctx.fillStyle = 'rgba(255, 237, 213, 0.5)'; ctx.fill(); ctx.strokeStyle = '#ea580c'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.font = '10px Montserrat, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#7c2d12';
             for(let i=0; i<360; i+=10) {
-                let rad = (i * Math.PI) / 180;
-                let outer = r;
-                let inner = (i%30===0) ? r-15 : r-5;
-                
-                ctx.beginPath();
-                ctx.moveTo(Math.cos(rad)*outer, Math.sin(rad)*outer);
-                ctx.lineTo(Math.cos(rad)*inner, Math.sin(rad)*inner);
-                ctx.stroke();
-
-                if(i%30===0) {
-                    let tx = Math.cos(rad) * (r-25);
-                    let ty = Math.sin(rad) * (r-25);
-                    ctx.fillText(i, tx, ty);
-                }
+                let rad = (i * Math.PI) / 180; let outer = r; let inner = (i%30===0) ? r-15 : r-5;
+                ctx.beginPath(); ctx.moveTo(Math.cos(rad)*outer, Math.sin(rad)*outer); ctx.lineTo(Math.cos(rad)*inner, Math.sin(rad)*inner); ctx.stroke();
+                if(i%30===0) { let tx = Math.cos(rad) * (r-25); let ty = Math.sin(rad) * (r-25); ctx.fillText(i, tx, ty); }
             }
-            
-            // Taranmış İÇ AÇI Alanı
             const mouseAngleGlobal = Math.atan2(currentPoint.y - startPoint.y, currentPoint.x - startPoint.x);
             let relativeAngle = mouseAngleGlobal - baseAngle;
-            
-            // En kısa yol normalizasyonu
-            while (relativeAngle <= -Math.PI) relativeAngle += 2*Math.PI;
-            while (relativeAngle > Math.PI) relativeAngle -= 2*Math.PI;
-
-            ctx.beginPath();
-            ctx.moveTo(0,0);
-            // Negatif açı ise CCW (true) çiz, Pozitif ise CW (false) çiz
-            ctx.arc(0, 0, r, 0, relativeAngle, relativeAngle < 0);
-            ctx.lineTo(0,0);
-            ctx.fillStyle = 'rgba(234, 88, 12, 0.3)';
-            ctx.fill();
-
+            while (relativeAngle <= -Math.PI) relativeAngle += 2*Math.PI; while (relativeAngle > Math.PI) relativeAngle -= 2*Math.PI;
+            ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0, 0, r, 0, relativeAngle, relativeAngle < 0); ctx.lineTo(0,0); ctx.fillStyle = 'rgba(234, 88, 12, 0.3)'; ctx.fill();
             ctx.restore();
-
-            // Etiket Pozisyonu (Açıortay üzerinde, iletki dışında)
             let degrees = Math.abs(relativeAngle * (180/Math.PI));
             let midRelAngle = relativeAngle / 2;
             let globalMidAngle = baseAngle + midRelAngle;
-            let labelR = r + 40; // İletki yarıçapı (130) + 40px dışarı
-            
-            // drawLabel +10 offset eklediği için merkeze oturtmak adına -25 yapıyoruz
+            let labelR = r + 40;
             let lx = startPoint.x + Math.cos(globalMidAngle) * labelR - 25;
             let ly = startPoint.y + Math.sin(globalMidAngle) * labelR - 25;
-
             drawLabel(`${Math.round(degrees)}°`, lx, ly, currentColor);
-            
             drawDot(startPoint, currentColor);
         }
 
         function drawActiveRuler() {
-            ctx.beginPath();
-            ctx.moveTo(startPoint.x, startPoint.y);
-            ctx.lineTo(currentPoint.x, currentPoint.y);
-            ctx.strokeStyle = currentColor;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            const dx = currentPoint.x - startPoint.x;
-            const dy = currentPoint.y - startPoint.y;
-            const pixelDist = Math.sqrt(dx*dx + dy*dy);
-            const cm = (pixelDist / PIXELS_PER_CM).toFixed(1);
-
+            ctx.beginPath(); ctx.moveTo(startPoint.x, startPoint.y); ctx.lineTo(currentPoint.x, currentPoint.y); ctx.strokeStyle = currentColor; ctx.lineWidth = 3; ctx.stroke();
+            const dx = currentPoint.x - startPoint.x; const dy = currentPoint.y - startPoint.y; const pixelDist = Math.sqrt(dx*dx + dy*dy); const cm = (pixelDist / PIXELS_PER_CM).toFixed(1);
             drawLabel(`${cm} cm`, currentPoint.x, currentPoint.y, currentColor);
-
-            ctx.save();
-            ctx.translate(startPoint.x, startPoint.y);
-            ctx.rotate(Math.atan2(dy, dx));
-            
-            ctx.fillStyle = 'rgba(250, 204, 21, 0.4)'; 
-            ctx.fillRect(0, 10, pixelDist + 40, 40);
-            
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-            ctx.lineWidth = 1;
-            ctx.font = '500 10px Montserrat';
-            ctx.fillStyle = '#000';
-            ctx.textAlign = 'center';
-
+            ctx.save(); ctx.translate(startPoint.x, startPoint.y); ctx.rotate(Math.atan2(dy, dx));
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.4)'; ctx.fillRect(0, 10, pixelDist + 40, 40);
+            ctx.beginPath(); ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1; ctx.font = '500 10px Montserrat, sans-serif'; ctx.fillStyle = '#000'; ctx.textAlign = 'center';
             const totalCm = Math.ceil(pixelDist / PIXELS_PER_CM);
             for(let i=0; i<= totalCm+1; i++) {
-                let x = i * PIXELS_PER_CM;
-                if(x > pixelDist + 30) break;
-                ctx.moveTo(x, 10);
-                ctx.lineTo(x, 25);
-                ctx.fillText(i, x, 38);
-                for(let j=1; j<10; j++) {
-                    let mx = x + (j * PIXELS_PER_CM/10);
-                    if(mx > pixelDist + 30) break;
-                    ctx.moveTo(mx, 10);
-                    ctx.lineTo(mx, j==5? 20 : 15);
-                }
+                let x = i * PIXELS_PER_CM; if(x > pixelDist + 30) break;
+                ctx.moveTo(x, 10); ctx.lineTo(x, 25); ctx.fillText(i, x, 38);
+                for(let j=1; j<10; j++) { let mx = x + (j * PIXELS_PER_CM/10); if(mx > pixelDist + 30) break; ctx.moveTo(mx, 10); ctx.lineTo(mx, j==5? 20 : 15); }
             }
-            ctx.stroke();
-            ctx.restore();
+            ctx.stroke(); ctx.restore();
         }
 
         function drawActiveCompass() {
-            const dx = currentPoint.x - startPoint.x;
-            const dy = currentPoint.y - startPoint.y;
-            const radius = Math.sqrt(dx*dx + dy*dy);
-            const cm = (radius / PIXELS_PER_CM).toFixed(1);
-
-            ctx.beginPath();
-            ctx.arc(startPoint.x, startPoint.y, radius, 0, Math.PI*2);
-            ctx.strokeStyle = currentColor;
-            ctx.setLineDash([5,5]);
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            ctx.beginPath();
-            ctx.moveTo(startPoint.x, startPoint.y);
-            ctx.lineTo(currentPoint.x, currentPoint.y);
-            ctx.strokeStyle = '#d8b4fe';
-            ctx.stroke();
-
+            const dx = currentPoint.x - startPoint.x; const dy = currentPoint.y - startPoint.y; const radius = Math.sqrt(dx*dx + dy*dy); const cm = (radius / PIXELS_PER_CM).toFixed(1);
+            ctx.beginPath(); ctx.arc(startPoint.x, startPoint.y, radius, 0, Math.PI*2); ctx.strokeStyle = currentColor; ctx.setLineDash([5,5]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.beginPath(); ctx.moveTo(startPoint.x, startPoint.y); ctx.lineTo(currentPoint.x, currentPoint.y); ctx.strokeStyle = '#d8b4fe'; ctx.stroke();
             drawLabel(`r: ${cm} cm`, currentPoint.x, currentPoint.y, currentColor);
-
-            const midX = (startPoint.x + currentPoint.x) / 2;
-            const midY = (startPoint.y + currentPoint.y) / 2;
-            const topY = midY - 120; 
-
-            ctx.beginPath();
-            ctx.moveTo(startPoint.x, startPoint.y); 
-            ctx.lineTo(midX, topY); 
-            ctx.lineTo(currentPoint.x, currentPoint.y); 
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = '#7e22ce'; 
-            ctx.lineWidth = 6;
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.arc(midX, topY, 8, 0, Math.PI*2);
-            ctx.fillStyle = '#581c87';
-            ctx.fill();
+            drawCompassTool(startPoint, currentPoint, currentColor);
         }
-
-        resizeCanvas();
-
     </script>
 </body>
 </html>
