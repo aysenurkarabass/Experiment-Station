@@ -37,6 +37,13 @@
         }
         .toggle-btn.active { background: #2563eb; border-color: #3b82f6; }
         .toggle-btn:hover:not(.active) { background: #475569; }
+        
+        /* Quiz Butonu için özel stil */
+        .quiz-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: 1px solid #7c3aed;
+        }
+        .quiz-btn:hover { background: linear-gradient(135deg, #4f46e5, #7c3aed); transform: scale(1.05); }
 
         .focus-btn {
             cursor: pointer;
@@ -113,6 +120,43 @@
             opacity: 0;
             pointer-events: none;
         }
+
+        /* QUIZ MODAL STİLLERİ */
+        #quiz-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+        .quiz-card {
+            background: #1e293b;
+            border: 1px solid #4f46e5;
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 30px rgba(79, 70, 229, 0.3);
+        }
+        .quiz-option {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: #334155;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: white;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .quiz-option:hover:not(:disabled) { background: #475569; border-color: #64748b; }
+        .quiz-option.correct { background: #059669; border-color: #10b981; }
+        .quiz-option.wrong { background: #dc2626; border-color: #ef4444; opacity: 0.6; }
+        .quiz-feedback { margin-top: 10px; font-size: 0.9rem; min-height: 20px; }
     </style>
 </head>
 <body>
@@ -168,6 +212,37 @@
         </div>
     </div>
     
+    <!-- QUIZ MODAL -->
+    <div id="quiz-modal">
+        <div class="quiz-card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-indigo-400">Uzay Bilgi Yarışması</h3>
+                <span id="quiz-progress" class="text-sm text-gray-400">Soru 1/5</span>
+            </div>
+            
+            <div id="quiz-question-container">
+                <p id="question-text" class="text-lg text-white mb-6">Soru buraya gelecek...</p>
+                <div id="options-container">
+                    <!-- Seçenekler JS ile buraya gelecek -->
+                </div>
+                <p id="quiz-feedback" class="quiz-feedback font-bold"></p>
+            </div>
+
+            <div id="quiz-result-container" class="hidden text-center">
+                <div class="text-6xl mb-4"></div>
+                <h2 class="text-2xl font-bold text-white mb-2">Test Tamamlandı!</h2>
+                <p class="text-gray-300 mb-6">Skorunuz: <span id="final-score" class="text-yellow-400 font-bold text-xl">0/0</span></p>
+                <button onclick="closeQuiz()" class="bg-gray-600 hover:bg-gray-500 text-white py-2 px-6 rounded-lg mr-2">Kapat</button>
+                <button onclick="restartQuiz()" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-6 rounded-lg">Tekrar Dene</button>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button id="next-question-btn" onclick="nextQuestion()" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-6 rounded-lg hidden">Sonraki Soru</button>
+                <button id="close-quiz-btn" onclick="closeQuiz()" class="text-gray-400 hover:text-white text-sm ml-4">Çıkış</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Bilgi Paneli -->
     <div id="info-panel">
         <h3>
@@ -217,6 +292,7 @@
 
             <div class="flex gap-2">
                 <button class="toggle-btn active" id="btn-trails" onclick="toggleTrails()">İzleri Göster</button>
+                <button class="toggle-btn quiz-btn" onclick="openQuiz()">Bilgini Test Et</button>
             </div>
         </div>
     </div>
@@ -253,6 +329,43 @@ const INFO_DATA = {
         text: "• <strong>Dönüş:</strong> ~27.3 gün<br>• <strong>Yörünge:</strong> ~27.3 gün<br>• <strong>Kütle Çekim Kilidi:</strong> Kendi dönüş hızı ile yörünge hızı eşittir. Bu yüzden Dünya'dan bakıldığında Ay'ın hep aynı yüzü görünür."
     }
 };
+
+// --- QUIZ DATA ---
+const QUIZ_QUESTIONS = [
+    {
+        q: "Dünya'nın kendi ekseni etrafındaki bir tam dönüşü ne kadar sürer?",
+        options: ["365 Gün", "24 Saat", "27 Gün", "12 Saat"],
+        correct: 1,
+        note: "Doğru! Bu süre bir 'Gün'ü oluşturur."
+    },
+    {
+        q: "Dünya'dan bakıldığında Ay'ın neden hep aynı yüzünü görürüz?",
+        options: ["Ay dönmez", "Tesadüftür", "Kütle Çekim Kilidi (Dönüş ve Yörünge hızı eşittir)", "Güneş ışığı sadece oraya vurur"],
+        correct: 2,
+        note: "Doğru! Ay'ın kendi etrafındaki dönüşü ile Dünya etrafındaki dönüşü aynı sürede (27.3 gün) gerçekleşir."
+    },
+    {
+        q: "Simülasyonda 'Gerçek Boyut' modunda Güneş'in yanındaki Dünya nasıl görünür?",
+        options: ["Güneş ile aynı boyutta", "Portakal büyüklüğünde", "Neredeyse görünmez bir nokta gibi", "Ay'dan daha küçük"],
+        correct: 2,
+        note: "Tebrikler! Güneş o kadar büyüktür ki (Çapı Dünya'nın 109 katı), gerçek ölçekte Dünya minicik kalır."
+    },
+    {
+        q: "Mevsimlerin oluşmasının temel sebebi nedir?",
+        options: ["Dünya'nın Güneş'e yaklaşması", "Dünya'nın eksen eğikliği (23.5°)", "Ay'ın çekim gücü", "Güneş'in soğuması"],
+        correct: 1,
+        note: "Doğru! Eksen eğikliği sayesinde güneş ışınlarının geliş açısı yıl boyunca değişir."
+    },
+    {
+        q: "Ay, Dünya etrafındaki tam turunu yaklaşık ne kadar sürede tamamlar?",
+        options: ["24 Saat", "1 Yıl", "27.3 Gün", "7 Gün"],
+        correct: 2,
+        note: "Doğru! Bu süre Ay takviminin temelini oluşturur."
+    }
+];
+
+let currentQuestionIndex = 0;
+let quizScore = 0;
 
 // İzler için
 let trails = { earth: [], moon: [] };
@@ -598,6 +711,100 @@ function closeInfoPanel() {
     infoPanel.style.display = 'none';
 }
 window.closeInfoPanel = closeInfoPanel;
+
+// --- QUIZ MANTIĞI ---
+
+function openQuiz() {
+    const modal = document.getElementById('quiz-modal');
+    modal.style.display = 'flex';
+    currentQuestionIndex = 0;
+    quizScore = 0;
+    document.getElementById('quiz-result-container').classList.add('hidden');
+    document.getElementById('quiz-question-container').classList.remove('hidden');
+    document.getElementById('close-quiz-btn').classList.remove('hidden');
+    document.getElementById('quiz-progress').innerText = `Soru 1/${QUIZ_QUESTIONS.length}`;
+    loadQuestion();
+}
+window.openQuiz = openQuiz;
+
+function closeQuiz() {
+    document.getElementById('quiz-modal').style.display = 'none';
+}
+window.closeQuiz = closeQuiz;
+
+function loadQuestion() {
+    const data = QUIZ_QUESTIONS[currentQuestionIndex];
+    document.getElementById('question-text').innerText = data.q;
+    const container = document.getElementById('options-container');
+    container.innerHTML = '';
+    
+    document.getElementById('quiz-feedback').innerText = '';
+    document.getElementById('quiz-feedback').className = 'quiz-feedback';
+    document.getElementById('next-question-btn').classList.add('hidden');
+
+    data.options.forEach((opt, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'quiz-option';
+        btn.innerText = opt;
+        btn.onclick = () => selectOption(index, btn);
+        container.appendChild(btn);
+    });
+
+    document.getElementById('quiz-progress').innerText = `Soru ${currentQuestionIndex + 1}/${QUIZ_QUESTIONS.length}`;
+}
+
+function selectOption(selectedIndex, btnElement) {
+    const data = QUIZ_QUESTIONS[currentQuestionIndex];
+    const options = document.querySelectorAll('.quiz-option');
+    
+    // Tüm butonları pasif yap
+    options.forEach(opt => opt.disabled = true);
+
+    const feedback = document.getElementById('quiz-feedback');
+    const nextBtn = document.getElementById('next-question-btn');
+
+    if (selectedIndex === data.correct) {
+        btnElement.classList.add('correct');
+        feedback.innerText = data.note;
+        feedback.classList.add('text-green-400');
+        quizScore++;
+    } else {
+        btnElement.classList.add('wrong');
+        // Doğruyu göster
+        options[data.correct].classList.add('correct');
+        feedback.innerText = "Yanlış! " + data.note;
+        feedback.classList.add('text-red-400');
+    }
+
+    // Son soru değilse buton, son ise sonuç göster
+    if (currentQuestionIndex < QUIZ_QUESTIONS.length - 1) {
+        nextBtn.innerText = "Sonraki Soru";
+        nextBtn.onclick = nextQuestion;
+    } else {
+        nextBtn.innerText = "Sonuçları Gör";
+        nextBtn.onclick = showResult;
+    }
+    nextBtn.classList.remove('hidden');
+}
+
+function nextQuestion() {
+    currentQuestionIndex++;
+    loadQuestion();
+}
+
+function showResult() {
+    document.getElementById('quiz-question-container').classList.add('hidden');
+    document.getElementById('quiz-result-container').classList.remove('hidden');
+    document.getElementById('next-question-btn').classList.add('hidden');
+    document.getElementById('close-quiz-btn').classList.add('hidden'); // Sonuç ekranında zaten kapat butonu var
+    
+    document.getElementById('final-score').innerText = `${quizScore}/${QUIZ_QUESTIONS.length}`;
+}
+
+function restartQuiz() {
+    openQuiz();
+}
+window.restartQuiz = restartQuiz;
 
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
