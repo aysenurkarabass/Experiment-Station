@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Güneş Sistemi Simülasyonu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js Kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; outline: none; }
+        
+        .panel {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            backdrop-filter: blur(8px);
+            border-radius: 12px;
+            color: #e2e8f0;
+            padding: 15px;
+            pointer-events: auto;
+            user-select: none;
+        }
+
+        .slider-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #94a3b8; }
+        input[type=range] { width: 100%; accent-color: #3b82f6; }
+
+        .toggle-btn {
+            background: #334155;
+            border: 1px solid #475569;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active { background: #2563eb; border-color: #3b82f6; }
+        .toggle-btn:hover:not(.active) { background: #475569; }
+
+        .focus-btn {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+            border: 1px solid transparent;
+            font-weight: 600;
+        }
+        .focus-btn:hover { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.2); color: #000; }
+        .focus-btn.active-focus { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; color: #2563eb; }
+
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0;
+        }
+        
+        #loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: #3b82f6; font-size: 24px; font-weight: bold;
+            pointer-events: none;
+        }
+
+        /* Yeni Bilgi Paneli Stili */
+        #info-panel {
+            position: absolute;
+            top: 100px; /* Header'ın hemen altı */
+            right: 20px;
+            width: 320px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #38bdf8;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            pointer-events: auto;
+            display: none; /* Başlangıçta gizli */
+            z-index: 50;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            line-height: 1.5;
+            transition: opacity 0.3s ease;
+        }
+        
+        #info-panel h3 {
+            color: #38bdf8;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 1.2rem;
+            transition: color 0.2s;
+        }
+        .close-btn:hover { color: #fff; }
+
+        #info-content strong { color: #fff; font-weight: 600; }
+        #info-content i { color: #cbd5e1; }
+
+        /* Giriş Ekranı Animasyonu */
+        .fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">3D Evren Yükleniyor...</div>
+
+    <!-- GİRİŞ EKRANI (INTRO) -->
+    <div id="intro-screen" class="fixed inset-0 z-[1000] bg-slate-950/90 backdrop-blur-md flex items-center justify-center transition-opacity duration-700 p-4">
+        <div class="bg-slate-900 border border-sky-500/30 p-8 rounded-2xl max-w-4xl w-full shadow-2xl relative overflow-hidden">
+            <!-- Dekoratif üst çizgi -->
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-sky-500 to-transparent"></div>
+
+            <div class="text-center mb-8">
+                <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="Logo" class="h-20 mx-auto mb-4">
+                <h1 class="text-4xl font-bold text-sky-400 tracking-wide">3D Güneş Sistemi</h1>
+                <p class="text-slate-400 mt-3 text-lg">Uzay mekaniklerini ve astronomik ölçekleri etkileşimli olarak keşfedin.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 mb-10">
+                <!-- Sol Kolon: Amaç -->
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col justify-center h-full">
+                    <h3 class="text-white font-semibold mb-4 flex items-center gap-2 text-xl border-b border-slate-700 pb-2">
+                        Deneyin Amacı
+                    </h3>
+                    <p class="text-slate-300 leading-relaxed text-base">
+                        Bu simülasyon; Güneş, Dünya ve Ay arasındaki <strong>yörünge ilişkilerini</strong>, <strong>boyut farklarını</strong> ve <strong>gece-gündüz döngülerini</strong> 3 boyutlu bir ortamda gözlemlemeniz için tasarlanmıştır.
+                    </p>
+                </div>
+
+                <!-- Sağ Kolon: Kontroller -->
+                <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700 flex flex-col justify-center h-full">
+                    <h3 class="text-white font-semibold mb-4 flex items-center gap-2 text-xl border-b border-slate-700 pb-2">
+                        Nasıl Kullanılır?
+                    </h3>
+                    <ul class="text-slate-300 space-y-4 text-base">
+                        <li class="flex items-start gap-3">
+                            <span class="text-sky-400 font-bold min-w-[100px] text-right">Odaklanma:</span>
+                            <span>Üst menüdeki "Git" butonları ile kamerayı doğrudan gök cisimlerine kilitleyin.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-sky-400 font-bold min-w-[100px] text-right">Kontrol:</span>
+                            <span>Mouse ile sürükleyerek 360° gezin, tekerlek ile yakınlaşın. Bilgi almak için gezegenlere tıklayın.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button onclick="startSimulation()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold py-4 px-16 rounded-full text-xl transition-all transform hover:scale-105 shadow-lg shadow-sky-900/50 focus:outline-none ring-4 ring-sky-500/30">
+                    Deneye Başla
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bilgi Paneli -->
+    <div id="info-panel">
+        <h3>
+            <span id="info-title">Bilgi</span>
+            <span class="close-btn" onclick="closeInfoPanel()">&times;</span>
+        </h3>
+        <div id="info-content"></div>
+    </div>
+
+    <div id="ui-layer">
+        <!-- Üst Header: Beyaz Arka Plan, Siyah Metin, Mavi Çerçeve -->
+        <div class="w-full px-6 py-4 flex justify-between items-center bg-white shadow-lg border-b-4 border-sky-500 pointer-events-auto">
+            <div>
+                <h1 class="text-3xl font-bold text-black flex items-center gap-3">
+                    <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="Logo" class="h-12">
+                    3D Güneş Sistemi
+                </h1>
+            </div>
+            
+            <div class="flex gap-2 text-sm text-gray-600 font-medium">
+                <button onclick="setFocus('sun')" id="focus-sun" class="focus-btn active-focus flex items-center gap-1">
+                    <span class="w-3 h-3 rounded-full bg-yellow-400 block border border-gray-300"></span> Güneş'e Git
+                </button>
+                <button onclick="setFocus('earth')" id="focus-earth" class="focus-btn flex items-center gap-1">
+                    <span class="w-3 h-3 rounded-full bg-blue-500 block"></span> Dünya'ya Git
+                </button>
+                <button onclick="setFocus('moon')" id="focus-moon" class="focus-btn flex items-center gap-1">
+                    <span class="w-3 h-3 rounded-full bg-gray-400 block"></span> Ay'a Git
+                </button>
+            </div>
+        </div>
+
+        <!-- Alt Kontroller -->
+        <div class="panel w-full max-w-3xl self-center mx-auto mb-6 flex flex-wrap gap-6 items-center justify-center shadow-lg">
+            
+            <!-- Hız Kontrolü -->
+            <div class="w-40">
+                <div class="slider-label"><span>Simülasyon Hızı</span> <span id="speed-val">1x</span></div>
+                <input type="range" min="0" max="5" step="0.1" value="1" id="speed-slider">
+            </div>
+
+            <!-- Butonlar -->
+            <div class="flex gap-2">
+                <button class="toggle-btn active" id="btn-visual">Görsel Boyut</button>
+                <button class="toggle-btn" id="btn-real">Gerçek Boyut</button>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="toggle-btn active" id="btn-trails" onclick="toggleTrails()">İzleri Göster</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+/**
+ * 3D GÜNEŞ SİSTEMİ SİMÜLASYONU (Three.js)
+ */
+
+// --- GLOBAL DEĞİŞKENLER ---
+let scene, camera, renderer;
+let sunMesh, earthMesh, moonMesh, sunGlow;
+let pointLight, ambientLight;
+let starField;
+
+// Raycaster (Etkileşim için)
+let raycaster, mouse;
+let infoPanel = document.getElementById('info-panel');
+let infoContent = document.getElementById('info-content');
+let infoTitle = document.getElementById('info-title');
+
+// Bilgi Metinleri
+const INFO_DATA = {
+    sun: {
+        title: "Güneş",
+        text: "• <strong>Dönüş Süresi:</strong> ~27 gün (Kendi ekseni)<br>• <strong>Yapı:</strong> Gaz ve plazma.<br>• <strong>Not:</strong> Gaz yapısından dolayı ekvatoru kutuplarından daha hızlı döner (Diferansiyel Dönüş)."
+    },
+    earth: {
+        title: "Dünya",
+        text: "• <strong>Gün Uzunluğu:</strong> 24 saat<br>• <strong>Yıl Uzunluğu:</strong> 365 gün 6 saat<br>• <strong>Eksen Eğikliği:</strong> 23.5° (Mevsimlerin sebebi)<br>• <strong>Özellik:</strong> Güneş sisteminde yaşam barındıran tek gezegendir."
+    },
+    moon: {
+        title: "Ay",
+        text: "• <strong>Dönüş:</strong> ~27.3 gün<br>• <strong>Yörünge:</strong> ~27.3 gün<br>• <strong>Kütle Çekim Kilidi:</strong> Kendi dönüş hızı ile yörünge hızı eşittir. Bu yüzden Dünya'dan bakıldığında Ay'ın hep aynı yüzü görünür."
+    }
+};
+
+// İzler için
+let trails = { earth: [], moon: [] };
+let showTrails = true;
+
+// Ayarlar
+let CONFIG = {
+    speed: 1,
+    scaleMode: 'visual', // 'visual' veya 'real'
+    sunRadius: { visual: 15, real: 30 },
+    earthRadius: { visual: 5, real: 1 },
+    moonRadius: { visual: 1.5, real: 0.27 },
+    earthDist: { visual: 80, real: 300 },
+    moonDist: { visual: 15, real: 20 },
+    orbitSpeed: { earth: 0.005, moon: 0.05 }
+};
+
+let time = 0;
+
+// Kamera Kontrol Değişkenleri
+let isDragging = false;
+let startMousePos = { x: 0, y: 0 }; // Tıklama vs Sürükleme ayrımı için
+let cameraAngle = { theta: 0.5, phi: 0.5 };
+let cameraRadius = 150;
+let targetCameraRadius = 150;
+let cameraTarget = new THREE.Vector3(0, 0, 0);
+let focusTarget = 'sun';
+
+// --- BAŞLATMA ---
+function init() {
+    // 1. Sahne
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x020205);
+    scene.fog = new THREE.FogExp2(0x020205, 0.0015);
+
+    // 2. Kamera
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+    updateCameraPosition();
+
+    // 3. Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    // 4. Işıklandırma
+    pointLight = new THREE.PointLight(0xffffff, 2.5, 2000);
+    pointLight.position.set(0, 0, 0);
+    pointLight.castShadow = true;
+    pointLight.shadow.mapSize.width = 2048;
+    pointLight.shadow.mapSize.height = 2048;
+    pointLight.shadow.camera.far = 1000;
+    scene.add(pointLight);
+
+    ambientLight = new THREE.AmbientLight(0x404040, 0.3); 
+    scene.add(ambientLight);
+
+    // 5. Etkileşim Araçları
+    raycaster = new THREE.Raycaster();
+    mouse = new THREE.Vector2();
+
+    // 6. Nesneler
+    createObjects();
+    createStars();
+
+    // 7. Event Listeners
+    window.addEventListener('resize', onWindowResize, false);
+    setupInputs();
+
+    document.getElementById('loading').style.display = 'none';
+
+    animate();
+}
+
+// Giriş Ekranını Kapatma Fonksiyonu
+function startSimulation() {
+    const intro = document.getElementById('intro-screen');
+    intro.classList.add('fade-out');
+    // Animasyon bitince display:none yapmaya gerek yok, pointer-events:none iş görüyor ama temizlik için:
+    setTimeout(() => {
+        intro.style.display = 'none';
+    }, 700);
+}
+// Window scope'a ekle
+window.startSimulation = startSimulation;
+
+
+// --- NESNE OLUŞTURMA ---
+
+function createTextureCanvas(color, type) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = color;
+    ctx.fillRect(0,0,512,512);
+
+    if (type === 'sun') {
+        for(let i=0; i<50; i++) {
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255, 200, 0, ${Math.random()*0.5})`;
+            const x = Math.random()*512; const y = Math.random()*512; const r = Math.random()*50 + 10;
+            ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+        }
+    } else if (type === 'earth') {
+        ctx.fillStyle = '#15803d'; // Kıtalar
+        for(let i=0; i<20; i++) {
+            ctx.beginPath();
+            const x = Math.random()*512; const y = Math.random()*512; const r = Math.random()*100 + 20;
+            ctx.ellipse(x, y, r, r*0.6, Math.random()*Math.PI, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.4)'; // Bulutlar
+        for(let i=0; i<30; i++) {
+            ctx.beginPath();
+            const x = Math.random()*512; const y = Math.random()*512;
+            ctx.arc(x, y, Math.random()*40, 0, Math.PI*2); ctx.fill();
+        }
+    } else if (type === 'moon') {
+        ctx.fillStyle = '#6b7280'; // Kraterler
+        for(let i=0; i<100; i++) {
+            ctx.beginPath();
+            const x = Math.random()*512; const y = Math.random()*512; const r = Math.random()*10 + 2;
+            ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+        }
+    }
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createGlowTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grad.addColorStop(0, 'rgba(255, 255, 220, 1)');
+    grad.addColorStop(0.2, 'rgba(255, 200, 50, 0.8)');
+    grad.addColorStop(0.5, 'rgba(255, 140, 0, 0.3)');
+    grad.addColorStop(1, 'rgba(255, 100, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createObjects() {
+    // Güneş
+    const sunGeo = new THREE.SphereGeometry(1, 64, 64);
+    const sunMat = new THREE.MeshBasicMaterial({ map: createTextureCanvas('#f59e0b', 'sun'), color: 0xfff0a0 });
+    sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    sunMesh.name = 'sun';
+    scene.add(sunMesh);
+
+    const spriteMat = new THREE.SpriteMaterial({ map: createGlowTexture(), color: 0xffaa00, transparent: true, blending: THREE.AdditiveBlending });
+    sunGlow = new THREE.Sprite(spriteMat);
+    sunGlow.name = 'glow';
+    scene.add(sunGlow);
+
+    // Dünya
+    const earthGeo = new THREE.SphereGeometry(1, 32, 32);
+    const earthMat = new THREE.MeshStandardMaterial({ map: createTextureCanvas('#1d4ed8', 'earth'), roughness: 0.6, metalness: 0.1 });
+    earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    earthMesh.name = 'earth';
+    earthMesh.castShadow = true;
+    earthMesh.receiveShadow = true;
+    earthMesh.rotation.z = 23.5 * Math.PI / 180;
+    scene.add(earthMesh);
+
+    // Ay
+    const moonGeo = new THREE.SphereGeometry(1, 32, 32);
+    const moonMat = new THREE.MeshStandardMaterial({ map: createTextureCanvas('#9ca3af', 'moon'), roughness: 0.9 });
+    moonMesh = new THREE.Mesh(moonGeo, moonMat);
+    moonMesh.name = 'moon';
+    moonMesh.castShadow = true;
+    moonMesh.receiveShadow = true;
+    scene.add(moonMesh);
+
+    updateScale();
+}
+
+function createStars() {
+    const starGeo = new THREE.BufferGeometry();
+    const posArray = new Float32Array(2000 * 3);
+    for(let i=0; i<2000 * 3; i++) posArray[i] = (Math.random() - 0.5) * 2000;
+    starGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const starMat = new THREE.PointsMaterial({color: 0xffffff, size: 0.8, transparent: true, opacity: 0.8});
+    starField = new THREE.Points(starGeo, starMat);
+    scene.add(starField);
+}
+
+// --- GÜNCELLEME ---
+
+function updateScale() {
+    const s = CONFIG.scaleMode === 'visual' ? 'visual' : 'real';
+    sunMesh.scale.setScalar(CONFIG.sunRadius[s]);
+    sunGlow.scale.setScalar(CONFIG.sunRadius[s] * 2.8);
+    earthMesh.scale.setScalar(CONFIG.earthRadius[s]);
+    moonMesh.scale.setScalar(CONFIG.moonRadius[s]);
+    scene.children = scene.children.filter(c => c.name !== 'trail');
+}
+
+function updatePositions() {
+    const s = CONFIG.scaleMode === 'visual' ? 'visual' : 'real';
+    
+    // Dünya
+    const rEarth = CONFIG.earthDist[s];
+    const thetaEarth = time * CONFIG.orbitSpeed.earth;
+    earthMesh.position.x = Math.cos(thetaEarth) * rEarth;
+    earthMesh.position.z = Math.sin(thetaEarth) * rEarth;
+    earthMesh.rotation.y += 0.02 * CONFIG.speed;
+
+    // Ay
+    const rMoon = CONFIG.moonDist[s];
+    const thetaMoon = time * CONFIG.orbitSpeed.moon;
+    moonMesh.position.x = earthMesh.position.x + Math.cos(thetaMoon) * rMoon;
+    moonMesh.position.z = earthMesh.position.z + Math.sin(thetaMoon) * rMoon;
+    moonMesh.lookAt(earthMesh.position);
+
+    if (showTrails && time % 5 === 0) {
+        addTrailDot(earthMesh.position.clone(), 0x3b82f6, 0.5);
+        addTrailDot(moonMesh.position.clone(), 0x9ca3af, 0.3);
+    }
+}
+
+function addTrailDot(pos, colorHex, size) {
+    const geo = new THREE.PlaneGeometry(size, size);
+    const mat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide });
+    const dot = new THREE.Mesh(geo, mat);
+    dot.position.copy(pos);
+    dot.rotation.x = Math.PI / 2;
+    dot.name = 'trail';
+    scene.add(dot);
+    
+    const trailObjects = scene.children.filter(c => c.name === 'trail');
+    if (trailObjects.length > 500) scene.remove(trailObjects[0]);
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    time += CONFIG.speed;
+    updatePositions();
+    sunMesh.rotation.y += 0.002;
+
+    if (focusTarget === 'earth') cameraTarget.lerp(earthMesh.position, 0.1);
+    else if (focusTarget === 'moon') cameraTarget.lerp(moonMesh.position, 0.1);
+    else cameraTarget.lerp(new THREE.Vector3(0,0,0), 0.1);
+
+    if (Math.abs(cameraRadius - targetCameraRadius) > 0.1) {
+        cameraRadius += (targetCameraRadius - cameraRadius) * 0.1;
+    }
+    
+    updateCameraPosition();
+    
+    // Hover efekti için raycaster (Sadece cursor stilini değiştirir)
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects([sunMesh, earthMesh, moonMesh]);
+    if (intersects.length > 0) {
+        document.body.style.cursor = 'pointer';
+    } else if (!isDragging) {
+        document.body.style.cursor = 'default';
+    }
+
+    renderer.render(scene, camera);
+}
+
+function updateCameraPosition() {
+    const x = cameraRadius * Math.sin(cameraAngle.theta) * Math.cos(cameraAngle.phi);
+    const z = cameraRadius * Math.cos(cameraAngle.theta) * Math.cos(cameraAngle.phi);
+    const y = cameraRadius * Math.sin(cameraAngle.phi);
+    camera.position.set(cameraTarget.x + x, cameraTarget.y + y, cameraTarget.z + z);
+    camera.lookAt(cameraTarget);
+}
+
+// --- GİRDİLER VE ETKİLEŞİM ---
+
+function setupInputs() {
+    const dom = renderer.domElement;
+
+    // Mouse Down (Hareket Başlangıcı)
+    dom.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startMousePos = { x: e.clientX, y: e.clientY }; // Tıklama ayrımı için
+        dom.style.cursor = 'grabbing';
+    });
+
+    // Mouse Up (Hareket Sonu - Tıklama Kontrolü)
+    dom.addEventListener('mouseup', (e) => {
+        isDragging = false;
+        dom.style.cursor = 'default';
+
+        // Eğer mouse çok az hareket ettiyse bunu "Tıklama" olarak kabul et
+        const dist = Math.hypot(e.clientX - startMousePos.x, e.clientY - startMousePos.y);
+        
+        if (dist < 5) { // 5 pikselden az oynama varsa tıklamadır
+            handleObjectClick(e);
+        }
+    });
+
+    // Mouse Move (Kamera Hareketi ve Mouse Konumu)
+    dom.addEventListener('mousemove', (e) => {
+        // Raycaster için mouse güncelle
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+        if (isDragging) {
+            const deltaMove = { x: e.clientX - startMousePos.x, y: e.clientY - startMousePos.y };
+            cameraAngle.theta -= deltaMove.x * 0.005;
+            cameraAngle.phi += deltaMove.y * 0.005;
+            cameraAngle.phi = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, cameraAngle.phi));
+            startMousePos = { x: e.clientX, y: e.clientY }; // Sürekli güncelle
+        }
+    });
+
+    dom.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const zoomSpeed = 0.1;
+        if (e.deltaY > 0) targetCameraRadius *= (1 + zoomSpeed);
+        else targetCameraRadius *= (1 - zoomSpeed);
+        targetCameraRadius = Math.max(2, Math.min(1000, targetCameraRadius));
+    });
+}
+
+function handleObjectClick(e) {
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects([sunMesh, earthMesh, moonMesh]);
+
+    if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        if (INFO_DATA[obj.name]) {
+            showInfo(obj.name);
+        }
+    }
+}
+
+function showInfo(name) {
+    const data = INFO_DATA[name];
+    infoTitle.innerText = data.title.replace(/<[^>]*>?/gm, ''); // HTML taglerini başlıktan temizle
+    infoContent.innerHTML = data.text;
+    infoPanel.style.display = 'block';
+}
+
+function closeInfoPanel() {
+    infoPanel.style.display = 'none';
+}
+window.closeInfoPanel = closeInfoPanel;
+
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// UI Buton Fonksiyonları
+function setFocus(target) {
+    focusTarget = target;
+    document.querySelectorAll('.focus-btn').forEach(btn => btn.classList.remove('active-focus'));
+    document.getElementById(`focus-${target}`).classList.add('active-focus');
+    
+    if (target === 'earth') targetCameraRadius = 20;
+    else if (target === 'moon') targetCameraRadius = 5;
+    else targetCameraRadius = 150;
+    
+    // Odaklandığında bilgiyi de açalım
+    showInfo(target);
+}
+window.setFocus = setFocus;
+
+document.getElementById('speed-slider').addEventListener('input', (e) => {
+    CONFIG.speed = parseFloat(e.target.value);
+    document.getElementById('speed-val').innerText = CONFIG.speed + 'x';
+});
+
+const btnVisual = document.getElementById('btn-visual');
+const btnReal = document.getElementById('btn-real');
+
+btnVisual.onclick = () => {
+    CONFIG.scaleMode = 'visual';
+    btnVisual.classList.add('active');
+    btnReal.classList.remove('active');
+    updateScale();
+    setFocus('sun');
+};
+
+btnReal.onclick = () => {
+    CONFIG.scaleMode = 'real';
+    btnReal.classList.add('active');
+    btnVisual.classList.remove('active');
+    updateScale();
+    setFocus('earth');
+};
+
+function toggleTrails() {
+    showTrails = !showTrails;
+    document.getElementById('btn-trails').classList.toggle('active');
+    if (!showTrails) scene.children = scene.children.filter(c => c.name !== 'trail');
+}
+window.toggleTrails = toggleTrails;
+
+// Başlat
+init();
+
+</script>
+</body>
+</html>
