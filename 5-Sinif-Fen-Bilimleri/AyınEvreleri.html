@@ -144,8 +144,7 @@
 
             <!-- Quiz Modu Kontrolleri (Başlangıçta gizli) -->
             <div id="quiz-mode-controls" class="hidden flex items-center gap-4 bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
-                <span class="text-sm text-gray-300">Skor: <span id="score-display" class="text-white font-bold">0 / 0</span></span>
-                <button onclick="exitQuiz()" class="text-xs text-red-300 hover:text-red-100 underline">Bitir</button>
+                <span class="text-sm text-gray-300">İlerleme: <span id="progress-display" class="text-white font-bold">1 / 8</span></span>
             </div>
         </div>
     </div>
@@ -273,8 +272,29 @@
                      </div>
                      
                      <button id="next-question-btn" onclick="nextQuestion()" class="hidden w-full mt-4 bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-lg">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Sıradaki Soru
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i> Sıradaki Soru
                      </button>
+                </div>
+
+                <!-- QUIZ RESULTS SCREEN -->
+                <div id="quiz-results" class="hidden text-center space-y-6 w-full animate-[fadeIn_0.5s_ease-out]">
+                    <div>
+                        <h3 class="text-xl font-bold text-yellow-100 mb-2">Test Tamamlandı!</h3>
+                        <div class="w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-700 flex items-center justify-center mx-auto mb-4 relative">
+                            <span id="final-score" class="text-4xl font-bold text-white">0</span>
+                            <span class="absolute bottom-4 text-xs text-gray-400 font-bold">/ 8</span>
+                        </div>
+                        <p id="result-message" class="text-sm font-medium text-blue-200 px-4"></p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <button onclick="startQuiz()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 rounded-lg font-bold text-white transition-all shadow-lg flex items-center justify-center gap-2">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Testi Tekrarla
+                        </button>
+                        <button onclick="exitQuiz()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-gray-300 font-medium transition-colors border border-slate-700 flex items-center justify-center gap-2">
+                            <i data-lucide="home" class="w-4 h-4"></i> Simülasyona Dön
+                        </button>
+                    </div>
                 </div>
 
                 <!-- NORMAL INFO DISPLAY -->
@@ -315,6 +335,8 @@
         let score = { correct: 0, total: 0 };
         const ORBIT_RADIUS = 120;
         
+        let quizQueue = []; // Sorulacak fazların listesi
+
         // --- GİRİŞ EKRANI FONKSİYONU ---
         function closeSplash() {
             const splash = document.getElementById('splash-screen');
@@ -329,6 +351,18 @@
             "Yeni Ay", "Hilal (Büyüyen)", "İlk Dördün", "Şişkin Ay (Büyüyen)", 
             "Dolunay", "Şişkin Ay (Küçülen)", "Son Dördün", "Hilal (Küçülen)"
         ];
+
+        // Sorular için ideal açı değerleri (Radyan)
+        const phaseAngles = {
+            "Yeni Ay": 0,
+            "Hilal (Büyüyen)": 45 * (Math.PI / 180),
+            "İlk Dördün": 90 * (Math.PI / 180),
+            "Şişkin Ay (Büyüyen)": 135 * (Math.PI / 180),
+            "Dolunay": 180 * (Math.PI / 180),
+            "Şişkin Ay (Küçülen)": 225 * (Math.PI / 180),
+            "Son Dördün": 270 * (Math.PI / 180),
+            "Hilal (Küçülen)": 315 * (Math.PI / 180)
+        };
 
         const phaseDescriptions = {
             "Yeni Ay": "Ay, Dünya ile Güneş arasındadır. Ay'ın karanlık yüzü Dünya'ya dönük olduğu için Ay'ı göremeyiz.",
@@ -519,9 +553,23 @@
         }
 
         // --- QUIZ MANTIĞI ---
+        
+        // Karıştırma (Shuffle) Fonksiyonu
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         function startQuiz() {
             quizMode = true;
             score = { correct: 0, total: 0 };
+            
+            // 8 evreyi listele ve karıştır
+            quizQueue = shuffleArray([...phasesList]);
+            
             updateScoreDisplay();
             
             // UI Değişiklikleri
@@ -529,8 +577,34 @@
             document.getElementById('quiz-mode-controls').classList.remove('hidden');
             document.getElementById('info-display').classList.add('hidden');
             document.getElementById('quiz-interface').classList.remove('hidden');
+            document.getElementById('quiz-results').classList.add('hidden');
             
             nextQuestion();
+        }
+
+        function showResults() {
+            quizMode = false; // Drag kilidini aç
+            quizHidden = false;
+            
+            document.getElementById('quiz-interface').classList.add('hidden');
+            document.getElementById('quiz-results').classList.remove('hidden');
+            document.getElementById('earth-view-moon').classList.remove('hidden');
+            document.getElementById('quiz-hidden-view').classList.add('hidden');
+
+            // Sonuçları Yazdır
+            document.getElementById('final-score').textContent = score.correct;
+            
+            const resultMsg = document.getElementById('result-message');
+            if (score.correct === 8) {
+                resultMsg.textContent = "Mükemmel! Ay'ın tüm evrelerine hakimsin. 🎉";
+                resultMsg.className = "text-sm font-medium text-green-300 px-4";
+            } else if (score.correct >= 5) {
+                resultMsg.textContent = "Tebrikler, gayet iyi! Biraz daha pratikle mükemmel olabilirsin.";
+                resultMsg.className = "text-sm font-medium text-blue-200 px-4";
+            } else {
+                resultMsg.textContent = "Biraz daha çalışmalısın. Simülasyonu kullanarak evreleri tekrar incele.";
+                resultMsg.className = "text-sm font-medium text-yellow-200 px-4";
+            }
         }
 
         function exitQuiz() {
@@ -542,6 +616,7 @@
             document.getElementById('quiz-mode-controls').classList.add('hidden');
             document.getElementById('info-display').classList.remove('hidden');
             document.getElementById('quiz-interface').classList.add('hidden');
+            document.getElementById('quiz-results').classList.add('hidden');
             document.getElementById('quiz-hidden-view').classList.add('hidden');
             document.getElementById('earth-view-moon').classList.remove('hidden');
             document.getElementById('quiz-feedback').classList.add('hidden');
@@ -552,6 +627,12 @@
         }
 
         function nextQuestion() {
+            // Eğer soru kalmadıysa sonuçları göster
+            if (quizQueue.length === 0) {
+                showResults();
+                return;
+            }
+
             quizHidden = true;
             document.getElementById('quiz-feedback').classList.add('hidden');
             document.getElementById('next-question-btn').classList.add('hidden');
@@ -567,8 +648,16 @@
             document.getElementById('quiz-hidden-view').classList.remove('hidden');
             document.getElementById('earth-view-moon').classList.add('hidden');
 
-            // Rastgele Açı
-            angle = (Math.random() * Math.PI * 2) - Math.PI;
+            // Sıradaki Fazı Al (Listeden çıkar)
+            const targetPhase = quizQueue.pop();
+            
+            // Açıyı o faza ayarla
+            angle = phaseAngles[targetPhase];
+            
+            // Soru sayısını güncelle
+            const currentQ = 8 - quizQueue.length;
+            document.getElementById('progress-display').textContent = `${currentQ} / 8`;
+            
             updateVisuals();
         }
 
@@ -576,9 +665,9 @@
             const correctPhase = getPhaseName(angle);
             const isCorrect = selectedPhase === correctPhase;
             
-            score.total++;
+            score.total++; // Not: Bu mantıkta total her zaman 8'e gidecek, ama anlık takip için ok.
             if (isCorrect) score.correct++;
-            updateScoreDisplay();
+            // Skor göstergesini güncellemek gerekmiyor çünkü sonuç ekranında gösteriyoruz artık.
 
             // Feedback Göster
             const fbBox = document.getElementById('quiz-feedback');
@@ -610,11 +699,22 @@
                 }
             });
 
-            document.getElementById('next-question-btn').classList.remove('hidden');
+            // Sonraki soru butonu veya Sonuçları Gör butonu
+            const nextBtn = document.getElementById('next-question-btn');
+            nextBtn.classList.remove('hidden');
+            
+            if (quizQueue.length === 0) {
+                nextBtn.innerHTML = '<i data-lucide="award" class="w-4 h-4"></i> Sonuçları Gör';
+            } else {
+                nextBtn.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Sıradaki Soru';
+                // Lucide ikonlarını refreshlemek gerekebilir
+                lucide.createIcons();
+            }
         }
 
         function updateScoreDisplay() {
-            document.getElementById('score-display').textContent = `${score.correct} / ${score.total}`;
+            // Artık sonuç ekranında gösteriyoruz, burası boş kalabilir veya üst bar için kullanılabilir.
+            // document.getElementById('score-display').textContent = ...
         }
 
         function renderQuizOptions() {
