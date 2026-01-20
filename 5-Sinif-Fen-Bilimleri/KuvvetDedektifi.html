@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuvvet Dedektifi - İnteraktif Simülasyon</title>
+    
+    <!-- React ve ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel (JSX Derleyicisi) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+        /* Özel Kaydırma Çubuğu Stilleri */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-700 h-screen overflow-hidden">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- İKONLAR (Lucide-react yerine SVG componentleri) ---
+        const ArrowRight = ({ size = 24, className = "", style = {} }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        );
+        const RefreshCcw = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+        );
+        const Settings = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        );
+        const Weight = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"/></svg>
+        );
+        const AlertTriangle = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        );
+        const Plus = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        );
+        const Trash2 = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        );
+        const HelpCircle = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        );
+        const Play = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        );
+        const CheckCircle2 = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        );
+        const XCircle = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+        );
+
+        // --- Veri ve Sabitler ---
+
+        const MATERIALS = {
+            bakir: { id: 'bakir', name: 'Bakır', baseK: 2, color: '#fbbf24', labelColor: 'text-amber-600' }, // Soft Amber
+            celik: { id: 'celik', name: 'Çelik', baseK: 5, color: '#94a3b8', labelColor: 'text-slate-500' }, // Soft Slate
+            titanyum: { id: 'titanyum', name: 'Titanyum', baseK: 10, color: '#cbd5e1', labelColor: 'text-slate-400' } // Light Slate
+        };
+
+        const THICKNESS = {
+            ince: { id: 'ince', name: 'İnce Yay', multiplier: 0.5, strokeWidth: 2 },
+            orta: { id: 'orta', name: 'Orta Yay', multiplier: 1.0, strokeWidth: 4 },
+            kalin: { id: 'kalin', name: 'Kalın Yay', multiplier: 2.0, strokeWidth: 6 }
+        };
+
+        // SORULAR
+        const QUIZ_QUESTIONS = [
+            {
+                id: 1,
+                text: "Kutuya soldan 10N İTME kuvveti, sağdan ise 20N ÇEKME kuvveti uygulanıyor. Kutu hangi yöne kaç N ile hareket eder?",
+                visual: { leftPush: 10, rightPull: 20, leftPull: 0, rightPush: 0 },
+                options: [
+                { label: "10N Sola", correct: false },
+                { label: "30N Sağa", correct: true },
+                { label: "10N Sağa", correct: false }
+                ]
+            },
+            {
+                id: 2,
+                text: "Kutuya sağdan 30N İTME uygulanırken, soldan 10N ÇEKME kuvveti uygulanıyor. Net kuvvet nedir?",
+                visual: { rightPush: 30, leftPull: 10, leftPush: 0, rightPull: 0 },
+                options: [
+                { label: "40N Sola", correct: true },
+                { label: "20N Sağa", correct: false },
+                { label: "20N Sola", correct: false }
+                ]
+            },
+            {
+                id: 3,
+                text: "Dikkat! Kutuya soldan 20N, sağdan 20N İTME kuvveti uygulanırsa ne olur?",
+                visual: { leftPush: 20, rightPush: 20, leftPull: 0, rightPull: 0 },
+                options: [
+                { label: "40N Sağa gider", correct: false },
+                { label: "Hareket etmez (0N)", correct: true },
+                { label: "Kutu sıkışır patlar", correct: false }
+                ]
+            },
+            {
+                id: 4,
+                text: "Bileşke kuvvet hesabı: Sağa doğru 50N çekme, Sola doğru 15N çekme kuvveti var.",
+                visual: { rightPull: 50, leftPull: 15, leftPush: 0, rightPush: 0 },
+                options: [
+                { label: "35N Sağa", correct: true },
+                { label: "65N Sağa", correct: false },
+                { label: "35N Sola", correct: false }
+                ]
+            }
+        ];
+
+        const OBJECTS = [
+            {
+                id: 'pelus_ayi', name: 'Peluş Ayı', weight: 5, color: 'bg-orange-50',
+                icon: (
+                <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-sm">
+                    <circle cx="14" cy="14" r="10" fill="#d7ccc8" />
+                    <circle cx="50" cy="14" r="10" fill="#d7ccc8" />
+                    <circle cx="32" cy="32" r="24" fill="#a1887f" />
+                    <circle cx="24" cy="26" r="3" fill="#5d4037" />
+                    <circle cx="40" cy="26" r="3" fill="#5d4037" />
+                    <ellipse cx="32" cy="36" rx="10" ry="8" fill="#efebe9" />
+                    <circle cx="32" cy="34" r="3" fill="#5d4037" />
+                </svg>
+                )
+            },
+            {
+                id: 'kalem_kutusu', name: 'Kalem Kutusu', weight: 10, color: 'bg-purple-50',
+                icon: (
+                <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-sm">
+                    <rect x="8" y="20" width="48" height="24" rx="4" fill="#e1bee7" />
+                    <rect x="8" y="28" width="48" height="2" fill="#f3e5f5" />
+                    <path d="M20 20 L20 12 L24 8 L28 12 L28 20" fill="#fff59d" />
+                    <path d="M30 20 L30 10 L34 6 L38 10 L38 20" fill="#90caf9" />
+                </svg>
+                )
+            },
+            {
+                id: 'su_sisesi', name: 'Su Şişesi', weight: 15, color: 'bg-blue-50',
+                icon: (
+                <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-sm">
+                    <rect x="20" y="16" width="24" height="40" rx="4" fill="#b3e5fc" opacity="0.9" />
+                    <rect x="22" y="18" width="4" height="30" rx="2" fill="#e1f5fe" opacity="0.5" />
+                    <rect x="20" y="8" width="24" height="8" rx="2" fill="#4fc3f7" />
+                    <rect x="20" y="28" width="24" height="20" fill="#e1f5fe" opacity="0.4" />
+                </svg>
+                )
+            },
+            {
+                id: 'kitap', name: 'Kitap', weight: 20, color: 'bg-red-50',
+                icon: (
+                <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-sm">
+                    <rect x="12" y="10" width="40" height="48" rx="2" fill="#ffcdd2" />
+                    <rect x="16" y="10" width="32" height="48" fill="#ef9a9a" />
+                    <rect x="20" y="18" width="24" height="4" rx="1" fill="#ffebee" />
+                    <rect x="20" y="26" width="24" height="2" rx="1" fill="#ffebee" opacity="0.6" />
+                    <path d="M12 10 L8 14 L8 54 L12 58" fill="#e57373" />
+                </svg>
+                )
+            },
+            {
+                id: 'oyuncak_araba', name: 'Oyuncak Araba', weight: 30, color: 'bg-red-50',
+                icon: (
+                <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-sm">
+                    <path d="M8 36 L14 24 L40 24 L46 36 Z" fill="#ef9a9a" />
+                    <rect x="4" y="36" width="56" height="12" rx="4" fill="#e57373" />
+                    <circle cx="14" cy="48" r="6" fill="#555" />
+                    <circle cx="14" cy="48" r="2" fill="#999" />
+                    <circle cx="50" cy="48" r="6" fill="#555" />
+                    <circle cx="50" cy="48" r="2" fill="#999" />
+                    <rect x="16" y="26" width="22" height="8" fill="#b3e5fc" />
+                </svg>
+                )
+            },
+            {
+                id: 'saksi', name: 'Saksı Bitkisi', weight: 45, color: 'bg-green-50',
+                icon: (
+                <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-sm">
+                    <path d="M20 36 L16 36 L22 60 L42 60 L48 36 L44 36" fill="#a1887f" />
+                    <rect x="16" y="32" width="32" height="6" rx="2" fill="#8d6e63" />
+                    <path d="M32 32 Q20 10 12 24 Q24 32 32 32" fill="#c8e6c9" />
+                    <path d="M32 32 Q44 10 52 24 Q40 32 32 32" fill="#c8e6c9" />
+                    <path d="M32 32 L32 16 Q32 4 24 10" fill="none" stroke="#81c784" strokeWidth="2" />
+                </svg>
+                )
+            },
+            {
+                id: 'canta', name: 'Okul Çantası', weight: 60, color: 'bg-indigo-50',
+                icon: (
+                <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-sm">
+                    <rect x="14" y="16" width="36" height="40" rx="8" fill="#9fa8da" />
+                    <path d="M14 24 L50 24 L50 40 L14 40 Z" fill="#7986cb" opacity="0.3" />
+                    <rect x="22" y="34" width="20" height="18" rx="4" fill="#c5cae9" />
+                    <path d="M24 16 L24 8 Q32 4 40 8 L40 16" fill="none" stroke="#5c6bc0" strokeWidth="4" />
+                </svg>
+                )
+            },
+            {
+                id: 'dambil', name: 'Dambıl', weight: 90, color: 'bg-slate-100',
+                icon: (
+                <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-sm">
+                    <rect x="16" y="28" width="32" height="8" fill="#e2e8f0" />
+                    <rect x="4" y="16" width="12" height="32" rx="2" fill="#94a3b8" />
+                    <rect x="48" y="16" width="12" height="32" rx="2" fill="#94a3b8" />
+                    <rect x="8" y="12" width="4" height="40" rx="1" fill="#475569" />
+                    <rect x="52" y="12" width="4" height="40" rx="1" fill="#475569" />
+                </svg>
+                )
+            }
+        ];
+
+        // --- Yardımcı Bileşenler ---
+
+        const SpringSVG = ({ length, width, color, strokeWidth, isBroken }) => {
+            const loops = 12;
+            const loopHeight = length / loops;
+            let path = `M ${width / 2} 0 `;
+
+            if (isBroken) {
+                const breakPoint = Math.floor(loops / 2);
+                for (let i = 0; i < breakPoint; i++) {
+                    const y = i * loopHeight;
+                    path += `Q ${width} ${y + loopHeight / 4} ${width / 2} ${y + loopHeight / 2} Q 0 ${y + loopHeight * 0.75} ${width / 2} ${y + loopHeight} `;
+                }
+                path += `l 10 10`; 
+            } else {
+                for (let i = 0; i < loops; i++) {
+                    const y = i * loopHeight;
+                    path += `Q ${width} ${y + loopHeight / 4} ${width / 2} ${y + loopHeight / 2} Q 0 ${y + loopHeight * 0.75} ${width / 2} ${y + loopHeight} `;
+                }
+            }
+
+            return (
+                <svg width={width} height={Math.max(length, 50)} className="overflow-visible transition-all duration-300 ease-out">
+                <path
+                    d={path}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+                {!isBroken && (
+                    <g transform={`translate(${width/2 - 5}, ${length})`}>
+                    <path d="M 5 0 L 5 10 A 5 5 0 0 1 5 20" fill="none" stroke="#64748b" strokeWidth="3" />
+                    </g>
+                )}
+                </svg>
+            );
+        };
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('intro'); // intro, build, measure
+            const [showWelcome, setShowWelcome] = useState(true);
+            const [introMode, setIntroMode] = useState('explore'); // 'explore' | 'quiz'
+            const [forceType, setForceType] = useState('push'); // push, pull
+            const [forceMagnitude, setForceMagnitude] = useState(50);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [quizAnswerStatus, setQuizAnswerStatus] = useState(null); // null, 'correct', 'wrong'
+            const [selectedMaterial, setSelectedMaterial] = useState('celik');
+            const [selectedThickness, setSelectedThickness] = useState('orta');
+            const [attachedObject, setAttachedObject] = useState(null);
+            const [extraWeight, setExtraWeight] = useState(0); 
+            const [springLength, setSpringLength] = useState(100); 
+            const [isBroken, setIsBroken] = useState(false);
+            const [measuredValue, setMeasuredValue] = useState(0);
+
+            const calculateSpringK = () => {
+                const mat = MATERIALS[selectedMaterial];
+                const thick = THICKNESS[selectedThickness];
+                return mat.baseK * thick.multiplier; 
+            };
+
+            const MAX_EXTENSION = 300; 
+            const BASE_LENGTH = 100; 
+
+            useEffect(() => {
+                if (activeTab !== 'measure') {
+                    setAttachedObject(null);
+                    setExtraWeight(0);
+                    setIsBroken(false);
+                    setSpringLength(BASE_LENGTH);
+                    setMeasuredValue(0);
+                    return;
+                }
+            }, [activeTab]);
+
+            useEffect(() => {
+                const objWeight = attachedObject ? attachedObject.weight : 0;
+                
+                if (objWeight === 0 && extraWeight === 0) {
+                    setSpringLength(BASE_LENGTH);
+                    setMeasuredValue(0);
+                    setIsBroken(false);
+                    return;
+                }
+
+                const k = calculateSpringK();
+                const totalForce = objWeight + extraWeight;
+                const extension = (totalForce / k) * 5; 
+                const totalLength = BASE_LENGTH + extension;
+
+                if (extension > MAX_EXTENSION) {
+                    setIsBroken(true);
+                    setSpringLength(BASE_LENGTH + MAX_EXTENSION + 50); 
+                    setMeasuredValue('HATA');
+                } else {
+                    setIsBroken(false);
+                    setSpringLength(totalLength);
+                    setMeasuredValue(totalForce);
+                }
+
+            }, [attachedObject, extraWeight, selectedMaterial, selectedThickness]);
+
+            const handleAddWeight = (amount) => {
+                if (!isBroken) {
+                    setExtraWeight(prev => prev + amount);
+                }
+            };
+
+            const handleResetExtra = () => {
+                setExtraWeight(0);
+            };
+
+            const handleQuizAnswer = (isCorrect) => {
+                setQuizAnswerStatus(isCorrect ? 'correct' : 'wrong');
+            };
+
+            const nextQuestion = () => {
+                if (currentQuestionIndex < QUIZ_QUESTIONS.length - 1) {
+                    setCurrentQuestionIndex(prev => prev + 1);
+                    setQuizAnswerStatus(null);
+                } else {
+                    setCurrentQuestionIndex(0);
+                    setQuizAnswerStatus(null);
+                }
+            };
+
+            const renderWelcomeScreen = () => (
+                <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-500">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+                        <div className="bg-orange-50 p-8 flex flex-col items-center justify-center text-slate-700 md:w-1/3 border-r border-orange-100">
+                            <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="Logo" className="h-32 mb-6" />
+                            <h1 className="text-3xl font-bold text-center mb-2 text-slate-800 drop-shadow-sm">Kuvvet Dedektifi</h1>
+                            <p className="text-orange-500 text-center text-sm font-medium">Sanal Fen Laboratuvarı</p>
+                        </div>
+
+                        <div className="p-8 md:w-2/3 flex flex-col overflow-y-auto">
+                            <h2 className="text-2xl font-bold text-slate-600 mb-4">Simülasyonun Amacı</h2>
+                            <p className="text-slate-500 mb-8 text-sm leading-relaxed">
+                                Bu simülasyon, kuvvetin özelliklerini keşfetmenizi, dinamometrenin çalışma prensibini anlamanızı ve sanal bir ortamda ölçüm yaparak deneyim kazanmanızı sağlar.
+                            </p>
+
+                            <div className="space-y-6 mb-8">
+                                <div className="flex gap-4 items-start group hover:bg-orange-50 p-2 rounded transition-colors">
+                                    <div className="bg-orange-100 p-2 rounded-lg text-orange-400 group-hover:bg-orange-300 group-hover:text-white transition-colors">
+                                        <ArrowRight size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-600">1. Kuvvet Nedir?</h3>
+                                        <p className="text-xs text-slate-400 mt-1">İtme ve çekme kuvvetlerini keşfedin, yönleri inceleyin ve interaktif sınav ile bilginizi test edin.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 items-start group hover:bg-orange-50 p-2 rounded transition-colors">
+                                    <div className="bg-orange-100 p-2 rounded-lg text-orange-400 group-hover:bg-orange-300 group-hover:text-white transition-colors">
+                                        <Settings size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-600">2. Yay Yapısı</h3>
+                                        <p className="text-xs text-slate-400 mt-1">Farklı malzemelerin (Bakır, Çelik, Titanyum) ve yay kalınlıklarının ölçümü nasıl etkilediğini gözlemleyin.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 items-start group hover:bg-orange-50 p-2 rounded transition-colors">
+                                    <div className="bg-orange-100 p-2 rounded-lg text-orange-400 group-hover:bg-orange-300 group-hover:text-white transition-colors">
+                                        <Weight size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-600">3. Laboratuvar</h3>
+                                        <p className="text-xs text-slate-400 mt-1">Kendi tasarladığınız dinamometre ile çeşitli nesnelerin ağırlıklarını ölçün veya ekstra ağırlıklar ekleyerek deney yapın.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setShowWelcome(false)}
+                                className="mt-auto w-full bg-orange-400 text-white py-4 px-6 rounded-xl font-bold hover:bg-orange-500 hover:shadow-lg transition-all flex items-center justify-center gap-3 group text-lg"
+                            >
+                                Simülasyonu Başlat
+                                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderForceArrow = (magnitude, type, direction, isQuiz = false) => {
+                const color = type === 'push' ? 'text-indigo-400' : 'text-emerald-400';
+                const labelColor = type === 'push' ? 'text-indigo-500' : 'text-emerald-500';
+                const label = type === 'push' ? 'İTME' : 'ÇEKME';
+                
+                let rotation = 0;
+                let positionClass = "";
+
+                if (direction === 'left-to-right') {
+                    rotation = 0; 
+                    positionClass = "left-0 -translate-x-full pr-2"; 
+                    if(type === 'pull') rotation = 180;
+                } else {
+                    rotation = 180;
+                    positionClass = "right-0 translate-x-full pl-2";
+                    if(type === 'pull') rotation = 0;
+                }
+
+                return (
+                    <div className={`absolute top-1/2 -translate-y-1/2 flex items-center ${positionClass}`} style={{ flexDirection: direction === 'left-to-right' ? 'row' : 'row-reverse' }}>
+                        <div className={`font-bold ${labelColor} text-sm whitespace-nowrap mx-2`}>{magnitude}N {label}</div>
+                        <ArrowRight 
+                            size={20 + magnitude} 
+                            strokeWidth={Math.max(2, magnitude/10)} 
+                            className={`${color}`} 
+                            style={{ transform: `rotate(${rotation}deg)` }}
+                        />
+                    </div>
+                );
+            };
+
+            const renderIntro = () => (
+                <div className="flex flex-col items-center justify-start h-full space-y-6 p-4 animate-in fade-in zoom-in duration-300 overflow-y-auto">
+                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                        <button
+                        onClick={() => setIntroMode('explore')}
+                        className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${introMode === 'explore' ? 'bg-white shadow-sm text-orange-400' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                        <Play className="inline w-4 h-4 mr-2"/> Keşfet
+                        </button>
+                        <button
+                        onClick={() => setIntroMode('quiz')}
+                        className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${introMode === 'quiz' ? 'bg-white shadow-sm text-purple-400' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                        <HelpCircle className="inline w-4 h-4 mr-2"/> Kuvvet Sınavı
+                        </button>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-xl shadow-lg border border-slate-100 max-w-2xl w-full text-center min-h-[400px]">
+                        
+                        {introMode === 'explore' ? (
+                        <>
+                            <h2 className="text-2xl font-bold text-slate-600 mb-4">Kuvveti Keşfet</h2>
+                            <p className="text-slate-500 mb-6">
+                            Kuvvetin yönünü ve büyüklüğünü değiştirerek kutu üzerindeki etkisini gözlemle.
+                            </p>
+
+                            <div className="flex justify-center gap-4 mb-8">
+                            <button 
+                                onClick={() => setForceType('push')}
+                                className={`px-6 py-3 rounded-lg font-bold transition-all ${forceType === 'push' ? 'bg-indigo-400 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                            >
+                                İTME (Push)
+                            </button>
+                            <button 
+                                onClick={() => setForceType('pull')}
+                                className={`px-6 py-3 rounded-lg font-bold transition-all ${forceType === 'pull' ? 'bg-emerald-400 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                            >
+                                ÇEKME (Pull)
+                            </button>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-2 mb-8">
+                                <label className="text-sm font-semibold text-slate-500">Kuvvetin Büyüklüğü: {forceMagnitude} N</label>
+                                <input 
+                                    type="range" 
+                                    min="10" 
+                                    max="100" 
+                                    value={forceMagnitude} 
+                                    onChange={(e) => setForceMagnitude(parseInt(e.target.value))}
+                                    className="w-64 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-300"
+                                />
+                            </div>
+
+                            <div className="relative h-40 bg-slate-50/50 border-b-4 border-slate-200 rounded-lg flex items-center justify-center overflow-visible mx-12">
+                                <div className="absolute bottom-0 w-full h-1 bg-slate-200"></div>
+                                
+                                <div className="w-24 h-24 bg-amber-400 rounded-md shadow-md flex items-center justify-center text-white font-bold relative z-10">
+                                    KUTU
+                                    
+                                    <div className={`absolute top-1/2 -translate-y-1/2 flex items-center transition-all duration-300 ${forceType === 'push' ? 'right-full pr-2' : 'left-full pl-2'}`}>
+                                        {forceType === 'push' ? (
+                                            <>
+                                                <span className="font-bold text-indigo-400 mr-2 whitespace-nowrap">{forceMagnitude}N İTME</span>
+                                                <ArrowRight size={20 + forceMagnitude/2} strokeWidth={forceMagnitude/20} className="text-indigo-400" />
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ArrowRight size={20 + forceMagnitude/2} strokeWidth={forceMagnitude/20} className="text-emerald-400" />
+                                                <span className="font-bold text-emerald-500 ml-2 whitespace-nowrap">{forceMagnitude}N ÇEKME</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                        ) : (
+                        <div className="flex flex-col h-full justify-between">
+                            <div>
+                            <div className="flex justify-between items-center mb-4">
+                                <span className="text-xs font-bold text-purple-500 bg-purple-50 px-2 py-1 rounded border border-purple-100">SORU {currentQuestionIndex + 1} / {QUIZ_QUESTIONS.length}</span>
+                                <button onClick={nextQuestion} className="text-xs text-slate-400 hover:text-slate-600">Atla &rarr;</button>
+                            </div>
+                            
+                            <h3 className="text-lg font-bold text-slate-600 mb-6 px-4">{QUIZ_QUESTIONS[currentQuestionIndex].text}</h3>
+                            
+                            <div className="relative h-40 bg-slate-50/50 border-b-4 border-slate-200 rounded-lg flex items-center justify-center overflow-visible mx-12 mb-8">
+                                    <div className="absolute bottom-0 w-full h-1 bg-slate-200"></div>
+                                    <div className="w-24 h-24 bg-amber-400 rounded-md shadow-md flex items-center justify-center text-white font-bold relative z-10">
+                                        KUTU
+                                        
+                                        {QUIZ_QUESTIONS[currentQuestionIndex].visual.leftPush > 0 && 
+                                        renderForceArrow(QUIZ_QUESTIONS[currentQuestionIndex].visual.leftPush, 'push', 'left-to-right')}
+                                        
+                                        {QUIZ_QUESTIONS[currentQuestionIndex].visual.leftPull > 0 && 
+                                        renderForceArrow(QUIZ_QUESTIONS[currentQuestionIndex].visual.leftPull, 'pull', 'left-to-right')}
+
+                                        {QUIZ_QUESTIONS[currentQuestionIndex].visual.rightPush > 0 && 
+                                        renderForceArrow(QUIZ_QUESTIONS[currentQuestionIndex].visual.rightPush, 'push', 'right-to-left')}
+
+                                        {QUIZ_QUESTIONS[currentQuestionIndex].visual.rightPull > 0 && 
+                                        renderForceArrow(QUIZ_QUESTIONS[currentQuestionIndex].visual.rightPull, 'pull', 'right-to-left')}
+                                    </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                {QUIZ_QUESTIONS[currentQuestionIndex].options.map((opt, idx) => (
+                                    <button
+                                    key={idx}
+                                    onClick={() => handleQuizAnswer(opt.correct)}
+                                    disabled={quizAnswerStatus !== null}
+                                    className={`py-3 px-4 rounded-lg border-2 font-bold transition-all
+                                        ${quizAnswerStatus === null 
+                                        ? 'border-slate-100 hover:border-orange-200 hover:bg-orange-50 text-slate-500' 
+                                        : opt.correct 
+                                            ? 'border-emerald-300 bg-emerald-50 text-emerald-600' 
+                                            : 'border-slate-100 text-slate-300 opacity-50'
+                                        }
+                                    `}
+                                    >
+                                    {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                            </div>
+
+                            {quizAnswerStatus && (
+                            <div className={`mt-6 p-4 rounded-lg flex items-center justify-between animate-in slide-in-from-bottom-2 ${quizAnswerStatus === 'correct' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                                <div className="flex items-center gap-2 font-bold">
+                                    {quizAnswerStatus === 'correct' ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
+                                    {quizAnswerStatus === 'correct' ? "Doğru Cevap! Harikasın." : "Yanlış Cevap. Tekrar dene!"}
+                                </div>
+                                {quizAnswerStatus === 'correct' && (
+                                    <button onClick={nextQuestion} className="px-4 py-1 bg-white rounded shadow-sm border border-emerald-100 text-sm hover:bg-emerald-50">
+                                    Sıradaki Soru &rarr;
+                                    </button>
+                                )}
+                                {quizAnswerStatus === 'wrong' && (
+                                    <button onClick={() => setQuizAnswerStatus(null)} className="px-4 py-1 bg-white rounded shadow-sm border border-red-100 text-sm hover:bg-red-50">
+                                    Tekrar Dene
+                                    </button>
+                                )}
+                            </div>
+                            )}
+
+                        </div>
+                        )}
+
+                    </div>
+                </div>
+            );
+
+            const renderLab = (mode) => { 
+                const springK = calculateSpringK();
+                const currentMat = MATERIALS[selectedMaterial];
+                const currentThick = THICKNESS[selectedThickness];
+
+                return (
+                    <div className="flex flex-col lg:flex-row h-full gap-4 p-4 animate-in fade-in duration-500">
+                        <div className="w-full lg:w-1/3 bg-white p-6 rounded-xl shadow-lg border border-slate-100 flex flex-col gap-6 overflow-y-auto">
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-bold flex items-center gap-2 text-slate-600">
+                            <Settings className="w-5 h-5" />
+                            Dinamometre Yapısı
+                            </h3>
+                            
+                            <div>
+                            <label className="block text-sm font-medium text-slate-500 mb-1">Yay Malzemesi</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {Object.values(MATERIALS).map((mat) => (
+                                <button
+                                    key={mat.id}
+                                    onClick={() => setSelectedMaterial(mat.id)}
+                                    className={`p-2 text-sm rounded border-2 transition-all ${selectedMaterial === mat.id ? 'border-orange-300 bg-orange-50 font-bold' : 'border-slate-100 hover:border-slate-300'}`}
+                                    style={{ color: selectedMaterial === mat.id ? '' : mat.color }}
+                                >
+                                    {mat.name}
+                                </button>
+                                ))}
+                            </div>
+                            </div>
+
+                            <div>
+                            <label className="block text-sm font-medium text-slate-500 mb-1">Yay Kalınlığı</label>
+                            <input 
+                                type="range" 
+                                min="0" max="2" step="1"
+                                value={Object.keys(THICKNESS).indexOf(selectedThickness)}
+                                onChange={(e) => setSelectedThickness(Object.keys(THICKNESS)[e.target.value])}
+                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-orange-300"
+                            />
+                            <div className="flex justify-between text-xs text-slate-400 mt-1">
+                                <span>İnce</span>
+                                <span>Orta</span>
+                                <span>Kalın</span>
+                            </div>
+                            </div>
+                            
+                            <div className="bg-orange-50/50 p-3 rounded border border-orange-100 text-sm">
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-slate-500">Yay Sertliği (k):</span>
+                                    <span className="font-bold text-orange-500">{springK.toFixed(1)} birim</span>
+                                </div>
+                                <p className="text-xs text-slate-400">
+                                {springK < 3 ? "Çok yumuşak yay. Hassas ölçer ama çabuk kopar." : 
+                                springK > 10 ? "Çok sert yay. Ağır yükleri ölçer ama küçükleri hissetmez." : 
+                                "Dengeli yay."}
+                                </p>
+                            </div>
+                        </div>
+
+                        {mode === 'measure' && (
+                            <div className="pt-4 border-t border-slate-100 flex flex-col gap-4">
+                            <h3 className="text-lg font-bold flex items-center gap-2 text-slate-600">
+                                <Weight className="w-5 h-5" />
+                                Nesne Envanteri
+                            </h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-2 gap-2">
+                                {OBJECTS.map((obj) => (
+                                    <button
+                                        key={obj.id}
+                                        onClick={() => {
+                                            setIsBroken(false);
+                                            setAttachedObject(obj);
+                                        }}
+                                        className={`p-2 rounded-lg border text-left transition-all flex flex-col items-center gap-1 hover:shadow-md
+                                            ${attachedObject?.id === obj.id ? 'border-orange-300 ring-2 ring-orange-50 bg-orange-50' : 'border-slate-100 bg-white hover:border-slate-300'}
+                                        `}
+                                    >
+                                        <div className="w-10 h-10 mb-1">{obj.icon}</div>
+                                        <div className="text-center">
+                                            <div className="font-bold text-xs text-slate-600">{obj.name}</div>
+                                            <div className="text-[10px] text-slate-400 font-mono">{obj.weight} N</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {!isBroken && (
+                                <div className="bg-amber-50 border border-amber-100 rounded-lg p-3 animate-in fade-in slide-in-from-left-2">
+                                    <h4 className="text-xs font-bold text-amber-600 mb-2 flex items-center gap-1">
+                                        <Plus className="w-3 h-3"/> Ekstra Ağırlık Ekle
+                                    </h4>
+                                    <div className="flex gap-2 mb-3">
+                                        {[1, 5, 10].map(val => (
+                                            <button
+                                                key={val}
+                                                onClick={() => handleAddWeight(val)}
+                                                className="flex-1 py-1 bg-white border border-amber-200 rounded text-xs font-bold text-amber-600 hover:bg-amber-100 active:scale-95 transition-transform"
+                                            >
+                                                +{val} N
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between text-xs text-amber-600 bg-amber-100/50 p-2 rounded">
+                                        <span>Eklenen: <b>{extraWeight} N</b></span>
+                                        {extraWeight > 0 && (
+                                            <button 
+                                                onClick={handleResetExtra}
+                                                className="text-red-400 hover:text-red-600 flex items-center gap-1"
+                                            >
+                                                <Trash2 className="w-3 h-3" /> Sıfırla
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {(attachedObject || extraWeight > 0) && (
+                                <button 
+                                    onClick={() => { setAttachedObject(null); setExtraWeight(0); setIsBroken(false); }}
+                                    className="w-full mt-2 py-2 text-red-400 border border-red-100 rounded hover:bg-red-50 text-sm font-medium transition-colors"
+                                >
+                                    Komple Kaldır
+                                </button>
+                            )}
+                            </div>
+                        )}
+                        </div>
+
+                        <div className="flex-1 bg-slate-50 rounded-xl shadow-inner border border-slate-200 relative overflow-hidden flex flex-col items-center">
+                            
+                            <div className="absolute top-0 w-32 h-full bg-white/60 border-x border-slate-200 flex justify-center z-0"></div>
+
+                            <div className="w-48 h-8 bg-slate-600 rounded-b-lg shadow-lg z-10 flex items-center justify-center text-white text-xs font-mono">
+                                Dinamometre
+                            </div>
+
+                            <div className="relative z-10 mt-2 flex flex-col items-center" style={{ width: '100px' }}>
+                                <SpringSVG 
+                                    length={springLength} 
+                                    width={60} 
+                                    color={currentMat.color} 
+                                    strokeWidth={currentThick.strokeWidth}
+                                    isBroken={isBroken}
+                                />
+                                
+                                <div 
+                                    className={`absolute w-24 h-1 bg-red-400 rounded transition-all duration-300 ${isBroken ? 'opacity-50 rotate-12' : ''}`}
+                                    style={{ top: springLength }}
+                                >
+                                    {!isBroken && (
+                                        <div className="absolute right-full top-1/2 -translate-y-1/2 flex items-center pr-1 transition-opacity duration-300 opacity-100">
+                                        <div className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow mr-1 whitespace-nowrap min-w-[30px] text-center">
+                                            {measuredValue > 0 ? measuredValue + ' N' : '0 N'}
+                                        </div>
+                                        <div className="w-6 h-px bg-red-400 border-t border-red-500 border-dashed"></div>
+                                        <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-red-500 rotate-180 -ml-1"></div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {!isBroken && (attachedObject || extraWeight > 0) && (
+                                    <div className="mt-2 animate-in slide-in-from-top-4 duration-500 flex flex-col items-center">
+                                        {attachedObject && (
+                                            <div className="flex flex-col items-center">
+                                                <div className={`w-20 h-20 rounded-lg shadow-xl flex items-center justify-center border-2 border-slate-200 bg-white z-20 p-2`}>
+                                                    {attachedObject.icon}
+                                                </div>
+                                                <div className="text-center mt-1 bg-white/90 px-2 py-0.5 rounded text-[10px] font-bold text-slate-500 shadow-sm border border-slate-200 z-20">
+                                                    {attachedObject.weight} N
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {extraWeight > 0 && (
+                                            <div className={`flex flex-col items-center ${attachedObject ? '-mt-2' : ''} animate-in slide-in-from-top-2`}>
+                                                <div className={`w-0.5 ${attachedObject ? 'h-4' : 'h-8'} bg-slate-400`}></div>
+                                                <div className="bg-slate-500 text-white rounded px-2 py-1 text-xs font-bold shadow-md flex items-center gap-1 border border-slate-400">
+                                                    <svg viewBox="0 0 24 24" className="w-4 h-4 text-amber-300 fill-current">
+                                                        <rect x="4" y="8" width="16" height="8" rx="1" />
+                                                        <line x1="12" y1="8" x2="12" y2="16" stroke="rgba(0,0,0,0.2)" strokeWidth="2" />
+                                                    </svg>
+                                                    <span>+{extraWeight} N</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {isBroken && (
+                                <div className="absolute bottom-10 bg-red-50 border-l-4 border-red-300 text-red-600 p-4 rounded shadow-lg max-w-sm animate-bounce z-50">
+                                    <div className="flex items-center gap-2 font-bold">
+                                        <AlertTriangle className="w-5 h-5" />
+                                        DİNAMOMETRE KIRILDI!
+                                    </div>
+                                    <p className="text-sm mt-1">
+                                        Seçtiğin yay bu ağırlığı taşıyamadı. <br/>
+                                        Daha <b>kalın</b> bir yay veya daha <b>sağlam</b> bir malzeme (Titanyum gibi) seçmelisin.
+                                    </p>
+                                    <button 
+                                        onClick={() => {setAttachedObject(null); setIsBroken(false); setExtraWeight(0);}}
+                                        className="mt-3 bg-red-400 text-white px-4 py-1 rounded text-sm hover:bg-red-500 w-full"
+                                    >
+                                        Tamir Et (Sıfırla)
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {mode === 'measure' && !attachedObject && extraWeight === 0 && !isBroken && (
+                                <div className="absolute bottom-10 text-slate-400 text-sm bg-white/80 px-4 py-2 rounded-full border border-slate-200">
+                                    Sol menüden bir nesne seçin veya ağırlık ekleyin.
+                                </div>
+                            )}
+                            {mode === 'build' && (
+                                <div className="absolute bottom-10 text-orange-400 text-sm bg-orange-50 px-4 py-2 rounded-full border border-orange-100">
+                                    Yayın malzemesini ve kalınlığını değiştirerek yapısını incele.
+                                </div>
+                            )}
+
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-700 relative">
+                    {showWelcome && renderWelcomeScreen()}
+
+                    <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-40">
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setShowWelcome(true)} title="Giriş ekranını aç">
+                            <img 
+                                src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" 
+                                alt="Logo" 
+                                className="h-10 w-auto"
+                            />
+                            <div>
+                                <h1 className="text-xl font-bold text-slate-700 leading-tight">Kuvvet Dedektifi</h1>
+                                <p className="text-xs text-slate-400">İnteraktif Dinamometre Atölyesi</p>
+                            </div>
+                        </div>
+                        
+                        <nav className="flex bg-slate-100 p-1 rounded-lg">
+                            {[
+                                { id: 'intro', label: '1. Kuvvet Nedir?', icon: ArrowRight },
+                                { id: 'build', label: '2. Yay Yapısı', icon: Settings },
+                                { id: 'measure', label: '3. Laboratuvar', icon: Weight },
+                            ].map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
+                                        ${activeTab === tab.id 
+                                            ? 'bg-white text-orange-400 shadow-sm' 
+                                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'
+                                        }
+                                    `}
+                                >
+                                    <tab.icon size={16} />
+                                    <span className="hidden sm:inline">{tab.label}</span>
+                                </button>
+                            ))}
+                        </nav>
+                    </header>
+                    <main className="flex-1 overflow-hidden relative">
+                        {activeTab === 'intro' && renderIntro()}
+                        {activeTab === 'build' && renderLab('build')}
+                        {activeTab === 'measure' && renderLab('measure')}
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
