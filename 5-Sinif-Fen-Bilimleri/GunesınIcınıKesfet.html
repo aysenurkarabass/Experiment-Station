@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güneş'in İçini Keşfet Simülasyonu</title>
+    <!-- Three.js ve Fontlar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls Eklentisi -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS (Hızlı stil için) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Montserrat', sans-serif; color: white; }
+        
+        /* Arayüz Panelleri */
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 3D etkileşimi engellememesi için */
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .panel {
+            background: rgba(16, 20, 30, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 200, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            pointer-events: auto;
+            box-shadow: 0 0 20px rgba(255, 165, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .left-panel { width: 320px; display: flex; flex-direction: column; gap: 15px; }
+        .right-panel { width: 300px; display: flex; flex-direction: column; gap: 10px; }
+
+        h1 { font-family: 'Montserrat', sans-serif; font-weight: 700; color: #ffcc00; font-size: 3.5rem; margin-bottom: 5px; text-shadow: 0 0 10px #ffcc00; }
+        h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; color: #fff; font-size: 1.1rem; margin-bottom: 10px; border-bottom: 1px solid #555; padding-bottom: 5px; }
+
+        /* Kontroller */
+        .control-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #aaa; }
+        
+        button {
+            background: linear-gradient(45deg, #ff8800, #ffcc00);
+            border: none;
+            padding: 10px 20px;
+            color: black;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        button:hover { transform: scale(1.02); box-shadow: 0 0 15px #ffcc00; }
+        button:active { transform: scale(0.98); }
+        button.secondary { background: #333; color: white; border: 1px solid #555; }
+        button.secondary:hover { background: #444; box-shadow: none; }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #ffcc00;
+            cursor: pointer;
+        }
+
+        /* Highlight Animasyonu */
+        @keyframes pulse-yellow {
+            0% { box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(255, 204, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 204, 0, 0); }
+        }
+
+        .highlight-pulse {
+            animation: pulse-yellow 2s infinite;
+            border: 1px solid #ffcc00 !important; /* Görünürlük için çerçeve zorla */
+            position: relative;
+            z-index: 20;
+            border-radius: 5px;
+        }
+
+        /* Bilgi Kutusu (Tooltip) */
+        #tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #ffcc00;
+            padding: 15px;
+            border-radius: 8px;
+            max-width: 250px;
+            display: none;
+            pointer-events: none; /* Default olarak tıklanamaz, ama kilitlenince tıklanır hale gelecek */
+            z-index: 100;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
+            transition: opacity 0.2s;
+        }
+        #tooltip.locked {
+            border-color: #00ff00; /* Kilitlendiğinde yeşil çerçeve */
+            pointer-events: auto; /* Kilitlendiğinde içindeki butona tıklanabilir */
+        }
+        #tooltip h3 { margin: 0 0 5px 0; color: #ffcc00; font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        #tooltip p { margin: 0; font-size: 0.85rem; line-height: 1.4; color: #ddd; }
+        #tooltip .temp { color: #ff5555; font-weight: bold; margin-top: 5px; display: block; }
+        #tooltip .hint { font-size: 0.7rem; color: #888; margin-top: 5px; font-style: italic; display: block; border-top: 1px solid #333; padding-top: 3px;}
+
+        /* Görev Kutusu */
+        .mission-box {
+            background: rgba(0, 50, 0, 0.3);
+            border: 1px solid #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .mission-title { color: #00ff00; font-weight: bold; font-family: 'Montserrat', sans-serif; margin-bottom: 5px; text-transform: uppercase; }
+        .mission-desc { font-size: 0.9rem; margin-bottom: 10px; }
+        .mission-status { font-size: 0.8rem; color: #aaa; font-style: italic; }
+
+        /* Loading Ekranı */
+        #loading {
+            position: absolute; width: 100%; height: 100%; background: #000;
+            display: flex; justify-content: center; align-items: center; z-index: 999;
+            flex-direction: column;
+        }
+        .loader {
+            width: 50px; height: 50px; border: 5px solid #333; border-top: 5px solid #ffcc00;
+            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Aksiyon Butonu (Tooltip içinde çıkacak) */
+        .action-btn {
+            background: #ff4444; color: white; border: none; padding: 5px 10px;
+            border-radius: 4px; font-size: 0.8rem; cursor: pointer; margin-top: 8px;
+            pointer-events: auto !important; 
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading -->
+    <div id="loading">
+        <div class="loader"></div>
+        <div style="font-family: 'Montserrat', sans-serif; font-weight: 700;">Güneş Sistemi Yükleniyor...</div>
+    </div>
+
+    <!-- 3D Sahne Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Arayüz -->
+    <div id="ui-container">
+        
+        <!-- Sol Panel: Bilgi ve Görevler -->
+        <div class="panel left-panel">
+            <div>
+                <h1>Güneş'i Keşfet</h1>
+            </div>
+
+            <div class="mission-box" id="mission-box">
+                <div class="mission-title">GÖREV 1: Dönüşü Gözlemle</div>
+                <div class="mission-desc" id="mission-desc">Güneş'i döndür ve bir Güneş lekesini takip et.</div>
+                <div class="mission-status" id="mission-status">Durum: Bekleniyor...</div>
+                <button id="next-mission-btn" style="display:none; margin-top:10px; background: #00aa00; font-size:0.8rem;">Sonraki Görev</button>
+            </div>
+
+            <div style="margin-top: auto; font-size: 0.8rem; color: #666;">
+                <p>İpucu: Mouse ile üzerine gelin. <strong>Sabitlemek için tıklayın.</strong></p>
+            </div>
+        </div>
+
+        <!-- Sağ Panel: Kontroller -->
+        <div class="panel right-panel">
+            <h2>Kontrol Paneli</h2>
+            
+            <div class="control-group">
+                <label>Dönme Hareketi</label>
+                <button id="toggle-rotation">OYNAT / DURDUR</button>
+            </div>
+
+            <div class="control-group">
+                <label>İçini Aç (Kesit)</label>
+                <input type="range" id="slice-slider" min="0" max="180" value="0">
+                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#666;">
+                    <span>Kapalı</span>
+                    <span>Yarım</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Görünüm Modu</label>
+                <button class="secondary" id="reset-cam">Kamerayı Sıfırla</button>
+            </div>
+            
+            <div id="debug-info" style="font-size: 0.7rem; color: #555; margin-top: 10px;">
+                Sıcaklık: ~5500 °C (Yüzey)
+            </div>
+        </div>
+    </div>
+
+    <!-- Hover Bilgi Kutusu -->
+    <div id="tooltip">
+        <h3 id="tt-title">Katman Adı</h3>
+        <p id="tt-desc">Açıklama buraya gelecek.</p>
+        <span class="temp" id="tt-temp">Sıcaklık: 0 °C</span>
+        <button id="tt-action" class="action-btn">Ölçüm Yap</button>
+        <span class="hint" id="tt-hint">(Sabitlemek için tıkla)</span>
+    </div>
+
+    <script>
+        // --- 1. Değişkenler ve Ayarlar ---
+        let scene, camera, renderer, controls;
+        let sunGroup, core, radiative, convective, photosphere, corona, sunspots;
+        let raycaster, mouse;
+        let isRotating = false;
+        let rotationSpeed = 0.005;
+        let clippingPlanes = [];
+        
+        // Etkileşim ve Kilitleme
+        let hoveredObj = null;
+        let lockedObj = null; // Tıklanarak sabitlenen obje
+
+        // Görev Değişkenleri
+        let currentMission = 1;
+        let missionCompleted = false;
+
+        // Katman Verileri
+        const layers = {
+            'Core': { 
+                name: 'Çekirdek', 
+                temp: '15.000.000 °C', 
+                desc: 'Güneş\'in enerji santrali. Burada nükleer füzyon gerçekleşir ve hidrojen helyuma dönüşür.',
+                color: 0xffffff, emissive: 0xff0000 
+            },
+            'Radiative': { 
+                name: 'Işıma Bölgesi', 
+                temp: '2.000.000 - 7.000.000 °C', 
+                desc: 'Enerjinin fotonlar aracılığıyla çok yavaş bir şekilde dışarıya taşındığı yoğun bölge.',
+                color: 0xffaa00 
+            },
+            'Convective': { 
+                name: 'Konveksiyon Bölgesi', 
+                temp: '2.000.000 °C', 
+                desc: 'Sıcak plazmanın yükselip soğuyarak tekrar battığı devasa kaynama hareketlerinin olduğu yer.',
+                color: 0xff8800 
+            },
+            'Photosphere': { 
+                name: 'Işık Küre (Fotosfer)', 
+                temp: '5.500 °C', 
+                desc: 'Güneş\'in gördüğümüz yüzeyi. Güneş lekeleri burada bulunur.',
+                color: 0xffcc00 
+            },
+            'Sunspot': {
+                name: 'Güneş Lekesi',
+                temp: '3.500 °C',
+                desc: 'Manyetik alanın yoğunlaşması sonucu yüzeyin diğer kısımlarına göre daha soğuk ve karanlık bölgeler.',
+                color: 0x000000
+            },
+            'Corona': {
+                name: 'Taç Küre (Korona)',
+                temp: '1.000.000 °C+',
+                desc: 'Güneş\'in en dış atmosferi. Sadece tam güneş tutulmasında çıplak gözle görülebilir.',
+                color: 0xffffff
+            }
+        };
+
+        // --- 2. Başlatma Fonksiyonu ---
+        function init() {
+            // Sahne
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x050505); // Derin uzay siyahı
+            scene.fog = new THREE.FogExp2(0x000000, 0.002);
+
+            // Kamera
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 20, 40);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.localClippingEnabled = true; // Kesit alma için gerekli
+            renderer.shadowMap.enabled = true;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Controls (Yörünge Kontrolleri) EKLENDİ
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true; // Yumuşak hareket
+            controls.dampingFactor = 0.05;
+
+            // Işıklandırma
+            const ambientLight = new THREE.AmbientLight(0x404040, 2); // Ortam ışığı
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.PointLight(0xffffff, 1.5, 1000);
+            sunLight.position.set(20, 20, 20);
+            scene.add(sunLight);
+            
+            // İçeriden parlayan ışık (Güneş'in kendisi ışık kaynağıdır)
+            const internalLight = new THREE.PointLight(0xffaa00, 2, 50);
+            internalLight.position.set(0,0,0);
+            scene.add(internalLight);
+
+            // Yıldızlı Arka Plan
+            createStars();
+
+            // Güneş Sistemini Oluştur
+            createSunSystem();
+
+            // Etkileşim Araçları
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Olay Dinleyicileri
+            window.addEventListener('resize', onWindowResize, false);
+            document.addEventListener('mousemove', onMouseMove, false);
+            
+            // YENİ: Canvas'a tıklayınca sabitleme (lock) işlemi
+            renderer.domElement.addEventListener('click', onCanvasClick, false);
+
+            document.getElementById('toggle-rotation').addEventListener('click', toggleRotation);
+            document.getElementById('slice-slider').addEventListener('input', updateSlice);
+            
+            // Kamerayı Sıfırla Butonu (GÜNCELLENDİ)
+            document.getElementById('reset-cam').addEventListener('click', () => {
+                // Kamera pozisyonunu sıfırla
+                gsap.to(camera.position, { 
+                    duration: 1.5, 
+                    x: 0, 
+                    y: 20, 
+                    z: 40,
+                    ease: "power2.inOut"
+                });
+                
+                // Kontrollerin odak noktasını sıfırla (Güneşin merkezi)
+                if(controls) {
+                    gsap.to(controls.target, { 
+                        duration: 1.5, 
+                        x: 0, 
+                        y: 0, 
+                        z: 0,
+                        ease: "power2.inOut"
+                    });
+                }
+            });
+            
+            // Görev Butonları
+            document.getElementById('next-mission-btn').addEventListener('click', nextMission);
+            document.getElementById('tt-action').addEventListener('click', performMeasurement);
+
+            // Görev 1 için Başlangıç Highlight
+            document.getElementById('toggle-rotation').classList.add('highlight-pulse');
+
+            // Animasyon Başlat
+            animate();
+            
+            // Loading'i kapat
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 1000);
+        }
+
+        // --- 3. Yıldızlar ---
+        function createStars() {
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            for (let i = 0; i < 3000; i++) {
+                vertices.push(THREE.MathUtils.randFloatSpread(400)); // x
+                vertices.push(THREE.MathUtils.randFloatSpread(400)); // y
+                vertices.push(THREE.MathUtils.randFloatSpread(400)); // z
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.7, transparent: true, opacity: 0.8 });
+            const stars = new THREE.Points(geometry, material);
+            scene.add(stars);
+        }
+
+        // --- 4. Güneş Katmanları ---
+        function createSunSystem() {
+            sunGroup = new THREE.Group();
+            scene.add(sunGroup);
+
+            // Kesit Düzlemleri (Clipping Planes)
+            const localPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 100); // Başlangıçta dışarıda
+            clippingPlanes = [localPlane];
+
+            // 1. Çekirdek (En iç) - Kesilmez, hep görünür
+            const coreGeo = new THREE.SphereGeometry(2, 32, 32);
+            const coreMat = new THREE.MeshStandardMaterial({ 
+                color: 0xffffff, 
+                emissive: 0xff0000, 
+                emissiveIntensity: 1,
+                roughness: 0.4
+            });
+            core = new THREE.Mesh(coreGeo, coreMat);
+            core.userData = { type: 'Core' };
+            sunGroup.add(core);
+
+            // 2. Işıma Bölgesi
+            const radGeo = new THREE.SphereGeometry(4, 32, 32);
+            const radMat = new THREE.MeshStandardMaterial({ 
+                color: 0xff8800, 
+                roughness: 0.5,
+                wireframe: false, // Doku yerine basit renk, wireframe karmaşık görünür
+                side: THREE.DoubleSide,
+                clippingPlanes: clippingPlanes,
+                clipShadows: true
+            });
+            radMat.map = createNoiseTexture(256, '#ffaa00', '#ff4400');
+            radiative = new THREE.Mesh(radGeo, radMat);
+            radiative.userData = { type: 'Radiative' };
+            sunGroup.add(radiative);
+
+            // 3. Konveksiyon Bölgesi
+            const convGeo = new THREE.SphereGeometry(6, 32, 32);
+            const convMat = new THREE.MeshStandardMaterial({ 
+                color: 0xffaa00,
+                roughness: 0.8,
+                side: THREE.DoubleSide,
+                clippingPlanes: clippingPlanes
+            });
+            convMat.map = createNoiseTexture(256, '#ffcc00', '#cc5500'); // Kaynama efekti için noise
+            convective = new THREE.Mesh(convGeo, convMat);
+            convective.userData = { type: 'Convective' };
+            sunGroup.add(convective);
+
+            // 4. Işık Küre (Fotosfer - En dış katı yüzey)
+            const photoGeo = new THREE.SphereGeometry(8, 64, 64);
+            const photoMat = new THREE.MeshStandardMaterial({ 
+                color: 0xffdd00,
+                emissive: 0xffaa00,
+                emissiveIntensity: 0.2,
+                roughness: 0.4,
+                side: THREE.DoubleSide,
+                clippingPlanes: clippingPlanes
+            });
+            photoMat.map = createNoiseTexture(512, '#ffee00', '#ff8800');
+            photosphere = new THREE.Mesh(photoGeo, photoMat);
+            photosphere.userData = { type: 'Photosphere' };
+            sunGroup.add(photosphere);
+
+            // 5. Güneş Lekeleri (Fotosfere yapışık)
+            createSunspots();
+
+            // 6. Taç Küre (Corona - Glow Efekti)
+            const coronaGeo = new THREE.SphereGeometry(9, 32, 32);
+            const coronaMat = new THREE.MeshBasicMaterial({
+                color: 0xffffaa,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.BackSide, // Arkasını göstererek halo efekti ver
+                blending: THREE.AdditiveBlending
+            });
+            corona = new THREE.Mesh(coronaGeo, coronaMat);
+            corona.scale.set(1.2, 1.2, 1.2); // Biraz daha büyük
+            corona.userData = { type: 'Corona' }; // Tıklanabilir değil ama görsel
+            scene.add(corona); 
+        }
+
+        function createSunspots() {
+            sunspots = new THREE.Group();
+            
+            const spotGeo = new THREE.CircleGeometry(0.7, 32); 
+            const spotMat = new THREE.MeshBasicMaterial({ 
+                color: 0x000000,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.85
+            });
+            
+            function addSpot(x, y, z) {
+                const mesh = new THREE.Mesh(spotGeo, spotMat);
+                const pos = new THREE.Vector3(x, y, z);
+                pos.normalize().multiplyScalar(8.04); 
+                mesh.position.copy(pos);
+                const lookTarget = pos.clone().multiplyScalar(2);
+                mesh.lookAt(lookTarget);
+                mesh.userData = { type: 'Sunspot' };
+                sunspots.add(mesh);
+            }
+            
+            addSpot(7.8, 1, 2);
+            addSpot(7.6, -2, -1.5);
+            addSpot(7.9, 3, 0.5);
+            addSpot(4, 5, 5); 
+            addSpot(-2, 1, 7.5); 
+
+            photosphere.add(sunspots);
+        }
+
+        function createNoiseTexture(size, color1, color2) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = color1;
+            ctx.fillRect(0,0,size,size);
+
+            for(let i=0; i<size*40; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const w = Math.random() * 3;
+                ctx.fillStyle = color2;
+                ctx.globalAlpha = Math.random() * 0.5;
+                ctx.beginPath();
+                ctx.arc(x, y, w, 0, Math.PI*2);
+                ctx.fill();
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        // --- 5. Etkileşim ve Animasyon ---
+        
+        function onMouseMove(event) {
+            // EĞER KİLİTLİYSE mouse hareketinde yeni seçim yapma
+            if (lockedObj) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.left = event.clientX + 15 + 'px';
+            tooltip.style.top = event.clientY + 15 + 'px';
+
+            checkIntersection();
+        }
+
+        // YENİ: Tıklama ile Sabitleme
+        function onCanvasClick(event) {
+            // Koordinatları al
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+
+            // Intersection logic kopyası (tıklananı bulmak için)
+            let meshes = [];
+            sunGroup.traverse((child) => { if (child.isMesh) meshes.push(child); });
+            const intersects = raycaster.intersectObjects(meshes);
+
+            let clickedTarget = null;
+            if (intersects.length > 0) {
+                for (let i = 0; i < intersects.length; i++) {
+                    const intersection = intersects[i];
+                    const obj = intersection.object;
+                    let isVisible = true;
+                    if (obj.material.clippingPlanes && obj.material.clippingPlanes.length > 0) {
+                        for (const plane of obj.material.clippingPlanes) {
+                            if (plane.distanceToPoint(intersection.point) < 0) {
+                                isVisible = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (isVisible) {
+                        clickedTarget = obj;
+                        break; 
+                    }
+                }
+            }
+
+            // MANTIK:
+            // 1. Bir objeye tıklandıysa: Kilitle (veya kilitliyse aç)
+            // 2. Boşluğa tıklandıysa: Kilidi kaldır ve kapat
+            
+            const tooltip = document.getElementById('tooltip');
+            const hint = document.getElementById('tt-hint');
+
+            if (clickedTarget && clickedTarget.userData.type) {
+                if (lockedObj !== clickedTarget) {
+                    // Yeni bir objeye kilitlen
+                    if (lockedObj) resetHighlight(lockedObj); // eskisini bırak
+                    lockedObj = clickedTarget;
+                    highlightObject(lockedObj);
+                    
+                    // Tooltipi son pozisyona getir
+                    tooltip.style.left = event.clientX + 15 + 'px';
+                    tooltip.style.top = event.clientY + 15 + 'px';
+                    
+                    showTooltip(lockedObj.userData.type);
+                    
+                    // Görsel olarak kilitlendiğini göster
+                    tooltip.classList.add('locked');
+                    hint.innerText = "(Sabitlendi - Kapatmak için boşluğa tıkla)";
+                } else {
+                    // Aynı objeye tekrar tıklandı -> Kilidi kaldırabiliriz veya sabit bırakabiliriz.
+                    // Kullanıcı için boşluğa tıklamak daha doğal "çıkış"tır, o yüzden burada bir şey yapmaya gerek yok.
+                }
+            } else {
+                // Boşluğa tıklandı -> Kilidi aç
+                if (lockedObj) {
+                    resetHighlight(lockedObj);
+                    lockedObj = null;
+                    hideTooltip();
+                    tooltip.classList.remove('locked');
+                    hint.innerText = "(Sabitlemek için tıkla)";
+                }
+            }
+        }
+
+        function checkIntersection() {
+            raycaster.setFromCamera(mouse, camera);
+
+            let meshes = [];
+            sunGroup.traverse((child) => {
+                if (child.isMesh) meshes.push(child);
+            });
+
+            const intersects = raycaster.intersectObjects(meshes);
+
+            if (intersects.length > 0) {
+                let target = null;
+                
+                for (let i = 0; i < intersects.length; i++) {
+                    const intersection = intersects[i];
+                    const obj = intersection.object;
+                    let isVisible = true;
+
+                    if (obj.material.clippingPlanes && obj.material.clippingPlanes.length > 0) {
+                        for (const plane of obj.material.clippingPlanes) {
+                            if (plane.distanceToPoint(intersection.point) < 0) {
+                                isVisible = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isVisible) {
+                        target = obj;
+                        break; 
+                    }
+                }
+
+                if (target && target.userData.type) {
+                    if (hoveredObj !== target) {
+                        if (hoveredObj) resetHighlight(hoveredObj);
+                        hoveredObj = target;
+                        highlightObject(hoveredObj);
+                        showTooltip(hoveredObj.userData.type);
+                    }
+                } else {
+                    if (hoveredObj) {
+                        resetHighlight(hoveredObj);
+                        hoveredObj = null;
+                        hideTooltip();
+                    }
+                }
+            } else {
+                if (hoveredObj) {
+                    resetHighlight(hoveredObj);
+                    hoveredObj = null;
+                    hideTooltip();
+                }
+            }
+        }
+
+        function highlightObject(obj) {
+            if (obj.material.emissive) {
+                obj.currentEmissive = obj.material.emissive.getHex();
+                obj.material.emissive.setHex(0xffffff);
+                obj.material.emissiveIntensity = 0.5;
+            } else {
+                obj.material.color.setHex(0x555555);
+            }
+        }
+
+        function resetHighlight(obj) {
+            if (obj.material.emissive) {
+                obj.material.emissive.setHex(obj.currentEmissive || 0x000000); 
+                
+                if (obj.userData.type === 'Photosphere') obj.material.emissive.setHex(0xffaa00);
+                if (obj.userData.type === 'Core') obj.material.emissive.setHex(0xff0000);
+                
+                obj.material.emissiveIntensity = (obj.userData.type === 'Core' ? 1 : 0.2);
+            } else {
+                if (obj.userData.type === 'Sunspot') obj.material.color.setHex(0x000000);
+            }
+        }
+
+        function showTooltip(type) {
+            const data = layers[type];
+            if (!data) return;
+
+            document.getElementById('tt-title').innerText = data.name;
+            document.getElementById('tt-desc').innerText = data.desc;
+            
+            const tempEl = document.getElementById('tt-temp');
+            const actionBtn = document.getElementById('tt-action');
+            const status = document.getElementById('mission-status');
+            
+            tempEl.style.color = "#ff5555"; 
+
+            if (currentMission === 2 && !missionCompleted) {
+                if (type === 'Core') {
+                    tempEl.innerText = "Sıcaklık: ??? (Ölçüm Bekleniyor)";
+                    
+                    actionBtn.style.display = 'block';
+                    actionBtn.innerText = "Sıcaklığı Ölç";
+                    
+                    status.innerText = "Durum: Çekirdek BULUNDU! Sıcaklığı ölçün.";
+                    status.style.color = "#00ff00";
+                    status.style.fontWeight = "bold";
+                } else {
+                    tempEl.innerText = "Sıcaklık: " + data.temp;
+                    actionBtn.style.display = 'none';
+                    
+                    if (!missionCompleted) {
+                        status.innerText = "Durum: Çekirdek aranıyor...";
+                        status.style.color = "#aaa";
+                        status.style.fontWeight = "normal";
+                    }
+                }
+            } else {
+                tempEl.innerText = "Sıcaklık: " + data.temp;
+                actionBtn.style.display = 'none';
+                
+                if (currentMission === 2 && missionCompleted && type === 'Core') {
+                     tempEl.style.color = "#00ff00";
+                     tempEl.innerText = "Sıcaklık: 15.000.000 °C";
+                }
+            }
+
+            document.getElementById('tooltip').style.display = 'block';
+        }
+
+        function hideTooltip() {
+            // Eğer kilitliyse gizleme
+            if (lockedObj) return;
+
+            document.getElementById('tooltip').style.display = 'none';
+            document.getElementById('tooltip').classList.remove('locked');
+            
+            if (currentMission === 2 && !missionCompleted) {
+                const status = document.getElementById('mission-status');
+                status.innerText = "Durum: Çekirdek aranıyor...";
+                status.style.color = "#aaa";
+                status.style.fontWeight = "normal";
+            }
+        }
+
+        // --- 6. Kontrol Fonksiyonları ---
+
+        function toggleRotation() {
+            isRotating = !isRotating;
+            
+            if (currentMission === 1 && isRotating) {
+                document.getElementById('mission-status').innerText = "Durum: Güneş dönüyor, leke izleniyor...";
+                document.getElementById('mission-status').style.color = "#ffcc00";
+                
+                setTimeout(() => {
+                    if(currentMission === 1) completeMission(1);
+                }, 4000);
+            }
+        }
+
+        function updateSlice(e) {
+            const value = parseInt(e.target.value);
+            const maxRadius = 8.5;
+            const constant = maxRadius - (value / 180) * maxRadius; 
+            clippingPlanes[0].constant = constant;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- 7. Görev Mantığı ---
+
+        function performMeasurement() {
+            if (currentMission === 2) {
+                const tempEl = document.getElementById('tt-temp');
+                
+                tempEl.innerText = "Sıcaklık: 15.000.000 °C";
+                tempEl.style.color = "#00ff00"; 
+                
+                document.getElementById('tt-action').style.display = 'none';
+                
+                // Görevi tamamla ve kilidi kaldır
+                completeMission(2);
+                
+                // Ölçüm bitince kilidi kaldırabiliriz, kullanıcı sonucunu gördü.
+                // Veya kalabilir, ama genellikle iş bitince serbest bırakmak iyidir.
+                // Ancak kullanıcı okumak isteyebilir. Kalsın.
+            }
+        }
+
+        function completeMission(missionId) {
+            if (missionCompleted) return;
+            missionCompleted = true;
+
+            const box = document.getElementById('mission-box');
+            const status = document.getElementById('mission-status');
+            const btn = document.getElementById('next-mission-btn');
+
+            box.style.borderColor = "#ffff00";
+            status.innerText = "GÖREV BAŞARILI!";
+            status.style.color = "#00ff00";
+            status.style.fontWeight = "bold";
+
+            if (missionId === 1) {
+                btn.style.display = 'block';
+                document.getElementById('toggle-rotation').classList.remove('highlight-pulse');
+            } else if (missionId === 2) {
+                status.innerText = "TÜM GÖREVLER TAMAMLANDI! Tebrikler.";
+                document.getElementById('slice-slider').classList.remove('highlight-pulse');
+            }
+        }
+
+        function nextMission() {
+            currentMission = 2;
+            missionCompleted = false;
+            
+            const title = document.querySelector('.mission-title');
+            const desc = document.getElementById('mission-desc');
+            const status = document.getElementById('mission-status');
+            const btn = document.getElementById('next-mission-btn');
+
+            title.innerText = "GÖREV 2: Enerji Kaynağı";
+            desc.innerText = "Slider'ı kullanarak Güneş'in içini aç. En içteki Çekirdeği bul ve sıcaklığını ölç.";
+            status.innerText = "Durum: Çekirdek aranıyor...";
+            status.style.color = "#aaa";
+            btn.style.display = 'none';
+            document.getElementById('mission-box').style.borderColor = "#00ff00";
+
+            document.getElementById('slice-slider').classList.add('highlight-pulse');
+        }
+
+        // --- 8. Ana Döngü ---
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isRotating && sunGroup) {
+                sunGroup.rotation.y += rotationSpeed;
+            }
+
+            if (corona) {
+                corona.lookAt(camera.position);
+            }
+            
+            // YENİ: Kontrolleri güncelle
+            if (controls) controls.update();
+
+            renderer.render(scene, camera);
+        }
+
+        init();
+
+    </script>
+</body>
+</html>
