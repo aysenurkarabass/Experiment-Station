@@ -229,7 +229,7 @@
             </div>
 
             <div id="quiz-result-container" class="hidden text-center">
-                <div class="text-6xl mb-4"></div>
+                <div class="text-6xl mb-4">🏆</div>
                 <h2 class="text-2xl font-bold text-white mb-2">Test Tamamlandı!</h2>
                 <p class="text-gray-300 mb-6">Skorunuz: <span id="final-score" class="text-yellow-400 font-bold text-xl">0/0</span></p>
                 <button onclick="closeQuiz()" class="bg-gray-600 hover:bg-gray-500 text-white py-2 px-6 rounded-lg mr-2">Kapat</button>
@@ -268,9 +268,6 @@
                 </button>
                 <button onclick="setFocus('earth')" id="focus-earth" class="focus-btn flex items-center gap-1">
                     <span class="w-3 h-3 rounded-full bg-blue-500 block"></span> Dünya'ya Git
-                </button>
-                <button onclick="setFocus('moon')" id="focus-moon" class="focus-btn flex items-center gap-1">
-                    <span class="w-3 h-3 rounded-full bg-gray-400 block"></span> Ay'a Git
                 </button>
             </div>
         </div>
@@ -816,7 +813,10 @@ function onWindowResize() {
 function setFocus(target) {
     focusTarget = target;
     document.querySelectorAll('.focus-btn').forEach(btn => btn.classList.remove('active-focus'));
-    document.getElementById(`focus-${target}`).classList.add('active-focus');
+    
+    // Safe selection: if element exists, interact with it
+    const activeBtn = document.getElementById(`focus-${target}`);
+    if (activeBtn) activeBtn.classList.add('active-focus');
     
     if (target === 'earth') targetCameraRadius = 20;
     else if (target === 'moon') targetCameraRadius = 5;
