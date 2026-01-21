@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6. Sınıf Fen Bilimleri: Bileşke Kuvvet Simülasyonu</title>
+    <!-- Google Fonts entegrasyonu -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;600&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* GENEL TASARIM AYARLARI */
+        :root {
+            --primary: #4A90E2; /* Mavi - Doğu Kuvveti */
+            --secondary: #E74C3C; /* Kırmızı - Batı Kuvveti */
+            --success: #27ae60;
+            --bg-color: #f0f3f6;
+            --panel-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* HEADER LOGO AYARLARI (YENİ) */
+        #header-logo {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 40px;
+            z-index: 10;
+        }
+
+        /* ANA KONTEYNER (16:9 ORANI) */
+        #app-container {
+            width: 90vw;
+            max-width: 1200px;
+            aspect-ratio: 16/9;
+            background-color: var(--panel-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            margin-top: 2vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* BAŞLIK */
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            position: relative; /* Logo konumlandırması için gerekli */
+        }
+
+        /* MENÜ BUTONU */
+        #home-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Fredoka', sans-serif;
+            display: none; /* Başlangıçta gizli */
+        }
+        #home-btn:hover { background: #d35400; }
+
+        /* SAYFALAR (SCREENS) */
+        .screen {
+            flex: 1;
+            display: none; /* Varsayılan olarak gizli */
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ANA MENÜ TASARIMI */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            padding: 40px;
+            height: 100%;
+        }
+
+        .menu-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: var(--primary);
+        }
+
+        .menu-card h3 {
+            margin: 10px 0;
+            font-size: 1.4rem;
+            color: #2c3e50;
+        }
+        .menu-card p {
+            color: #7f8c8d;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        /* ETKİNLİK RENKLERİ */
+        .card-1 { border-top: 5px solid #e67e22; }
+        .card-2 { border-top: 5px solid #9b59b6; }
+        .card-3 { border-top: 5px solid #2ecc71; }
+        .card-4 { border-top: 5px solid #34495e; background-color: #f7f9fa; }
+
+        /* SORU EKRANI (Quiz) */
+        .quiz-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 20px;
+            align-items: center;
+        }
+
+        .visual-stage {
+            width: 100%;
+            height: 200px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 4px solid #bdc3c7; /* Zemin efekti */
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            max-width: 800px;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 2px solid #bdc3c7;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Fredoka', sans-serif;
+            transition: 0.2s;
+        }
+        .option-btn:hover:not(:disabled) {
+            background: #eaf2f8;
+            border-color: var(--primary);
+        }
+        .option-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+        .option-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+
+        .feedback-area {
+            height: 40px;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .next-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* LABORATUVAR EKRANI */
+        .lab-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .lab-canvas {
+            flex: 2;
+            background: linear-gradient(to bottom, #81d4fa 0%, #e1f5fe 100%);
+            position: relative;
+            border-bottom: 20px solid #795548; /* Zemin */
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end; /* Cismi zemine oturt */
+            justify-content: center;
+        }
+
+        .lab-controls {
+            flex: 1;
+            background: white;
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 2px solid #ccc;
+        }
+
+        /* KUTU VE OKLAR */
+        .box {
+            width: 120px;
+            height: 120px;
+            background: #f1c40f;
+            border: 3px solid #f39c12;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #d35400;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* Animasyon için kutu wrapper */
+        #box-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: transform 0.1s linear; /* Hareket animasyonu */
+        }
+
+        .arrow {
+            position: absolute;
+            height: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            transition: width 0.2s;
+            z-index: 5;
+        }
+        
+        .arrow-text {
+            position: absolute;
+            top: -25px;
+            font-weight: bold;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        /* Batı Oku (Sol) - Kırmızı */
+        .arrow-west {
+            right: 100%; /* Kutunun solundan başla */
+            background-color: var(--secondary);
+            transform-origin: right;
+        }
+        /* Ok Ucu - CSS ile üçgen */
+        .arrow-west::before {
+            content: '';
+            position: absolute;
+            right: 100%;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-right: 15px solid var(--secondary);
+        }
+
+        /* Doğu Oku (Sağ) - Mavi */
+        .arrow-east {
+            left: 100%; /* Kutunun sağından başla */
+            background-color: var(--primary);
+            transform-origin: left;
+        }
+        .arrow-east::after {
+            content: '';
+            position: absolute;
+            left: 100%;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 15px solid var(--primary);
+        }
+
+        /* Lab Kontrol Panelleri */
+        .control-panel {
+            text-align: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            width: 250px;
+            border: 1px solid #ddd;
+        }
+        
+        .result-panel {
+            background: #2c3e50;
+            color: white;
+            width: 280px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- ESKİ LOGO KONTEYNERİ KALDIRILDI -->
+
+    <div id="app-container">
+        <header id="main-header">
+            <!-- YENİ LOGO KONUMU (Header içinde, solda, arka plansız) -->
+            <img id="header-logo" src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="e12 Logo">
+            
+            <span id="header-title">6. SINIF: BİLEŞKE KUVVET</span>
+            <button id="home-btn" onclick="showMenu()">Ana Menü</button>
+        </header>
+
+        <!-- EKRAN 1: ANA MENÜ -->
+        <div id="menu-screen" class="screen active">
+            <div class="menu-grid">
+                <div class="menu-card card-1" onclick="startQuiz(1)">
+                    <h3>Etkinlik 1</h3>
+                    <p>Kuvvetin Özellikleri (Yön, Doğrultu, Büyüklük)</p>
+                </div>
+                <div class="menu-card card-2" onclick="startQuiz(2)">
+                    <h3>Etkinlik 2</h3>
+                    <p>Bileşke Kuvvet Hesaplama</p>
+                </div>
+                <div class="menu-card card-3" onclick="startQuiz(3)">
+                    <h3>Etkinlik 3</h3>
+                    <p>Dengelenmiş & Dengelenmemiş Kuvvetler</p>
+                </div>
+                <div class="menu-card card-4" onclick="startLab()">
+                    <h3>Etkinlik 4: Laboratuvar</h3>
+                    <p>Simülasyon Modu (Serbest Deney)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- EKRAN 2: SORU MODU (QUIZ) -->
+        <div id="quiz-screen" class="screen">
+            <div class="quiz-container">
+                <!-- Soru Görsel Alanı -->
+                <div id="quiz-visual" class="visual-stage">
+                    <!-- JS ile buraya kutu ve oklar çizilecek -->
+                </div>
+                
+                <div id="question-text" class="question-text">Soru metni...</div>
+                
+                <div id="options-area" class="options-container">
+                    <!-- Şıklar -->
+                </div>
+
+                <div id="feedback" class="feedback-area"></div>
+                <button id="next-btn" class="next-btn" onclick="nextQuestion()">Sonraki Soru</button>
+            </div>
+        </div>
+
+        <!-- EKRAN 3: LABORATUVAR (SİMÜLASYON) -->
+        <div id="lab-screen" class="screen">
+            <div class="lab-layout">
+                <div class="lab-canvas">
+                    <div id="box-wrapper">
+                        <div class="box">CİSİM</div>
+                        <!-- Oklar dinamik eklenecek -->
+                        <div id="lab-arrow-west" class="arrow arrow-west" style="width: 0px; display: none;">
+                            <span class="arrow-text" style="right:0; color: #E74C3C;">0N</span>
+                        </div>
+                        <div id="lab-arrow-east" class="arrow arrow-east" style="width: 0px; display: none;">
+                            <span class="arrow-text" style="left:0; color: #4A90E2;">0N</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Hız çizgileri efekti için (Süsleme) -->
+                    <div id="speed-lines" style="position: absolute; bottom: 10px; font-size: 24px; opacity: 0.5;"></div>
+                </div>
+
+                <div class="lab-controls">
+                    <!-- Batı Kontrolü -->
+                    <div class="control-panel" style="border-left: 5px solid var(--secondary);">
+                        <h4 style="color:var(--secondary); margin:0;">BATI (Sol)</h4>
+                        <input type="range" id="input-west" min="0" max="20" step="1" value="0" oninput="updateLab()">
+                        <div id="val-west" style="font-weight:bold;">0 N</div>
+                    </div>
+
+                    <!-- Sonuç Paneli -->
+                    <div class="control-panel result-panel">
+                        <h4 style="margin:0; border-bottom:1px solid rgba(255,255,255,0.3); padding-bottom:5px;">ANALİZ</h4>
+                        <div style="margin-top:10px; display:flex; justify-content:space-between;">
+                            <span>Bileşke (R):</span>
+                            <span id="res-net" style="font-size:1.2rem; font-weight:bold;">0 N</span>
+                        </div>
+                        <div style="margin-top:5px; display:flex; justify-content:space-between;">
+                            <span>Durum:</span>
+                            <span id="res-status" style="font-size:0.9rem;">Dengelenmiş</span>
+                        </div>
+                    </div>
+
+                    <!-- Doğu Kontrolü -->
+                    <div class="control-panel" style="border-right: 5px solid var(--primary);">
+                        <h4 style="color:var(--primary); margin:0;">DOĞU (Sağ)</h4>
+                        <input type="range" id="input-east" min="0" max="20" step="1" value="0" oninput="updateLab()">
+                        <div id="val-east" style="font-weight:bold;">0 N</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // --- VERİ SETLERİ ---
+
+    // Etkinlik 1: Özellikler
+    const qAct1 = [
+        {
+            text: "Görseldeki cisme etki eden kuvvetin BÜYÜKLÜĞÜ kaç Newton'dur?",
+            visual: { west: 0, east: 10, label: "F = 10N" },
+            options: ["Doğu", "Batı", "10 N", "20 N"],
+            correct: 2
+        },
+        {
+            text: "Cisme Batı yönünde 5N ve Doğu yönünde 5N etki ediyor. Bu kuvvetlerin DOĞRULTULARI nasıldır?",
+            visual: { west: 5, east: 5, label: "Aynı Doğrultu" },
+            options: ["Farklıdır", "Doğu-Batı Doğrultusundadır", "Kuzey-Güney Doğrultusundadır", "Doğrultusu yoktur"],
+            correct: 1
+        },
+        {
+            text: "Kuvvetin yönü ile doğrultusu arasındaki fark nedir?",
+            visual: { west: 0, east: 8, label: "Yön ->" },
+            options: ["Aynı şeydir", "Yön tek taraflıdır, doğrultu çift yönlüdür", "Doğrultu sayıdır", "Yön alettir"],
+            correct: 1
+        },
+        {
+            text: "Kuvveti ölçen alete ne ad verilir?",
+            visual: { west: 0, east: 0, label: "Ölçüm Aleti" },
+            options: ["Termometre", "Barometre", "Dinamometre", "Metre"],
+            correct: 2
+        },
+        {
+            text: "Hangisi kuvvetin 3 temel özelliğinden biri DEĞİLDİR?",
+            visual: { west: 0, east: 0, label: "?" },
+            options: ["Yön", "Büyüklük", "Renk", "Doğrultu"],
+            correct: 2
+        }
+    ];
+
+    // Etkinlik 2: Bileşke Hesaplama
+    const qAct2 = [
+        {
+            text: "Doğuya 12N, Batıya 4N kuvvet uygulanıyor. Bileşke kuvvet kaç Newton'dur?",
+            visual: { west: 4, east: 12, label: "R=?" },
+            options: ["16 N", "8 N", "12 N", "4 N"],
+            correct: 1
+        },
+        {
+            text: "İki kuvvet de Doğu yönünde (3N ve 4N) uygulanırsa bileşke ne olur?",
+            visual: { west: 0, east: [3, 4], label: "3N & 4N" }, // DİZİ OLARAK GÜNCELLENDİ
+            options: ["1 N Batı", "1 N Doğu", "7 N Batı", "7 N Doğu"],
+            correct: 3
+        },
+        {
+            text: "Zıt yönlü eşit büyüklükteki (10N) iki kuvvetin bileşkesi nedir?",
+            visual: { west: 10, east: 10, label: "10N vs 10N" },
+            options: ["20 N", "10 N", "0 N", "100 N"],
+            correct: 2
+        },
+        {
+            text: "Cisme etki eden net kuvvetin yönü, hangi kuvvetin yönündedir?",
+            visual: { west: 3, east: 15, label: "Büyük Kuvvet ->" },
+            options: ["Küçük kuvvetin", "Büyük kuvvetin", "Her zaman Doğu", "Her zaman Batı"],
+            correct: 1
+        },
+        {
+            text: "Bileşke kuvvet R=5N (Batı) ise ve Doğu kuvveti 10N ise, Batı kuvveti kaçtır?",
+            visual: { west: 0, east: 10, label: "R=5N Batı" }, // Batı görseli kaldırıldı (Cevap gizlendi)
+            options: ["5 N", "10 N", "15 N", "20 N"],
+            correct: 2
+        }
+    ];
+
+    // Etkinlik 3: Dengelenmiş Kuvvetler
+    const qAct3 = [
+        {
+            text: "Sabit süratle giden bir araba için hangisi söylenebilir?",
+            visual: { west: 10, east: 10, label: "Sürat Sabit" },
+            options: ["Dengelenmiş kuvvetler etkisindedir", "Dengelenmemiş kuvvetler etkisindedir", "Kuvvet yoktur", "Hızlanıyordur"],
+            correct: 0
+        },
+        {
+            text: "Yavaşlayan bir araba için hangisi doğrudur?",
+            visual: { west: 5, east: 2, label: "Fren yapıyor" },
+            options: ["Net kuvvet sıfırdır", "Dengelenmiş kuvvettir", "Dengelenmemiş kuvvet etkisindedir", "Kuvvet etki etmiyordur"],
+            correct: 2
+        },
+        {
+            text: "Bileşke kuvvet 0 (sıfır) ise cisim...",
+            visual: { west: 6, east: 6, label: "R=0" },
+            options: ["Kesinlikle duruyordur", "Kesinlikle hareketlidir", "Ya durur ya da sabit süratle gider", "Hızlanır"],
+            correct: 2
+        },
+        {
+            text: "Aşağıdakilerden hangisi dengelenmemiş kuvvet etkisindedir?",
+            visual: { west: 0, east: 10, label: "Hızlanıyor" },
+            options: ["Duvardaki saat", "Sabit hızlı tren", "Daldan düşen elma", "Masadaki kitap"],
+            correct: 2
+        },
+        {
+            text: "Masanın üzerinde duran kitap dengelenmiş kuvvetler etkisindedir. Net kuvvet nedir?",
+            visual: { west: 0, east: 0, label: "Duruyor" },
+            options: ["Kitabın ağırlığı kadardır", "Sıfırdır", "Sonsuzdur", "Hesaplanamaz"],
+            correct: 1
+        }
+    ];
+
+    // --- UYGULAMA MANTIĞI ---
+
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let labInterval = null;
+
+    function showMenu() {
+        // Tüm ekranları gizle
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        // Menüyü göster
+        document.getElementById('menu-screen').classList.add('active');
+        document.getElementById('home-btn').style.display = 'none';
+        document.getElementById('header-title').innerText = "6. SINIF: BİLEŞKE KUVVET";
+        
+        // Lab animasyonunu durdur
+        if(labInterval) clearInterval(labInterval);
+    }
+
+    // --- QUIZ MOTORU ---
+    function startQuiz(actId) {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById('quiz-screen').classList.add('active');
+        document.getElementById('home-btn').style.display = 'block';
+
+        currentIndex = 0;
+        document.getElementById('feedback').innerHTML = "";
+        document.getElementById('next-btn').style.display = 'none';
+
+        if(actId === 1) {
+            currentQuestions = qAct1;
+            document.getElementById('header-title').innerText = "ETKİNLİK 1: KUVVETİN ÖZELLİKLERİ";
+        } else if(actId === 2) {
+            currentQuestions = qAct2;
+            document.getElementById('header-title').innerText = "ETKİNLİK 2: BİLEŞKE KUVVET";
+        } else {
+            currentQuestions = qAct3;
+            document.getElementById('header-title').innerText = "ETKİNLİK 3: DENGE DURUMU";
+        }
+
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = currentQuestions[currentIndex];
+        document.getElementById('question-text').innerText = (currentIndex + 1) + ". " + q.text;
+        
+        // Görsel Oluşturma (Canvas yerine DOM elementleri ile dinamik çizim)
+        const visualStage = document.getElementById('quiz-visual');
+        visualStage.innerHTML = ""; // Temizle
+        
+        // Kutu
+        const box = document.createElement('div');
+        box.style.width = "80px";
+        box.style.height = "80px";
+        box.style.background = "#f1c40f";
+        box.style.border = "2px solid #333";
+        box.style.display = "flex";
+        box.style.alignItems = "center";
+        box.style.justifyContent = "center";
+        box.style.fontSize = "12px";
+        box.style.fontWeight = "bold";
+        box.innerText = q.visual.label;
+        box.style.position = "relative";
+        box.style.zIndex = "2";
+        visualStage.appendChild(box);
+
+        // --- YARDIMCI FONKSİYON: OK ÇİZİMİ ---
+        const createArrow = (force, direction, index = 0, total = 1) => {
+            const isWest = direction === 'west';
+            const color = isWest ? "#E74C3C" : "#4A90E2";
+            
+            const arrow = document.createElement('div');
+            arrow.style.position = "absolute";
+            arrow.style.height = "5px"; // İNCELTİLDİ (Eskisi 8px)
+            arrow.style.width = (force * 10) + "px"; // 1N = 10px
+            arrow.style.background = color;
+            
+            // Konumlandırma (Aynı yönde birden fazla ok varsa dikeyde ayır)
+            // index: kaçıncı ok, total: toplam ok sayısı
+            let topOffset = 0;
+            if (total > 1) {
+                // Eğer birden fazla ok varsa, bunları kutunun üst/alt kısımlarına yay
+                const spacing = 30; // ARALIK ARTIRILDI (Eskisi 20px)
+                topOffset = (index - (total - 1) / 2) * spacing;
+            }
+
+            arrow.style.top = `calc(50% + ${topOffset}px)`;
+
+            // Ok ucu boyutları
+            const tipSize = 8; // Uç boyutu küçültüldü
+            const tipWidth = 12;
+
+            if (isWest) {
+                arrow.style.right = "50%";
+                arrow.style.marginRight = "45px"; 
+                
+                // Ok ucu (Sol)
+                const tip = document.createElement('div');
+                tip.style.position = "absolute";
+                tip.style.right = "100%";
+                // Dikey ortalama için transform kullanımı
+                tip.style.top = "50%";
+                tip.style.transform = "translateY(-50%)";
+                
+                tip.style.borderTop = `${tipSize}px solid transparent`;
+                tip.style.borderBottom = `${tipSize}px solid transparent`;
+                tip.style.borderRight = `${tipWidth}px solid ${color}`;
+                arrow.appendChild(tip);
+            } else {
+                arrow.style.left = "50%";
+                arrow.style.marginLeft = "45px";
+
+                // Ok ucu (Sağ)
+                const tip = document.createElement('div');
+                tip.style.position = "absolute";
+                tip.style.left = "100%";
+                // Dikey ortalama
+                tip.style.top = "50%";
+                tip.style.transform = "translateY(-50%)";
+
+                tip.style.borderTop = `${tipSize}px solid transparent`;
+                tip.style.borderBottom = `${tipSize}px solid transparent`;
+                tip.style.borderLeft = `${tipWidth}px solid ${color}`;
+                arrow.appendChild(tip);
+            }
+
+            // Değer yazısı
+            const val = document.createElement('div');
+            val.innerText = force + "N";
+            val.style.position = "absolute";
+            val.style.top = "-22px"; // Yazıyı biraz daha yukarı aldık
+            val.style.width = "100%";
+            val.style.textAlign = "center";
+            val.style.color = color;
+            val.style.fontWeight = "bold";
+            val.style.fontSize = "14px";
+            arrow.appendChild(val);
+
+            return arrow;
+        };
+
+        // --- BATI OKLARI ---
+        const westData = Array.isArray(q.visual.west) ? q.visual.west : (q.visual.west > 0 ? [q.visual.west] : []);
+        westData.forEach((force, idx) => {
+            visualStage.appendChild(createArrow(force, 'west', idx, westData.length));
+        });
+
+        // --- DOĞU OKLARI ---
+        const eastData = Array.isArray(q.visual.east) ? q.visual.east : (q.visual.east > 0 ? [q.visual.east] : []);
+        eastData.forEach((force, idx) => {
+            visualStage.appendChild(createArrow(force, 'east', idx, eastData.length));
+        });
+
+        // Şıkları Oluştur
+        const optsDiv = document.getElementById('options-area');
+        optsDiv.innerHTML = "";
+        q.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = "option-btn";
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(idx, q.correct, btn);
+            optsDiv.appendChild(btn);
+        });
+
+        // Feedback temizle
+        document.getElementById('feedback').innerHTML = "";
+        document.getElementById('next-btn').style.display = "none";
+    }
+
+    function checkAnswer(selectedIdx, correctIdx, btn) {
+        // Tüm butonları disable et
+        const btns = document.querySelectorAll('.option-btn');
+        btns.forEach(b => b.disabled = true);
+
+        const fb = document.getElementById('feedback');
+
+        if(selectedIdx === correctIdx) {
+            btn.classList.add('correct');
+            fb.innerHTML = "<span style='color:green'>✔ Harika! Doğru cevap.</span>";
+        } else {
+            btn.classList.add('wrong');
+            btns[correctIdx].classList.add('correct'); // Doğruyu göster
+            fb.innerHTML = "<span style='color:red'>✘ Yanlış. Doğru cevap yeşil ile işaretlendi.</span>";
+        }
+
+        // Sonraki butonunu hazırla
+        const nextBtn = document.getElementById('next-btn');
+        if(currentIndex < currentQuestions.length - 1) {
+            nextBtn.innerText = "Sonraki Soru";
+            nextBtn.onclick = nextQuestion;
+        } else {
+            nextBtn.innerText = "Etkinliği Bitir";
+            nextBtn.onclick = showMenu;
+        }
+        nextBtn.style.display = "inline-block";
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        renderQuestion();
+    }
+
+
+    // --- LABORATUVAR (SİMÜLASYON) MOTORU ---
+    let boxPos = 0; // Kutu pozisyonu (merkezden uzaklık px)
+    let speed = 0; // Hareket hızı
+
+    function startLab() {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById('lab-screen').classList.add('active');
+        document.getElementById('home-btn').style.display = 'block';
+        document.getElementById('header-title').innerText = "ETKİNLİK 4: LABORATUVAR";
+        
+        // Reset Lab
+        document.getElementById('input-west').value = 0;
+        document.getElementById('input-east').value = 0;
+        boxPos = 0;
+        speed = 0;
+        updateLab();
+
+        // Hareket Döngüsü
+        if(labInterval) clearInterval(labInterval);
+        labInterval = setInterval(animateLab, 30); // 30ms'de bir güncelle
+    }
+
+    function updateLab() {
+        const westVal = parseInt(document.getElementById('input-west').value);
+        const eastVal = parseInt(document.getElementById('input-east').value);
+
+        // Değerleri Yaz
+        document.getElementById('val-west').innerText = westVal + " N";
+        document.getElementById('val-east').innerText = eastVal + " N";
+
+        // Okları Çiz
+        const arrowW = document.getElementById('lab-arrow-west');
+        const arrowE = document.getElementById('lab-arrow-east');
+
+        if (westVal > 0) {
+            arrowW.style.display = 'flex';
+            arrowW.style.width = (westVal * 10) + 'px'; // 1N = 10px
+            arrowW.querySelector('span').innerText = westVal + 'N';
+        } else {
+            arrowW.style.display = 'none';
+        }
+
+        if (eastVal > 0) {
+            arrowE.style.display = 'flex';
+            arrowE.style.width = (eastVal * 10) + 'px';
+            arrowE.querySelector('span').innerText = eastVal + 'N';
+        } else {
+            arrowE.style.display = 'none';
+        }
+
+        // Hesaplama
+        let net = 0;
+        let status = "Dengelenmiş";
+        let color = "white";
+
+        if(eastVal === westVal) {
+            net = 0;
+            status = "Dengelenmiş (Sabit veya Duruyor)";
+            color = "#2ecc71"; // Yeşil
+            speed = 0; // Eşitse hız artmaz (mevcut hız korunur aslında ama basitlik için durduralım)
+        } else if (eastVal > westVal) {
+            net = eastVal - westVal;
+            status = "Dengelenmemiş (Doğu Yönünde)";
+            color = "white";
+            speed = net * 0.5; // Net kuvvetle orantılı hız
+        } else {
+            net = westVal - eastVal;
+            status = "Dengelenmemiş (Batı Yönünde)";
+            color = "white";
+            speed = -(net * 0.5); // Batı negatif yön
+        }
+
+        document.getElementById('res-net').innerText = net + " N";
+        document.getElementById('res-status').innerText = status;
+        document.getElementById('res-status').style.color = color;
+    }
+
+    function animateLab() {
+        const wrapper = document.getElementById('box-wrapper');
+        const westVal = parseInt(document.getElementById('input-west').value);
+        const eastVal = parseInt(document.getElementById('input-east').value);
+
+        // Sadece dengelenmemiş kuvvet varsa hareket ettir
+        if (westVal !== eastVal) {
+            boxPos += speed;
+            
+            // Sınırlandırma (Ekrandan çıkmasın)
+            if(boxPos > 400) boxPos = 400;
+            if(boxPos < -400) boxPos = -400;
+
+            wrapper.style.transform = `translateX(calc(-50% + ${boxPos}px))`;
+        }
+    }
+
+</script>
+</body>
+</html>
