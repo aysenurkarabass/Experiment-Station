@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güneş Sistemi 3B Keşif Modeli - e12</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Confetti for Game Mode (Global Script) -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
+    <!-- Import Map for reliable module loading -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js",
+                "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; display: block; }
+        
+        /* UI Glassmorphism */
+        .ui-panel {
+            backdrop-filter: blur(12px);
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Scrollbar */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #6366f1; border-radius: 3px; }
+
+        /* Animations */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+        }
+        .planet-btn:hover { transform: translateY(-5px); }
+        .planet-btn.active { border-color: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.5); }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="absolute top-0 left-0 w-full h-20 z-30 flex items-center justify-between px-6 bg-[#191970] shadow-xl border-b border-white/10">
+        <div class="flex items-center">
+            <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="e12 Logo" class="h-10 mr-6 pointer-events-auto select-none">
+            <h1 class="text-white text-2xl font-bold tracking-wide pointer-events-none select-none hidden md:block">
+                Güneş Sistemi 3B Keşif Modeli
+            </h1>
+        </div>
+        
+        <!-- Top Right Actions -->
+        <div class="flex space-x-3 pointer-events-auto">
+            <button onclick="window.toggleCompareMode()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-lg flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Karşılaştır
+            </button>
+            <button onclick="window.toggleGameMode()" id="game-btn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold transition-colors shadow-lg flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Beni Bul Oyunu
+            </button>
+        </div>
+    </header>
+
+    <!-- Game UI (Hidden by default) -->
+    <div id="game-ui" class="hidden absolute top-24 right-6 z-20 w-80 ui-panel rounded-xl p-4 text-white transition-all">
+        <div class="flex justify-between items-center mb-3 border-b border-white/10 pb-2">
+            <span class="font-bold text-emerald-400">TEST MODU</span>
+            <span class="bg-emerald-900/50 px-2 py-1 rounded text-xs">Puan: <span id="game-score">0</span></span>
+        </div>
+        <p class="text-sm text-gray-300 mb-2">Aşağıdaki ipucuna uyan gök cismini bul ve tıkla:</p>
+        <div id="game-question" class="text-lg font-semibold text-center py-4 bg-white/5 rounded-lg border border-white/5 animate-pulse min-h-[80px] flex items-center justify-center">
+            Soru yükleniyor...
+        </div>
+        <div id="game-feedback" class="mt-2 text-center text-sm font-bold min-h-[20px]"></div>
+        
+        <!-- Next Question Button -->
+        <button id="next-q-btn" onclick="window.nextQuestion()" class="hidden w-full mt-3 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg font-bold shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2">
+            Sıradaki Soru 
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+        </button>
+    </div>
+
+    <!-- Comparison Modal (Hidden) -->
+    <div id="compare-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+        <div class="bg-slate-900 w-full max-w-4xl h-[80vh] rounded-2xl border border-slate-700 shadow-2xl flex flex-col overflow-hidden">
+            <div class="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-800">
+                <h2 class="text-2xl font-bold text-white">Gezegen Karşılaştırma</h2>
+                <button onclick="window.toggleCompareMode()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <div class="flex-1 overflow-auto p-6 custom-scroll">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Selection Area -->
+                    <div class="col-span-1 md:col-span-3 mb-6 bg-slate-800/50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-400 mb-2">Karşılaştırmak için 2 gezegen seçin:</p>
+                        <div id="compare-selection" class="flex flex-wrap gap-2">
+                            <!-- Checkboxes injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Left Planet -->
+                    <div id="compare-left" class="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center hidden">
+                        <div id="comp-l-color" class="w-24 h-24 rounded-full mx-auto mb-4 shadow-[0_0_20px_rgba(255,255,255,0.2)]"></div>
+                        <h3 id="comp-l-name" class="text-2xl font-bold text-white mb-4">Gezegen 1</h3>
+                        <div class="space-y-3 text-left text-sm text-gray-300">
+                            <div class="flex justify-between border-b border-gray-700 pb-1"><span>Tür:</span> <span id="comp-l-type" class="text-white">...</span></div>
+                            <div class="flex justify-between border-b border-gray-700 pb-1"><span>Sıra:</span> <span id="comp-l-order" class="text-white">...</span></div>
+                            <div class="flex justify-between border-b border-gray-700 pb-1"><span>Uzaklık:</span> <span id="comp-l-dist" class="text-white">...</span></div>
+                            <div class="flex justify-between border-b border-gray-700 pb-1"><span>Çap (Birim):</span> <span id="comp-l-size" class="text-white">...</span></div>
+                        </div>
+                    </div>
+
+                    <!-- VS Graphic -->
+                    <div id="compare-vs" class="flex items-center justify-center text-4xl font-black text-slate-700 italic hidden">VS</div>
+
+                    <!-- Right Planet -->
+                    <div id="compare-right" class="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center hidden">
+                        <div id="comp-r-color" class="w-24 h-24 rounded-full mx-auto mb-4 shadow-[0_0_20px_rgba(255,255,255,0.2)]"></div>
+                        <h3 id="comp-r-name" class="text-2xl font-bold text-white mb-4">Gezegen 2</h3>
+                        <div class="space-y-3 text-left text-sm text-gray-300">
+                            <div class="flex justify-between border-b border-gray-700 pb-1"><span>Tür:</span> <span id="comp-r-type" class="text-white">...</span></div>
+                            <div class="flex justify-between border-b border-gray-700 pb-1"><span>Sıra:</span> <span id="comp-r-order" class="text-white">...</span></div>
+                            <div class="flex justify-between border-b border-gray-700 pb-1"><span>Uzaklık:</span> <span id="comp-r-dist" class="text-white">...</span></div>
+                            <div class="flex justify-between border-b border-gray-700 pb-1"><span>Çap (Birim):</span> <span id="comp-r-size" class="text-white">...</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Modal (Existing but styled) -->
+    <div id="info-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+        <div class="ui-panel relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl transform transition-all scale-100">
+            <div id="modal-header-bg" class="h-24 w-full flex items-end p-6 bg-gradient-to-r from-blue-900 to-slate-900">
+                <h2 id="modal-title" class="text-4xl font-bold text-white drop-shadow-md">Gezegen İsmi</h2>
+            </div>
+            <div class="p-6 text-slate-200">
+                <div class="flex items-center space-x-4 mb-4 text-sm text-slate-400 border-b border-slate-700 pb-2">
+                    <span id="modal-type" class="uppercase tracking-widest font-semibold">TÜR</span>
+                    <span>&bull;</span>
+                    <span id="modal-order">SIRA</span>
+                </div>
+                <p id="modal-description" class="text-lg leading-relaxed info-content max-h-60 overflow-y-auto custom-scroll">
+                    Açıklama...
+                </p>
+            </div>
+            <div class="bg-slate-900/50 p-4 flex justify-end">
+                <button onclick="window.closeModal()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors font-medium shadow-lg">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Planet Dock (Bottom Menu) -->
+    <div class="absolute bottom-0 left-0 w-full z-40 bg-gradient-to-t from-black via-black/80 to-transparent pt-10 pb-4 px-4">
+        <div class="flex justify-center items-end gap-2 md:gap-4 overflow-x-auto custom-scroll pb-2 px-4" id="planet-dock">
+            <!-- Dynamically filled -->
+        </div>
+    </div>
+
+    <!-- Controls (Moved slightly up) -->
+    <div class="absolute bottom-28 left-6 z-20 flex flex-col space-y-2">
+        <button onclick="window.togglePlayPause()" id="play-btn" class="ui-panel hover:bg-slate-700 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg" title="Başlat/Durdur">
+            <svg id="icon-pause" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </button>
+        <button onclick="window.changeSpeed()" class="ui-panel hover:bg-slate-700 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg group relative" title="Hız Değiştir">
+            <span id="speed-indicator" class="text-xs font-bold">1x</span>
+        </button>
+        <button onclick="window.resetCamera()" class="ui-panel hover:bg-slate-700 text-white w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-lg" title="Kamerayı Sıfırla">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+        </button>
+    </div>
+
+    <!-- Canvas -->
+    <div id="canvas-container"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+        // --- 1. DATA ---
+        const planetData = [
+             {
+                name: "Güneş",
+                color: 0xFFD700,
+                baseColor: "#FFD700",
+                textureType: "sun",
+                size: 8,
+                distance: 0,
+                speed: 0,
+                type: "Yıldız",
+                order: "Merkez",
+                desc: "Güneş Sistemi'nin merkezinde yer alan orta büyüklükte bir yıldızdır. Enerji kaynağımızdır.",
+                isSun: true
+            },
+            {
+                name: "Merkür",
+                color: 0xA5A5A5,
+                textureType: "rocky",
+                baseColor: "#A5A5A5",
+                size: 0.8,
+                distance: 20,
+                speed: 0.04,
+                type: "Karasal",
+                order: "1. Sırada",
+                desc: "Güneş’e en yakın ve en küçük gezegendir. Atmosferi yoktur, yüzeyi kraterlidir."
+            },
+            {
+                name: "Venüs",
+                color: 0xE3BB76,
+                textureType: "cloudy",
+                baseColor: "#E3BB76",
+                size: 1.5,
+                distance: 30,
+                speed: 0.025,
+                type: "Karasal",
+                order: "2. Sırada",
+                desc: "En sıcak gezegendir. Yoğun atmosferi sera etkisi yaratır. Çoban Yıldızı olarak bilinir."
+            },
+            {
+                name: "Dünya",
+                color: 0x22A6B3,
+                textureType: "earth",
+                baseColor: "#1a468c",
+                size: 1.6,
+                distance: 42,
+                speed: 0.02,
+                type: "Karasal",
+                order: "3. Sırada",
+                desc: "Yaşam barındıran tek gezegendir. Yüzeyinin %71'i sularla kaplıdır."
+            },
+            {
+                name: "Ay",
+                color: 0x888888,
+                textureType: "moon",
+                baseColor: "#888888",
+                size: 0.4,
+                distance: 45.5, // Fake distance for sorting in list
+                speed: 0,
+                type: "Uydu",
+                order: "Dünya",
+                desc: "Dünya'nın tek doğal uydusudur.",
+                isMoon: true,
+                parent: "Dünya"
+            },
+            {
+                name: "Mars",
+                color: 0xFF6B6B,
+                textureType: "mars",
+                baseColor: "#c1440e",
+                size: 1.1,
+                distance: 54,
+                speed: 0.016,
+                type: "Karasal",
+                order: "4. Sırada",
+                desc: "Kızıl Gezegen. Yüzeyinde demiroksit bulunur. En yüksek dağ Olimpos buradadır."
+            },
+            {
+                name: "Jüpiter",
+                color: 0xD9A77F,
+                textureType: "gas",
+                baseColor: "#D9A77F",
+                size: 4.5,
+                distance: 85,
+                speed: 0.008,
+                type: "Gaz Devi",
+                order: "5. Sırada",
+                desc: "En büyük gezegendir. Gazlardan oluşur ve Büyük Kırmızı Leke fırtınasına sahiptir."
+            },
+            {
+                name: "Satürn",
+                color: 0xE0C876,
+                textureType: "gas",
+                baseColor: "#E0C876",
+                size: 3.8,
+                distance: 110,
+                speed: 0.006,
+                hasRing: true,
+                type: "Gaz Devi",
+                order: "6. Sırada",
+                desc: "Halkalarıyla ünlüdür. Güneş sisteminin en büyük ikinci gezegenidir."
+            },
+            {
+                name: "Uranüs",
+                color: 0x7DE3F4,
+                textureType: "gas_plain",
+                baseColor: "#7DE3F4",
+                size: 2.8,
+                distance: 135,
+                speed: 0.004,
+                type: "Buz Devi",
+                order: "7. Sırada",
+                desc: "Yana yatmış varil gibi döner. En soğuk gezegenlerdendir."
+            },
+            {
+                name: "Neptün",
+                color: 0x3E5DD6,
+                textureType: "gas_plain",
+                baseColor: "#3E5DD6",
+                size: 2.7,
+                distance: 160,
+                speed: 0.003,
+                type: "Buz Devi",
+                order: "8. Sırada",
+                desc: "Güneş'e en uzak gezegendir. Şiddetli fırtınaları vardır."
+            }
+        ];
+
+        // --- GLOBAL VARIABLES (Module Scope) ---
+        let scene, camera, renderer, controls, composer;
+        let objectsMesh = []; // All clickable meshes
+        let earthMeshRef, moonMeshRef, sunMeshRef;
+        let asteroidBelt, comet;
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        
+        let isPaused = false;
+        let speedMultiplier = 1;
+        let moonAngle = 0;
+
+        // Game State
+        let gameActive = false;
+        let currentQuestionIndex = 0;
+        let isWaitingForNext = false; // Prevent clicks while showing feedback
+        let score = 0;
+        let gameQuestions = [];
+
+        // 20 Questions in Order (2 per celestial body)
+        const questions = [
+            // Güneş
+            { text: "Güneş Sistemi'nin merkezindeki yıldız hangisidir?", answer: "Güneş" },
+            { text: "Dünya'daki yaşamın temel enerji kaynağı hangisidir?", answer: "Güneş" },
+            // Merkür
+            { text: "Güneş'e en yakın gezegen hangisidir?", answer: "Merkür" },
+            { text: "Güneş sisteminin en küçük gezegeni hangisidir?", answer: "Merkür" },
+            // Venüs
+            { text: "Güneş sisteminin en sıcak gezegeni hangisidir?", answer: "Venüs" },
+            { text: "Halk arasında 'Çoban Yıldızı' olarak bilinen gezegen hangisidir?", answer: "Venüs" },
+            // Dünya
+            { text: "Üzerinde yaşam olduğu bilinen tek gezegen hangisidir?", answer: "Dünya" },
+            { text: "Yüzeyinin büyük kısmı sularla kaplı olan 'Mavi Gezegen' hangisidir?", answer: "Dünya" },
+            // Ay
+            { text: "Dünya'nın tek doğal uydusu hangisidir?", answer: "Ay" },
+            { text: "Güneş sisteminin beşinci büyük doğal uydusu hangisidir?", answer: "Ay" },
+            // Mars
+            { text: "Yüzeyindeki demiroksit nedeniyle 'Kızıl Gezegen' olarak bilinen hangisidir?", answer: "Mars" },
+            { text: "Güneş sisteminin en yüksek dağı olan Olimpos Dağı hangi gezegendedir?", answer: "Mars" },
+            // Jüpiter
+            { text: "Güneş sisteminin en büyük gezegeni hangisidir?", answer: "Jüpiter" },
+            { text: "Büyük Kırmızı Leke adlı dev fırtınaya sahip gezegen hangisidir?", answer: "Jüpiter" },
+            // Satürn
+            { text: "Belirgin halka sistemiyle tanınan gezegen hangisidir?", answer: "Satürn" },
+            { text: "Güneş sisteminin en büyük ikinci gezegeni hangisidir?", answer: "Satürn" },
+            // Uranüs
+            { text: "Ekseni yana yatmış bir varil gibi dönen gezegen hangisidir?", answer: "Uranüs" },
+            { text: "Atmosferindeki metan gazı nedeniyle soluk mavi görünen buz devi hangisidir?", answer: "Uranüs" },
+            // Neptün
+            { text: "Güneş'e en uzak gezegen hangisidir?", answer: "Neptün" },
+            { text: "Güneş sisteminin en rüzgarlı ve soğuk gezegenlerinden biri hangisidir?", answer: "Neptün" }
+        ];
+
+        // Compare State
+        let compareActive = false;
+        let selectedPlanets = [];
+
+        // --- 2. SETUP & INIT ---
+        function init() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.001);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 80, 160); 
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            // Tone mapping for Bloom
+            renderer.toneMapping = THREE.ReinhardToneMapping;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 400;
+
+            // --- BLOOM SETUP ---
+            const renderScene = new RenderPass(scene, camera);
+            const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+            bloomPass.threshold = 0.1; // Glow threshold
+            bloomPass.strength = 1.2;  // Glow intensity
+            bloomPass.radius = 0.5;
+            
+            composer = new EffectComposer(renderer);
+            composer.addPass(renderScene);
+            composer.addPass(bloomPass);
+
+            // Lights
+            scene.add(new THREE.AmbientLight(0x404040, 1.5)); // Brighter ambient
+            const sunLight = new THREE.PointLight(0xFFFFFF, 2.5, 450);
+            scene.add(sunLight);
+
+            // Content Creation
+            createStars();
+            createSystem();
+            createAsteroidBelt(65, 75);
+            createComet();
+            
+            // UI Generation
+            generatePlanetDock();
+            generateCompareSelection();
+
+            // Listeners
+            window.addEventListener('resize', onWindowResize, false);
+            window.addEventListener('click', onMouseClick, false);
+
+            animate();
+        }
+
+        // --- 3. CREATION HELPERS ---
+        function createPlanetTexture(type, baseColorHex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = baseColorHex; ctx.fillRect(0, 0, 512, 256);
+
+            if (type === 'sun') {
+                const g = ctx.createRadialGradient(256, 128, 20, 256, 128, 300);
+                g.addColorStop(0, '#FFF5CB'); g.addColorStop(0.1, '#FFD700'); 
+                g.addColorStop(0.5, '#FF8C00'); g.addColorStop(1, '#B22222');
+                ctx.fillStyle = g; ctx.fillRect(0,0,512,256);
+            } else if (type === 'gas') {
+                for(let i=0; i<20; i++) {
+                    ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.2})`;
+                    ctx.fillRect(0, Math.random()*256, 512, Math.random()*20+5);
+                }
+            } else if (['rocky','mars','moon'].includes(type)) {
+                for(let i=0; i<400; i++) {
+                    ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*256, Math.random()*10+2, 0, Math.PI*2);
+                    ctx.fillStyle = `rgba(0,0,0,0.15)`; ctx.fill();
+                }
+            } else if (type === 'earth') {
+                ctx.fillStyle = '#2d6a4f';
+                for(let i=0;i<30;i++) {
+                    ctx.beginPath(); ctx.ellipse(Math.random()*512, Math.random()*156+50, Math.random()*40+10, Math.random()*25+5, Math.random(), 0, Math.PI*2); ctx.fill();
+                }
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                for(let i=0;i<50;i++) ctx.fillRect(Math.random()*512, Math.random()*256, Math.random()*60+20, Math.random()*10+5);
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createSystem() {
+            planetData.forEach((data) => {
+                if (data.isSun) {
+                    const geo = new THREE.SphereGeometry(data.size, 64, 64);
+                    const mat = new THREE.MeshBasicMaterial({ map: createPlanetTexture('sun', data.baseColor) });
+                    sunMeshRef = new THREE.Mesh(geo, mat);
+                    sunMeshRef.userData = data;
+                    scene.add(sunMeshRef);
+                    objectsMesh.push(sunMeshRef);
+                } 
+                else if (data.isMoon) {
+                    // Created later with Earth
+                } 
+                else {
+                    // Orbit
+                    const orbitGeo = new THREE.RingGeometry(data.distance - 0.15, data.distance + 0.15, 128);
+                    const orbitMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, opacity: 0.1, transparent: true, side: THREE.DoubleSide });
+                    const orbit = new THREE.Mesh(orbitGeo, orbitMat);
+                    orbit.rotation.x = Math.PI / 2;
+                    scene.add(orbit);
+
+                    // Planet
+                    const geo = new THREE.SphereGeometry(data.size, 32, 32);
+                    const mat = new THREE.MeshStandardMaterial({ 
+                        map: createPlanetTexture(data.textureType, data.baseColor),
+                        roughness: 0.7, metalness: 0.1
+                    });
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.userData = data;
+                    
+                    // Ring
+                    if (data.hasRing) {
+                        const ringGeo = new THREE.RingGeometry(data.size + 1.5, data.size + 4, 64);
+                        const ringMat = new THREE.MeshBasicMaterial({ color: 0xAA9977, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+                        const ring = new THREE.Mesh(ringGeo, ringMat);
+                        ring.rotation.x = Math.PI/2;
+                        mesh.add(ring);
+                    }
+
+                    // Special Ref for Earth to attach Moon logic
+                    if (data.name === "Dünya") earthMeshRef = mesh;
+
+                    scene.add(mesh);
+                    objectsMesh.push(mesh);
+                    // Store initial angle
+                    mesh.userData.angle = Math.random() * Math.PI * 2;
+                }
+            });
+
+            // Create Moon manually
+            const moonDataRef = planetData.find(d => d.name === "Ay");
+            const mGeo = new THREE.SphereGeometry(moonDataRef.size, 16, 16);
+            const mMat = new THREE.MeshStandardMaterial({ map: createPlanetTexture('moon', '#888888') });
+            moonMeshRef = new THREE.Mesh(mGeo, mMat);
+            moonMeshRef.userData = moonDataRef;
+            scene.add(moonMeshRef);
+            objectsMesh.push(moonMeshRef);
+        }
+
+        function createStars() {
+            const geo = new THREE.BufferGeometry();
+            const pos = [];
+            for(let i=0; i<3000; i++) {
+                pos.push((Math.random()-0.5)*1000, (Math.random()-0.5)*1000, (Math.random()-0.5)*1000);
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            const mat = new THREE.PointsMaterial({size: 0.7, color: 0xffffff, transparent: true, opacity: 0.8});
+            scene.add(new THREE.Points(geo, mat));
+        }
+
+        function createAsteroidBelt(inner, outer) {
+            const geo = new THREE.BufferGeometry();
+            const pos = [], cols = [];
+            const color = new THREE.Color(0x888888);
+            for(let i=0; i<1500; i++) {
+                const r = inner + Math.random()*(outer-inner);
+                const theta = Math.random()*Math.PI*2;
+                pos.push(r*Math.cos(theta), (Math.random()-0.5)*3, r*Math.sin(theta));
+                cols.push(color.r + (Math.random()-0.5)*0.2, color.g, color.b);
+            }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+            geo.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+            asteroidBelt = new THREE.Points(geo, new THREE.PointsMaterial({size: 0.3, vertexColors: true}));
+            scene.add(asteroidBelt);
+        }
+
+        function createComet() {
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshBasicMaterial({color:0xffffff}));
+            const trail = new THREE.Mesh(new THREE.ConeGeometry(0.4, 5, 8), new THREE.MeshBasicMaterial({color: 0x88ccff, transparent:true, opacity:0.5}));
+            trail.position.y = -2.5; trail.rotation.x = Math.PI;
+            comet = new THREE.Group(); comet.add(head, trail);
+            comet.rotation.z = -Math.PI/4;
+            scene.add(comet);
+        }
+
+        // --- 4. UI LOGIC (MENU, GAME, COMPARE) ---
+        
+        function generatePlanetDock() {
+            const dock = document.getElementById('planet-dock');
+            planetData.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = "planet-btn flex flex-col items-center min-w-[60px] cursor-pointer transition-transform group";
+                btn.onclick = () => focusOnPlanet(p.name);
+                
+                // Create Icon Canvas
+                const size = 64; // High resolution for sharpness
+                const displaySize = 40; // CSS display size
+                const iconCanvas = document.createElement('canvas');
+                iconCanvas.width = size;
+                iconCanvas.height = size;
+                const ctx = iconCanvas.getContext('2d');
+
+                // Get the generated texture (it's a THREE.Texture, .image is the canvas)
+                const textureMap = createPlanetTexture(p.textureType, p.baseColor).image;
+                
+                const center = size / 2;
+                // Standardize radius EXACTLY same as Saturn for all planets
+                let radius = size / 3.5; 
+
+                // Adjust for Ring: if has ring, draw ring (radius is already set)
+                if (p.hasRing) {
+                    // Draw Ring
+                    ctx.save();
+                    ctx.translate(center, center);
+                    ctx.rotate(Math.PI / 8); // Tilt
+                    ctx.beginPath();
+                    // Ellipse for ring
+                    ctx.ellipse(0, 0, size/2 - 2, size/6, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(190, 180, 150, 0.8)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(100, 90, 70, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                // 1. Draw Planet Circle Mask
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(center, center, radius, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+
+                // 2. Draw Texture (Scale map to fit)
+                // Draw image covering the whole canvas area, but clipped to radius
+                ctx.drawImage(textureMap, 0, 0, textureMap.width, textureMap.height, 0, 0, size, size);
+
+                // 3. Add Sphere Shading (Fake 3D)
+                // Radial gradient to simulate light from top-left and shadow bottom-right
+                const grad = ctx.createRadialGradient(center - radius/3, center - radius/3, radius/10, center, center, radius);
+                grad.addColorStop(0, 'rgba(255,255,255,0.3)');  // Highlight
+                grad.addColorStop(0.4, 'rgba(0,0,0,0)');       // Mid
+                grad.addColorStop(1, 'rgba(0,0,0,0.6)');       // Shadow edge
+                ctx.fillStyle = grad;
+                ctx.fill();
+                ctx.restore();
+                
+                // 4. Border Ring (Inner glow/rim) for the planet itself
+                if (!p.hasRing) {
+                    ctx.beginPath();
+                    ctx.arc(center, center, radius - 1, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                }
+
+                // Style the canvas element
+                iconCanvas.className = "mb-1 transition-all group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] rounded-full";
+                iconCanvas.style.width = `${displaySize}px`;
+                iconCanvas.style.height = `${displaySize}px`;
+                
+                const span = document.createElement('span');
+                span.className = "text-xs text-gray-300 font-medium group-hover:text-white";
+                span.innerText = p.name;
+
+                btn.appendChild(iconCanvas);
+                btn.appendChild(span);
+                dock.appendChild(btn);
+            });
+        }
+
+        function generateCompareSelection() {
+            const container = document.getElementById('compare-selection');
+            planetData.forEach((p, idx) => {
+                const label = document.createElement('label');
+                label.className = "inline-flex items-center space-x-2 bg-slate-700 px-3 py-2 rounded cursor-pointer hover:bg-slate-600 transition";
+                label.innerHTML = `
+                    <input type="checkbox" class="form-checkbox text-indigo-500 rounded focus:ring-0" value="${p.name}" onchange="window.handleCompareCheck(this)">
+                    <span class="text-white text-sm select-none">${p.name}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        // --- EXPORTED FUNCTIONS FOR HTML ACCESS ---
+        window.handleCompareCheck = function(checkbox) {
+            if (checkbox.checked) {
+                if (selectedPlanets.length >= 2) {
+                    checkbox.checked = false; // Prevent more than 2
+                    alert("En fazla 2 gezegen seçebilirsiniz.");
+                    return;
+                }
+                selectedPlanets.push(checkbox.value);
+            } else {
+                selectedPlanets = selectedPlanets.filter(n => n !== checkbox.value);
+            }
+            updateCompareView();
+        }
+
+        function updateCompareView() {
+            const leftPanel = document.getElementById('compare-left');
+            const rightPanel = document.getElementById('compare-right');
+            const vsText = document.getElementById('compare-vs');
+
+            // Hide all first
+            leftPanel.classList.add('hidden');
+            rightPanel.classList.add('hidden');
+            vsText.classList.add('hidden');
+
+            if (selectedPlanets.length > 0) fillComparePanel('l', selectedPlanets[0], leftPanel);
+            if (selectedPlanets.length > 1) {
+                fillComparePanel('r', selectedPlanets[1], rightPanel);
+                vsText.classList.remove('hidden');
+            }
+        }
+
+        function fillComparePanel(side, planetName, panelElement) {
+            const data = planetData.find(p => p.name === planetName);
+            if (!data) return;
+
+            panelElement.classList.remove('hidden');
+            document.getElementById(`comp-${side}-name`).innerText = data.name;
+            document.getElementById(`comp-${side}-type`).innerText = data.type;
+            document.getElementById(`comp-${side}-order`).innerText = data.order;
+            document.getElementById(`comp-${side}-dist`).innerText = data.distance + " birim";
+            document.getElementById(`comp-${side}-size`).innerText = data.size + " birim";
+            
+            // Generate icon for compare panel too
+            const iconDiv = document.getElementById(`comp-${side}-color`);
+            iconDiv.innerHTML = ''; // clear old
+            iconDiv.style.backgroundColor = 'transparent';
+            iconDiv.style.boxShadow = 'none';
+            
+            const size = 100;
+            const cvs = document.createElement('canvas');
+            cvs.width = size; cvs.height = size;
+            const ctx = cvs.getContext('2d');
+            const textureMap = createPlanetTexture(data.textureType, data.baseColor).image;
+            
+            const center = size / 2;
+            let radius = size / 3.5; // Fixed size for consistency
+
+            if (data.hasRing) {
+                // Ring drawing
+                ctx.save();
+                ctx.translate(center, center);
+                ctx.rotate(Math.PI / 8);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, size/2 - 2, size/6, 0, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(190, 180, 150, 0.8)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(100, 90, 70, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            ctx.save();
+            ctx.beginPath(); 
+            ctx.arc(center, center, radius, 0, Math.PI*2); 
+            ctx.clip();
+            
+            ctx.drawImage(textureMap, 0, 0, textureMap.width, textureMap.height, 0, 0, size, size);
+            
+            const grad = ctx.createRadialGradient(center - radius/3, center - radius/3, radius/10, center, center, radius);
+            grad.addColorStop(0, 'rgba(255,255,255,0.3)'); grad.addColorStop(1, 'rgba(0,0,0,0.6)');
+            ctx.fillStyle = grad; ctx.fill();
+            ctx.restore();
+            
+            iconDiv.appendChild(cvs);
+        }
+
+        window.toggleCompareMode = function() {
+            compareActive = !compareActive;
+            const modal = document.getElementById('compare-modal');
+            if (compareActive) {
+                modal.classList.remove('hidden');
+                isPaused = true;
+            } else {
+                modal.classList.add('hidden');
+                isPaused = false;
+            }
+            updatePlayButton();
+        }
+
+        // --- GAME LOGIC ---
+        window.toggleGameMode = function() {
+            gameActive = !gameActive;
+            const ui = document.getElementById('game-ui');
+            const btn = document.getElementById('game-btn');
+            
+            if (gameActive) {
+                ui.classList.remove('hidden');
+                btn.innerText = "Oyunu Bitir";
+                btn.classList.replace('bg-emerald-600', 'bg-red-600');
+                btn.classList.replace('hover:bg-emerald-500', 'hover:bg-red-500');
+                
+                // Reset Game
+                score = 0;
+                document.getElementById('game-score').innerText = score;
+                currentQuestionIndex = 0;
+                isWaitingForNext = false;
+                
+                // Shuffle Questions
+                gameQuestions = [...questions].sort(() => Math.random() - 0.5);
+
+                askQuestion();
+            } else {
+                ui.classList.add('hidden');
+                btn.innerText = "Beni Bul Oyunu";
+                btn.classList.replace('bg-red-600', 'bg-emerald-600');
+                btn.classList.replace('hover:bg-red-500', 'hover:bg-emerald-500');
+                document.getElementById('next-q-btn').classList.add('hidden');
+            }
+        }
+
+        function askQuestion() {
+            if (currentQuestionIndex >= gameQuestions.length) {
+                finishGame();
+                return;
+            }
+            
+            const q = gameQuestions[currentQuestionIndex];
+            document.getElementById('game-question').innerText = `Soru ${currentQuestionIndex + 1}/${gameQuestions.length}:\n${q.text}`;
+            
+            // Reset Feedback UI
+            const fb = document.getElementById('game-feedback');
+            fb.innerText = "";
+            fb.className = "mt-2 text-center text-sm font-bold min-h-[20px]";
+            document.getElementById('next-q-btn').classList.add('hidden');
+            
+            isWaitingForNext = false;
+        }
+
+        function handleGameClick(clickedName) {
+            // Prevent multiple clicks on same question
+            if (isWaitingForNext) return;
+            
+            const q = gameQuestions[currentQuestionIndex];
+            const fb = document.getElementById('game-feedback');
+            const nextBtn = document.getElementById('next-q-btn');
+            
+            isWaitingForNext = true; // Block further inputs until next
+
+            if (clickedName === q.answer) {
+                score += 10;
+                document.getElementById('game-score').innerText = score;
+                fb.innerHTML = "DOĞRU! 🎉";
+                fb.className = "mt-2 text-center text-lg font-bold text-emerald-400";
+                
+                // Confetti Effect (Global window.confetti available)
+                window.confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+            } else {
+                fb.innerHTML = `YANLIŞ!<br><span class="text-sm font-normal text-gray-300">Doğru Cevap:</span> <span class="text-yellow-400">${q.answer}</span>`;
+                fb.className = "mt-2 text-center text-lg font-bold text-red-500";
+            }
+            
+            // Show Next Button
+            nextBtn.classList.remove('hidden');
+        }
+
+        window.nextQuestion = function() {
+            currentQuestionIndex++;
+            askQuestion();
+        }
+
+        function finishGame() {
+            document.getElementById('game-question').innerText = "Oyun Bitti!";
+            document.getElementById('game-feedback').innerHTML = `Toplam Puan: <span class="text-emerald-400 text-xl">${score}</span>`;
+            document.getElementById('next-q-btn').classList.add('hidden');
+        }
+
+        // --- NAVIGATION LOGIC ---
+        function focusOnPlanet(name) {
+            // Find object
+            const target = objectsMesh.find(o => o.userData.name === name);
+            if (!target) return;
+
+            // Simple Camera Move
+            const dist = target.userData.size * 4 + 10;
+            const worldPos = new THREE.Vector3();
+            target.getWorldPosition(worldPos);
+            
+            camera.position.set(worldPos.x + dist, worldPos.y + dist*0.5, worldPos.z + dist);
+            controls.target.copy(worldPos);
+            controls.update();
+        }
+
+        window.resetCamera = function() {
+            camera.position.set(0, 80, 160);
+            controls.target.set(0,0,0);
+            controls.update();
+        }
+
+        // --- INTERACTION ---
+        function onMouseClick(event) {
+            // Ignore if clicking on UI
+            if (event.target.closest('button') || event.target.closest('.ui-panel') || event.target.closest('#planet-dock')) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const intersects = raycaster.intersectObjects(objectsMesh);
+            if (intersects.length > 0) {
+                const data = intersects[0].object.userData;
+                
+                if (gameActive) {
+                    handleGameClick(data.name);
+                } else if (!compareActive) {
+                    // Open Info
+                    openModal(data);
+                }
+            }
+        }
+
+        function openModal(data) {
+            isPaused = true;
+            updatePlayButton();
+            document.getElementById('modal-title').innerText = data.name;
+            document.getElementById('modal-description').innerText = data.desc;
+            document.getElementById('modal-type').innerText = data.type;
+            document.getElementById('modal-order').innerText = data.order;
+            document.getElementById('modal-header-bg').style.background = `linear-gradient(to right, ${data.baseColor}, #0f172a)`;
+            document.getElementById('info-modal').classList.remove('hidden');
+        }
+
+        window.closeModal = function() {
+            document.getElementById('info-modal').classList.add('hidden');
+            isPaused = false;
+            updatePlayButton();
+        }
+
+        // --- CONTROLS ---
+        window.togglePlayPause = function() {
+            isPaused = !isPaused;
+            updatePlayButton();
+        }
+        function updatePlayButton() {
+            const icon = document.getElementById('icon-pause');
+            icon.innerHTML = isPaused 
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>' 
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+        }
+        window.changeSpeed = function() {
+            const speeds = [1, 2, 5, 0.5];
+            const labels = ["1x", "2x", "5x", "0.5x"];
+            let idx = speeds.indexOf(speedMultiplier);
+            idx = (idx + 1) % speeds.length;
+            speedMultiplier = speeds[idx];
+            document.getElementById('speed-indicator').innerText = labels[idx];
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!isPaused) {
+                const delta = 0.05 * speedMultiplier;
+
+                objectsMesh.forEach(mesh => {
+                    const d = mesh.userData;
+                    if (d.isSun) {
+                        mesh.rotation.y += 0.002;
+                    } else if (d.isMoon) {
+                        // Handled below
+                    } else {
+                        // Orbit
+                        d.angle = (d.angle || 0) + d.speed * delta;
+                        mesh.position.x = Math.cos(d.angle) * d.distance;
+                        mesh.position.z = Math.sin(d.angle) * d.distance;
+                        mesh.rotation.y += 0.02;
+                    }
+                });
+
+                // Moon Logic
+                if (moonMeshRef && earthMeshRef) {
+                    const mData = moonMeshRef.userData;
+                    const ePos = earthMeshRef.position;
+                    // Simple relative orbit
+                    moonAngle += 0.08 * delta * 2;
+                    moonMeshRef.position.x = ePos.x + Math.cos(moonAngle) * 3.5;
+                    moonMeshRef.position.z = ePos.z + Math.sin(moonAngle) * 3.5;
+                    moonMeshRef.position.y = ePos.y;
+                }
+
+                if (asteroidBelt) asteroidBelt.rotation.y += 0.002 * speedMultiplier;
+                if (comet) {
+                    const t = Date.now() * 0.0005 * speedMultiplier;
+                    comet.position.set(Math.cos(t)*180, Math.sin(t*2)*20, Math.sin(t)*120);
+                    comet.lookAt(0,0,0);
+                }
+            }
+
+            controls.update();
+            // Use Composer for Bloom instead of standard renderer
+            composer.render();
+        }
+
+        init();
+    </script>
+</body>
+</html>
