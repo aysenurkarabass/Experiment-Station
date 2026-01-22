@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canlıların Ortak Özellikleri - 9. Sınıf Biyoloji</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel (JSX Derleyicisi) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        /* Özel Animasyonlar */
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slide-right {
+          from { width: 0; }
+          to { width: 100%; }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out forwards;
+        }
+        .animate-slide-right {
+          animation: slide-right 1s linear infinite;
+        }
+        .animate-spin-slow {
+          animation: spin 8s linear infinite;
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        /* Custom Scrollbar for lists */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 h-screen overflow-hidden flex flex-col">
+    <div id="root" class="h-full flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- İKON TANIMLAMALARI (Lucide Icons Yerine SVG Bileşenleri) ---
+        const IconBase = ({ children, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+
+        const Microscope = (props) => <IconBase {...props}><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 12a7 7 0 1 0-7-7"/><path d="M9 36 9 9"/><path d="M9 14 9 9"/></IconBase>;
+        const Activity = (props) => <IconBase {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></IconBase>;
+        const Sun = (props) => <IconBase {...props}><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></IconBase>;
+        const Snowflake = (props) => <IconBase {...props}><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/><path d="m20 16-4-4 4-4"/><path d="m4 8 4 4-4 4"/><path d="m16 4-4 4-4-4"/><path d="m8 20 4-4 4 4"/></IconBase>;
+        const Zap = (props) => <IconBase {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>;
+        const Info = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>;
+        const ChevronRight = (props) => <IconBase {...props}><path d="m9 18 6-6-6-6"/></IconBase>;
+        const ChevronLeft = (props) => <IconBase {...props}><path d="m15 18-6-6 6-6"/></IconBase>;
+        const RefreshCw = (props) => <IconBase {...props}><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></IconBase>;
+        const Droplets = (props) => <IconBase {...props}><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></IconBase>;
+        const Leaf = (props) => <IconBase {...props}><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 .5 3.5-.5 9.1A7 7 0 0 1 11 20z"/><path d="m8 14 6-6"/></IconBase>;
+        const ShieldAlert = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></IconBase>;
+        const Sprout = (props) => <IconBase {...props}><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>;
+        const XCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></IconBase>;
+
+        // --- DETAYLI HÜCRE GÖRSELLERİ (SVG) ---
+
+        const AnimalCellSVG = () => (
+            <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl animate-float">
+                <defs>
+                    <radialGradient id="cytoplasmGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                        <stop offset="0%" stopColor="#ffe4e6" />
+                        <stop offset="90%" stopColor="#fda4af" />
+                        <stop offset="100%" stopColor="#f43f5e" />
+                    </radialGradient>
+                    <radialGradient id="nucleusGrad" cx="40%" cy="40%" r="50%">
+                        <stop offset="0%" stopColor="#e9d5ff" />
+                        <stop offset="100%" stopColor="#7e22ce" />
+                    </radialGradient>
+                    <linearGradient id="mitoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#fca5a5" />
+                        <stop offset="100%" stopColor="#b91c1c" />
+                    </linearGradient>
+                </defs>
+                <path d="M100,10 C160,10 195,50 190,100 C185,160 150,195 100,190 C40,185 10,150 15,100 C20,40 50,10 100,10 Z" fill="url(#cytoplasmGrad)" stroke="#be123c" strokeWidth="2" filter="drop-shadow(0px 5px 5px rgba(0,0,0,0.2))"/>
+                <path d="M50,90 Q40,120 60,140 M140,80 Q160,100 150,130" stroke="#d8b4fe" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.8" />
+                <circle cx="85" cy="85" r="35" fill="url(#nucleusGrad)" stroke="#6b21a8" strokeWidth="2" />
+                <circle cx="85" cy="85" r="12" fill="#4c1d95" opacity="0.6" />
+                <circle cx="65" cy="70" r="2" fill="#6b21a8" opacity="0.5" />
+                <circle cx="105" cy="70" r="2" fill="#6b21a8" opacity="0.5" />
+                <circle cx="65" cy="100" r="2" fill="#6b21a8" opacity="0.5" />
+                <g transform="translate(140, 60) rotate(30)">
+                    <path d="M-15,0 C-15,-10 15,-10 15,0 C15,10 -15,10 -15,0 Z" fill="url(#mitoGrad)" stroke="#7f1d1d" strokeWidth="1" />
+                    <path d="M-10,0 L-5,4 L0,-4 L5,4 L10,0" fill="none" stroke="#7f1d1d" strokeWidth="1" opacity="0.7"/>
+                </g>
+                <g transform="translate(60, 150) rotate(-15)">
+                     <path d="M-12,0 C-12,-8 12,-8 12,0 C12,8 -12,8 -12,0 Z" fill="url(#mitoGrad)" stroke="#7f1d1d" strokeWidth="1" />
+                     <path d="M-8,0 L-4,3 L0,-3 L4,3 L8,0" fill="none" stroke="#7f1d1d" strokeWidth="1" opacity="0.7"/>
+                </g>
+                <g transform="translate(130, 130)">
+                    <path d="M0,0 Q20,5 0,10" stroke="#d97706" strokeWidth="4" fill="none" strokeLinecap="round" />
+                    <path d="M-5,15 Q25,20 -5,25" stroke="#d97706" strokeWidth="4" fill="none" strokeLinecap="round" />
+                    <path d="M5,30 Q20,33 5,36" stroke="#d97706" strokeWidth="4" fill="none" strokeLinecap="round" />
+                </g>
+                <circle cx="160" cy="100" r="6" fill="#facc15" stroke="#a16207" strokeWidth="1" />
+                <circle cx="40" cy="50" r="5" fill="#facc15" stroke="#a16207" strokeWidth="1" />
+                <g transform="translate(50, 60)">
+                   <rect x="0" y="0" width="4" height="10" transform="rotate(0)" fill="#f59e0b" />
+                   <rect x="0" y="0" width="4" height="10" transform="rotate(90)" fill="#f59e0b" />
+                </g>
+                <circle cx="110" cy="40" r="1.5" fill="#581c87" />
+                <circle cx="120" cy="45" r="1.5" fill="#581c87" />
+                <circle cx="30" cy="120" r="1.5" fill="#581c87" />
+            </svg>
+        );
+
+        const PlantCellSVG = () => (
+            <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl animate-float">
+                 <defs>
+                    <linearGradient id="cellWallGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#4ade80" />
+                        <stop offset="100%" stopColor="#14532d" />
+                    </linearGradient>
+                    <radialGradient id="vacuoleGrad" cx="40%" cy="40%" r="60%">
+                        <stop offset="0%" stopColor="#e0f2fe" />
+                        <stop offset="90%" stopColor="#60a5fa" />
+                        <stop offset="100%" stopColor="#2563eb" />
+                    </radialGradient>
+                    <linearGradient id="chloroGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#86efac" />
+                        <stop offset="100%" stopColor="#166534" />
+                    </linearGradient>
+                </defs>
+                <path d="M35,25 L165,25 L190,90 L165,180 L35,180 L10,90 Z" fill="#14532d" transform="translate(4,4)" opacity="0.4" />
+                <path d="M35,25 L165,25 L190,90 L165,180 L35,180 L10,90 Z" fill="none" stroke="url(#cellWallGrad)" strokeWidth="16" strokeLinejoin="round" />
+                <path d="M35,25 L165,25 L190,90 L165,180 L35,180 L10,90 Z" fill="#dcfce7" stroke="#4ade80" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M42,32 L158,32 L178,90 L158,173 L42,173 L22,90 Z" fill="#f0fdf4" stroke="#16a34a" strokeWidth="1" />
+                <path d="M45,35 L155,35 L175,90 L155,170 L45,170 L25,90 Z" fill="#dcfce7" opacity="0.5" />
+                <path d="M55,60 Q145,60 145,95 Q145,155 55,155 Q45,110 55,60" fill="url(#vacuoleGrad)" stroke="#3b82f6" strokeWidth="1" opacity="0.9" filter="drop-shadow(2px 4px 6px rgba(0,0,0,0.2))"/>
+                <ellipse cx="85" cy="75" rx="15" ry="8" fill="white" opacity="0.3" transform="rotate(-15)"/>
+                <g transform="translate(145, 55)">
+                    <circle r="16" fill="#e9d5ff" stroke="#7e22ce" strokeWidth="2" />
+                    <circle r="5" fill="#6b21a8" opacity="0.6" />
+                    <path d="M-8,-8 Q0,0 8,-8 M-8,8 Q0,0 8,8" stroke="#a855f7" strokeWidth="0.5" fill="none" opacity="0.5"/>
+                </g>
+                <path d="M130,45 Q120,35 130,25" stroke="#d8b4fe" strokeWidth="4" fill="none" strokeLinecap="round"/>
+                <path d="M130,65 Q115,70 125,85" stroke="#d8b4fe" strokeWidth="4" fill="none" strokeLinecap="round"/>
+                <circle cx="130" cy="45" r="1" fill="#6b21a8" />
+                <circle cx="125" cy="40" r="1" fill="#6b21a8" />
+                <circle cx="120" cy="80" r="1" fill="#6b21a8" />
+                {[{ x: 60, y: 40, r: 10 }, { x: 160, y: 120, r: -80 }, { x: 80, y: 165, r: 5 }, { x: 35, y: 90, r: 90 }].map((pos, i) => (
+                    <g key={i} transform={`translate(${pos.x}, ${pos.y}) rotate(${pos.r})`}>
+                        <ellipse cx="0" cy="0" rx="18" ry="10" fill="url(#chloroGrad)" stroke="#14532d" strokeWidth="1" filter="drop-shadow(1px 2px 2px rgba(0,0,0,0.2))"/>
+                        <path d="M-10,-5 L-10,5 M-2,-6 L-2,6 M6,-5 L6,5" stroke="#064e3b" strokeWidth="3" opacity="0.4" strokeLinecap="round"/>
+                        <line x1="-10" y1="0" x2="6" y2="0" stroke="#064e3b" strokeWidth="0.5" opacity="0.4"/>
+                    </g>
+                ))}
+                <g transform="translate(45, 120) rotate(45)">
+                     <path d="M-10,0 C-10,-5 10,-5 10,0 C10,5 -10,5 -10,0 Z" fill="#fca5a5" stroke="#9f1239" strokeWidth="1" />
+                     <path d="M-6,0 L-3,2 L0,-2 L3,2 L6,0" fill="none" stroke="#9f1239" strokeWidth="1" opacity="0.6"/>
+                </g>
+                <g transform="translate(120, 160) rotate(10)">
+                     <path d="M-8,0 C-8,-5 8,-5 8,0 C8,5 -8,5 -8,0 Z" fill="#fca5a5" stroke="#9f1239" strokeWidth="1" />
+                </g>
+                <g transform="translate(110, 160) rotate(10)">
+                    <path d="M-10,0 Q0,5 10,0" stroke="#facc15" strokeWidth="3" fill="none" strokeLinecap="round" />
+                    <path d="M-8,5 Q0,10 8,5" stroke="#facc15" strokeWidth="3" fill="none" strokeLinecap="round" />
+                    <path d="M-6,10 Q0,15 6,10" stroke="#facc15" strokeWidth="3" fill="none" strokeLinecap="round" />
+                </g>
+                <circle cx="100" cy="40" r="1.5" fill="#15803d" opacity="0.7"/>
+                <circle cx="150" cy="90" r="1.5" fill="#15803d" opacity="0.7"/>
+                <circle cx="50" cy="150" r="1.5" fill="#15803d" opacity="0.7"/>
+            </svg>
+        );
+
+        const VirusSVG = () => (
+            <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-2xl animate-float">
+               <defs>
+                   <radialGradient id="virusBodyGrad" cx="50%" cy="50%" r="50%" fx="40%" fy="40%">
+                        <stop offset="0%" stopColor="#a78bfa" />
+                        <stop offset="100%" stopColor="#4c1d95" />
+                   </radialGradient>
+                   <radialGradient id="spikeGrad" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+                        <stop offset="0%" stopColor="#fca5a5" />
+                        <stop offset="100%" stopColor="#991b1b" />
+                   </radialGradient>
+               </defs>
+               <g transform="translate(100, 100)">
+                   {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
+                       <g key={i} transform={`rotate(${angle})`}>
+                           <line x1="0" y1="-65" x2="0" y2="-90" stroke="#6b7280" strokeWidth="4" />
+                           <circle cx="0" cy="-90" r="8" fill="url(#spikeGrad)" stroke="#7f1d1d" strokeWidth="1" />
+                       </g>
+                   ))}
+                   {[22.5, 67.5, 112.5, 157.5, 202.5, 247.5, 292.5, 337.5].map((angle, i) => (
+                       <g key={i} transform={`rotate(${angle})`}>
+                           <line x1="0" y1="-60" x2="0" y2="-80" stroke="#6b7280" strokeWidth="3" />
+                           <circle cx="0" cy="-80" r="6" fill="url(#spikeGrad)" stroke="#7f1d1d" strokeWidth="1" />
+                       </g>
+                   ))}
+               </g>
+               <circle cx="100" cy="100" r="65" fill="url(#virusBodyGrad)" stroke="#5b21b6" strokeWidth="2" />
+               <circle cx="80" cy="70" r="8" fill="#8b5cf6" opacity="0.3" />
+               <circle cx="120" cy="80" r="12" fill="#8b5cf6" opacity="0.3" />
+               <circle cx="90" cy="130" r="10" fill="#8b5cf6" opacity="0.3" />
+               <path d="M100,45 Q150,45 155,100" fill="none" stroke="#ddd6fe" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+               <g transform="translate(100, 100)">
+                   <path d="M-20,-20 Q0,-40 20,-20 T20,20 T-20,20 T-20,-20" stroke="#f43f5e" strokeWidth="3" fill="none" opacity="0.8" filter="drop-shadow(0 0 2px #be123c)"/>
+               </g>
+            </svg>
+        );
+
+        const quizQuestions = [
+            {
+                questionNumber: 1,
+                question: "Simülasyonda gözlemlediğimiz gibi bir araba hareket eder, benzin (enerji) tüketir ve ses çıkarır. Ancak biyolojik olarak 'canlı' kabul edilmez. Arabayı canlılardan ayıran en temel eksiklik aşağıdakilerden hangisidir?",
+                answerOptions: [
+                    { text: "Hareket mekanizmasının tekerlekli olması", rationale: "Hareket şekli canlılığı belirleyen temel bir kriter değildir; bazı canlılar da pasif hareket eder.", isCorrect: false },
+                    { text: "Hücresel yapıya ve metabolizmaya sahip olmaması", rationale: "Canlılığın en temel birimi hücredir. Araba, hücresel organizasyona, büyüme yeteneğine ve biyolojik bir metabolizmaya sahip olmadığı için canlı değildir.", isCorrect: true },
+                    { text: "Enerji tüketiminin çok yüksek olması", rationale: "Enerji tüketim miktarı canlılık kriteri değildir; canlılar da çok yüksek enerji tüketebilir.", isCorrect: false },
+                    { text: "Metalden yapılmış olması", rationale: "Yapı malzemesi tek başına belirleyici değildir; asıl fark organizasyon ve biyolojik süreçlerin yokluğudur.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 2,
+                question: "Simülasyonun 'Hücresel Yapı' bölümünde virüsler incelenirken özel bir uyarı işareti çıkmaktadır. Biyolojik sınıflandırmada virüslerin 'hücresel yapı' göstermediği kabul edilir. Bunun temel nedeni nedir?",
+                answerOptions: [
+                    { text: "Çok küçük boyutlarda olmaları", rationale: "Boyut tek başına bir kriter değildir; bazı bakteriler de çok küçüktür ancak hücreseldir.", isCorrect: false },
+                    { text: "Hastalık yapıcı olmaları", rationale: "Birçok bakteri ve mantar da hastalık yapabilir ancak onlar hücresel yapıdadır.", isCorrect: false },
+                    { text: "Sitoplazma, organel ve enzim sistemlerinin bulunmaması", rationale: "Virüsler, hücre zarı, sitoplazma ve organelleri olmadığı için hücresel yapı kriterlerini karşılamazlar. Sadece protein kılıf ve genetik materyalden oluşurlar.", isCorrect: true },
+                    { text: "DNA veya RNA taşımaları", rationale: "Nükleik asit taşımak canlılık için ortaktır, ancak virüslerin hücresel olmadığını açıklamaz.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 3,
+                question: "Simülasyonda karşılaştırılan kristal büyümesi ile mantar büyümesi arasındaki temel fark aşağıdakilerden hangisidir?",
+                answerOptions: [
+                    { text: "Mantarların daha yavaş büyümesi", rationale: "Hız bir kriter değildir; bazı kristaller çok hızlı büyüyebilir.", isCorrect: false },
+                    { text: "Kristallerin sadece suda büyümesi", rationale: "Kristaller farklı ortamlarda da büyüyebilir, bu biyolojik farkı açıklamaz.", isCorrect: false },
+                    { text: "Mantarların hücre bölünmesi/kütle artışı ile, kristallerin dışarıdan birikimle büyümesi", rationale: "Canlılarda büyüme içsel bir süreçtir (hücre sayısının veya hacminin artması). Cansızlarda (kristal) ise dış yüzeye madde eklenmesiyle olur.", isCorrect: true },
+                    { text: "İkisinin de kütle artışı göstermesi", rationale: "Bu bir fark değil, benzerliktir. Soruda fark sorulmaktadır.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 4,
+                question: "Sıcak bir ortamda simülasyondaki karakterin terlemeye başlaması, vücut sıcaklığını dengede tutmaya yönelik bir tepkidir. Bu durum canlıların ortak özelliklerinden hangisine örnektir?",
+                answerOptions: [
+                    { text: "Adaptasyon", rationale: "Adaptasyon kalıtsal bir uyumdur. Terleme ise anlık bir denge koruma işlevidir.", isCorrect: false },
+                    { text: "Homeostazi (İç Denge)", rationale: "Homeostazi, değişen çevre koşullarına rağmen iç ortamın (sıcaklık, pH vb.) kararlı tutulmasıdır. Terleme vücut ısısını düşürerek dengeyi sağlar.", isCorrect: true },
+                    { text: "Üreme", rationale: "Bu olay neslin devamı ile ilgili değildir.", isCorrect: false },
+                    { text: "Beslenme", rationale: "Enerji alımı ile ilgili değildir, düzenleme ile ilgilidir.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 5,
+                question: "Simülasyonda kaktüsün diken yapraklı, nilüferin ise geniş yapraklı olması gösterilmiştir. Bu özellikler o canlıların yaşadıkları çevreye kalıtsal olarak uyum sağladığını gösterir. Bu duruma ne ad verilir?",
+                answerOptions: [
+                    { text: "Metabolizma", rationale: "Metabolizma yapım ve yıkım olaylarıdır, yapısal uyum değildir.", isCorrect: false },
+                    { text: "Boşaltım", rationale: "Boşaltım atık maddelerin atılmasıdır.", isCorrect: false },
+                    { text: "Adaptasyon", rationale: "Adaptasyon, bir canlının yaşama ve üreme şansını artıran kalıtsal özelliklerin tamamıdır. Kaktüsün dikeni su kaybını önleyen bir adaptasyondur.", isCorrect: true },
+                    { text: "Uyarılara Tepki", rationale: "Uyarılara tepki anlık bir davranıştır, bu ise kalıtsal bir yapı özelliğidir.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 6,
+                question: "Aşağıdakilerden hangisi tüm canlılarda (tek hücrelilerden çok hücrelilere) ortak olarak gerçekleşen 'metabolik' bir olaydır?",
+                answerOptions: [
+                    { text: "Akciğer solunumu yapma", rationale: "Sadece gelişmiş hayvanlarda görülür, bakterilerde veya bitkilerde yoktur.", isCorrect: false },
+                    { text: "Fotosentez ile besin üretme", rationale: "Sadece ototroflarda (bitki, alg, bazı bakteriler) görülür, hayvanlarda yoktur.", isCorrect: false },
+                    { text: "Hücresel solunum/Fermantasyon ile ATP üretme", rationale: "Her canlı, yaşamsal faaliyetlerini sürdürmek için enerjiye (ATP) ihtiyaç duyar ve bunu hücresel solunum veya fermantasyon yoluyla üretmek zorundadır.", isCorrect: true },
+                    { text: "Sinir sistemi ile tepki verme", rationale: "Sinir sistemi sadece hayvanlarda bulunur, bitkilerde ve tek hücrelilerde yoktur.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 7,
+                question: "Simülasyondaki 'Bitki Hücresi' modelinde görülen, ancak 'Hayvan Hücresi' modelinde bulunmayan yapı aşağıdakilerden hangisidir?",
+                answerOptions: [
+                    { text: "Hücre Zarı", rationale: "Hücre zarı tüm canlı hücrelerde ortaktır.", isCorrect: false },
+                    { text: "Mitokondri", rationale: "Mitokondri (enerji santrali) hem bitki hem hayvan hücrelerinde bulunur.", isCorrect: false },
+                    { text: "Kloroplast", rationale: "Kloroplast, fotosentezin yapıldığı organeldir ve sadece bitki/alg gibi üretici hücrelerde bulunur, hayvan hücrelerinde yoktur.", isCorrect: true },
+                    { text: "Çekirdek", rationale: "Çekirdek her iki hücre tipinde de (ökaryot oldukları için) bulunur.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 8,
+                question: "Simülasyonda metabolizma süreci 'Anabolizma + Katabolizma' olarak gösterilmiştir. Aşağıdakilerden hangisi bir 'Anabolizma' (Yapım) örneğidir?",
+                answerOptions: [
+                    { text: "Besinlerin sindirilmesi", rationale: "Sindirim büyük molekülleri parçalamaktır, yani bir yıkım (katabolizma) olayıdır.", isCorrect: false },
+                    { text: "Hücresel solunum", rationale: "Solunum besini parçalayıp enerji üretmektir, bir yıkım (katabolizma) olayıdır.", isCorrect: false },
+                    { text: "Protein sentezi", rationale: "Küçük amino asitlerin birleşerek büyük protein moleküllerini oluşturması bir sentez (yapım/anabolizma) olayıdır.", isCorrect: true },
+                    { text: "Glikozun parçalanması", rationale: "Parçalanma kelimesi doğrudan yıkımı (katabolizma) ifade eder.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 9,
+                question: "Simülasyonda bir bitkinin ışığa, bir bakterinin besine veya bir insanın sıcaklığa tepki verdiği görülür. Canlıların çevrelerindeki değişimleri algılayıp cevap vermesine ne denir?",
+                answerOptions: [
+                    { text: "Uyarılara Tepki", rationale: "Canlılar iç ve dış ortamdan gelen fiziksel/kimyasal uyarılara (ışık, ses, ısı vb.) tepki gösterirler.", isCorrect: true },
+                    { text: "Büyüme", rationale: "Büyüme hacim artışıdır, anlık bir cevap değildir.", isCorrect: false },
+                    { text: "Boşaltım", rationale: "Boşaltım atık maddelerin atılmasıdır.", isCorrect: false },
+                    { text: "Üreme", rationale: "Üreme sayı artışıdır.", isCorrect: false }
+                ]
+            },
+            {
+                questionNumber: 10,
+                question: "Canlıların ortak özelliklerinden 'Organizasyon' düşünüldüğünde, çok hücreli bir canlıdaki hiyerarşik sıralama (basitten karmaşığa) nasıldır?",
+                answerOptions: [
+                    { text: "Hücre -> Doku -> Organ -> Sistem -> Organizma", rationale: "Doğru sıralama: Hücreler dokuları, dokular organları, organlar sistemleri ve sistemler organizmayı oluşturur.", isCorrect: true },
+                    { text: "Organ -> Doku -> Hücre -> Sistem -> Organizma", rationale: "Hücre organdan daha küçüktür.", isCorrect: false },
+                    { text: "Organizma -> Sistem -> Organ -> Doku -> Hücre", rationale: "Bu sıralama karmaşıktan basite doğrudur.", isCorrect: false },
+                    { text: "Doku -> Hücre -> Sistem -> Organ -> Organizma", rationale: "Hücre dokudan önce gelir.", isCorrect: false }
+                ]
+            }
+        ];
+
+        // --- ANA UYGULAMA ---
+        const BiologySimulation = () => {
+            const [currentStep, setCurrentStep] = useState(0);
+            const [interactions, setInteractions] = useState({});
+            const [showFeedback, setShowFeedback] = useState(null);
+
+            // Adım Tanımları
+            const steps = [
+                { title: "Giriş: Çevresel Gözlem", id: "intro" },
+                { title: "Hücresel Yapı & Virüsler", id: "cells" },
+                { title: "Metabolizma & Enerji", id: "metabolism" },
+                { title: "Uyarılara Tepki & Adaptasyon", id: "reaction" },
+                { title: "Kritik Analiz: Değerlendirme Testi", id: "analysis" }
+            ];
+
+            const handleNext = () => {
+                if (currentStep < steps.length - 1) {
+                    setCurrentStep(currentStep + 1);
+                    setShowFeedback(null);
+                }
+            };
+
+            const handlePrev = () => {
+                if (currentStep > 0) {
+                    setCurrentStep(currentStep - 1);
+                    setShowFeedback(null);
+                }
+            };
+
+            // --- COMPONENT: Header ---
+            const Header = () => (
+                <header className="bg-white border-b-4 border-emerald-600 shadow-sm p-3 md:p-4 flex items-center justify-between sticky top-0 z-50 shrink-0">
+                    <div className="flex items-center gap-3 md:gap-4">
+                        <img 
+                            src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" 
+                            alt="E12 Logo" 
+                            className="h-8 md:h-12"
+                        />
+                        <div className="border-l-2 border-gray-300 pl-3 md:pl-4">
+                            <h1 className="text-lg md:text-2xl font-bold text-emerald-800">Yaşam Bilimi: Simülasyon</h1>
+                            <p className="text-xs md:text-sm text-gray-500 hidden md:block">9. Sınıf Biyoloji - Canlıların Ortak Özellikleri</p>
+                        </div>
+                    </div>
+                    <div className="hidden md:flex items-center gap-2 bg-emerald-50 px-3 py-1 rounded-full">
+                        <span className="text-emerald-700 font-semibold text-sm">Bölüm {currentStep + 1} / {steps.length}</span>
+                    </div>
+                </header>
+            );
+
+            // --- SCENE 1: Observation ---
+            const ObservationScene = () => {
+                const [selectedItem, setSelectedItem] = useState(null);
+                
+                const items = [
+                    { 
+                        id: 'bird', 
+                        name: 'Serçe (Canlı)', 
+                        icon: '🐦', 
+                        traits: ['Hücresel Yapı', 'Beslenme', 'Hareket', 'Üreme'],
+                        desc: "Hücrelerden oluşur, besin tüketerek enerji üretir ve uçar (aktif hareket)." 
+                    },
+                    { 
+                        id: 'car', 
+                        name: 'Araba (Cansız)', 
+                        icon: '🚗', 
+                        traits: ['Hareket', 'Enerji Tüketimi', 'Ses Çıkarma'],
+                        desc: "Hareket eder ve benzin (enerji) harcar. Ancak hücresel yapısı yoktur, büyümez ve üreyemez." 
+                    },
+                    { 
+                        id: 'tree', 
+                        name: 'Çam Ağacı (Canlı)', 
+                        icon: '🌲', 
+                        traits: ['Fotosentez', 'Büyüme', 'Solunum'],
+                        desc: "Pasif hareket eder (yönelim), fotosentez ile kendi besinini üretir (Ototrof)." 
+                    }
+                ];
+
+                return (
+                    <div className="flex flex-col md:flex-row h-full gap-4">
+                        <div className="flex-1 bg-gradient-to-b from-sky-200 to-emerald-100 rounded-xl relative overflow-hidden p-4 md:p-6 shadow-inner border-2 border-emerald-200 flex flex-col">
+                            <h3 className="text-lg font-bold text-emerald-900 mb-2 bg-white/80 inline-block px-3 py-1 rounded self-start">Park Alanı Gözlemi</h3>
+                            <p className="text-sm text-emerald-800 mb-2">Çevredeki varlıklara tıklayarak özelliklerini incele.</p>
+                            
+                            <div className="flex-1 flex justify-around items-center min-h-[150px]">
+                                {items.map(item => (
+                                    <button 
+                                        key={item.id}
+                                        onClick={() => setSelectedItem(item)}
+                                        className={`transform transition-all duration-300 hover:scale-110 focus:outline-none p-2 ${selectedItem?.id === item.id ? 'scale-125 drop-shadow-2xl' : ''}`}
+                                    >
+                                        <div className="text-5xl md:text-8xl drop-shadow-md">{item.icon}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="w-full md:w-1/3 bg-white p-4 md:p-6 rounded-xl shadow-lg border-l-4 border-blue-500 overflow-y-auto max-h-[250px] md:max-h-full">
+                            <h4 className="font-bold text-gray-700 flex items-center gap-2 mb-4">
+                                <Info size={20} className="text-blue-500" />
+                                Gözlem Sonucu
+                            </h4>
+                            {selectedItem ? (
+                                <div className="animate-fade-in">
+                                    <h5 className="text-xl font-bold text-blue-600 mb-2">{selectedItem.name}</h5>
+                                    <p className="text-gray-600 text-sm mb-4">{selectedItem.desc}</p>
+                                    <div className="space-y-2">
+                                        <span className="text-xs font-semibold text-gray-400 uppercase">Tespit Edilen Özellikler:</span>
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedItem.traits.map(trait => (
+                                                <span key={trait} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-md font-medium">
+                                                    {trait}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {selectedItem.id === 'car' && (
+                                        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                                            <strong>Düşünme Sorusu:</strong> Araba da enerji harcıyor ve hareket ediyor. Onu canlılardan ayıran en temel fark nedir? (İpucu: Sonraki adımda hücresel yapıya bak!)
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <p className="text-gray-400 text-center italic mt-10">Bir varlık seçiniz...</p>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            // --- SCENE 2: Cells & Viruses ---
+            const CellScene = () => {
+                const [view, setView] = useState('animal');
+
+                const contents = {
+                    animal: { 
+                        title: "Hayvan Hücresi (Ökaryot)", 
+                        desc: "Zarlı organelleri ve belirgin bir çekirdeği olan gelişmiş hücre tipidir.",
+                        features: [
+                            "Hücre duvarı bulunmaz.",
+                            "Sentrozom organeli içerir (bölünme için).",
+                            "Kofullar küçük ve çok sayıdadır.",
+                            "Depo karbonhidratı glikojendir."
+                        ], 
+                        color: "bg-red-100",
+                        img: <AnimalCellSVG />
+                    },
+                    plant: { 
+                        title: "Bitki Hücresi (Ökaryot)", 
+                        desc: "Fotosentez yapabilen, köşeli yapıya sahip gelişmiş hücre tipidir.",
+                        features: [
+                            "Selüloz yapılı hücre çeperi vardır.",
+                            "Kloroplast (plastit) içerir.",
+                            "Kofullar büyük ve az sayıdadır.",
+                            "Depo karbonhidratı nişastadır."
+                        ],
+                        color: "bg-green-100",
+                        img: <PlantCellSVG />
+                    },
+                    virus: { 
+                        title: "Virüsler (Hücresel Değil!)", 
+                        desc: "Hücresel yapı göstermezler. Canlılık özelliklerini sadece konak hücre içindeyken gösterirler.",
+                        features: [
+                            "Sitoplazma ve organelleri yoktur.",
+                            "Zorunlu hücre içi parazittirler.",
+                            "Antibiyotiklerden etkilenmezler.",
+                            "Tek bir nükleik asit (DNA ya da RNA) taşırlar."
+                        ],
+                        color: "bg-gray-800",
+                        textColor: "text-white",
+                        warning: true,
+                        img: <VirusSVG />
+                    }
+                };
+
+                const activeContent = contents[view];
+
+                return (
+                    <div className="flex flex-col h-full">
+                        <div className="bg-gray-100 p-2 md:p-3 rounded-t-xl border-b flex gap-2 overflow-x-auto shrink-0">
+                            <button onClick={() => setView('animal')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition whitespace-nowrap ${view === 'animal' ? 'bg-red-500 text-white' : 'bg-white text-gray-600'}`}>Hayvan Hücresi</button>
+                            <button onClick={() => setView('plant')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition whitespace-nowrap ${view === 'plant' ? 'bg-green-600 text-white' : 'bg-white text-gray-600'}`}>Bitki Hücresi</button>
+                            <button onClick={() => setView('virus')} className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition whitespace-nowrap ${view === 'virus' ? 'bg-gray-800 text-white' : 'bg-white text-gray-600'}`}>Virüsler</button>
+                        </div>
+
+                        <div className={`flex-1 p-4 md:p-6 rounded-b-xl flex flex-col md:flex-row items-center gap-4 md:gap-8 ${activeContent.color} transition-colors duration-500 overflow-y-auto`}>
+                            <div className="flex-1 text-center shrink-0">
+                                <div className="w-48 h-48 md:w-64 md:h-64 mx-auto">
+                                    {activeContent.img}
+                                </div>
+                                <div className="mt-2 md:mt-4 opacity-70 text-[10px] md:text-xs font-mono">Simülasyon Modeli</div>
+                            </div>
+                            <div className="flex-1 w-full">
+                                <h3 className={`text-xl md:text-2xl font-bold mb-2 ${activeContent.textColor || 'text-gray-800'}`}>{activeContent.title}</h3>
+                                <p className={`text-xs md:text-sm leading-relaxed mb-4 opacity-90 ${activeContent.textColor || 'text-gray-700'}`}>{activeContent.desc}</p>
+                                
+                                <div className={`p-3 md:p-4 rounded-lg bg-black/5 ${activeContent.textColor ? 'bg-white/10' : ''}`}>
+                                    <h4 className={`font-bold text-xs md:text-sm mb-2 border-b border-current pb-1 inline-block ${activeContent.textColor || 'text-gray-800'}`}>Temel Özellikler:</h4>
+                                    <ul className={`text-xs md:text-sm space-y-1 md:space-y-2 ${activeContent.textColor || 'text-gray-700'}`}>
+                                        {activeContent.features.map((feature, idx) => (
+                                            <li key={idx} className="flex items-start gap-2">
+                                                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-current shrink-0"></span>
+                                                {feature}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+
+                                {activeContent.warning && (
+                                    <div className="mt-4 p-2 md:p-3 bg-red-900/50 border border-red-500 rounded-lg text-red-100 flex items-center gap-3">
+                                        <ShieldAlert size={16} className="shrink-0" />
+                                        <p className="text-[10px] md:text-xs"><strong>Not:</strong> Virüsler biyolojik sınıflandırmada ayrı bir gruptur.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // --- SCENE 3: Metabolism & Energy ---
+            const MetabolismScene = () => {
+                const [cycleActive, setCycleActive] = useState(false);
+                const [metabolismType, setMetabolismType] = useState('animal'); // 'animal' (heterotroph) or 'plant' (autotroph)
+
+                const typeConfig = {
+                    animal: {
+                        theme: "emerald",
+                        inputIcon: <Leaf size={28} className="text-orange-500 md:w-8 md:h-8" />,
+                        inputLabel: "Besin (Organik)",
+                        inputSub: "Hazır Alınır",
+                        processLabel: "Solunum",
+                        outputIcon: <Zap size={28} className="text-blue-500 md:w-8 md:h-8" />,
+                        outputLabel: "ATP + CO2",
+                        outputSub: "Enerji Üretimi",
+                        desc: "Hayvanlar (heterotroflar), dışarıdan hazır besin alarak hücresel solunum yoluyla enerji (ATP) üretirler."
+                    },
+                    plant: {
+                        theme: "green",
+                        inputIcon: <Sun size={28} className="text-yellow-500 md:w-8 md:h-8" />,
+                        inputLabel: "Işık + CO2 + H2O",
+                        inputSub: "İnorganik Maddeler",
+                        processLabel: "Fotosentez",
+                        outputIcon: <Sprout size={28} className="text-green-600 md:w-8 md:h-8" />,
+                        outputLabel: "Glikoz + O2",
+                        outputSub: "Besin Üretimi",
+                        desc: "Bitkiler (ototroflar), güneş ışığını kullanarak inorganik maddelerden kendi besinlerini (fotosentez) üretirler."
+                    }
+                };
+
+                const currentConfig = typeConfig[metabolismType];
+
+                return (
+                    <div className="h-full flex flex-col items-center p-4">
+                        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-4 md:p-8 relative overflow-hidden flex flex-col h-full">
+                            
+                            {/* Toggle Switch */}
+                            <div className="flex justify-center mb-6">
+                                <div className="bg-gray-100 p-1 rounded-lg flex gap-1">
+                                    <button 
+                                        onClick={() => { setMetabolismType('animal'); setCycleActive(false); }}
+                                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${metabolismType === 'animal' ? 'bg-orange-500 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+                                    >
+                                        Hayvan (Tüketici)
+                                    </button>
+                                    <button 
+                                        onClick={() => { setMetabolismType('plant'); setCycleActive(false); }}
+                                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${metabolismType === 'plant' ? 'bg-green-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-200'}`}
+                                    >
+                                        Bitki (Üretici)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <h3 className="text-xl font-bold text-center text-emerald-800 mb-8 shrink-0">Metabolizma: Yaşamın Kimyası</h3>
+                            
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8 relative z-10 flex-1">
+                                {/* Input Node */}
+                                <div className="text-center group w-32">
+                                    <div className="w-16 h-16 md:w-20 md:h-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-2 border-4 border-orange-200 group-hover:scale-110 transition">
+                                        {currentConfig.inputIcon}
+                                    </div>
+                                    <p className="font-bold text-gray-700 text-sm md:text-base">{currentConfig.inputLabel}</p>
+                                    <p className="text-[10px] md:text-xs text-gray-500">{currentConfig.inputSub}</p>
+                                </div>
+
+                                {/* Connection 1 */}
+                                <div className="hidden md:block flex-1 h-2 bg-gray-200 rounded relative overflow-hidden">
+                                    {cycleActive && <div className="absolute top-0 left-0 h-full w-full bg-emerald-400 animate-slide-right"></div>}
+                                </div>
+
+                                {/* Process Node (Middle) */}
+                                <div className="text-center relative">
+                                    <button 
+                                        onClick={() => setCycleActive(!cycleActive)}
+                                        className={`w-24 h-24 md:w-32 md:h-32 rounded-full flex flex-col items-center justify-center border-4 transition-all duration-500 ${cycleActive ? 'bg-emerald-600 border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.5)]' : 'bg-gray-100 border-gray-300'}`}
+                                    >
+                                        <Activity size={32} className={`mb-2 md:w-10 md:h-10 ${cycleActive ? 'text-white animate-pulse' : 'text-gray-400'}`} />
+                                        <span className={`font-bold text-sm md:text-base ${cycleActive ? 'text-white' : 'text-gray-500'}`}>
+                                            {cycleActive ? currentConfig.processLabel : 'Başlat'}
+                                        </span>
+                                    </button>
+                                    {cycleActive && (
+                                        <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2 w-48 text-center text-[10px] md:text-xs text-emerald-700 font-medium bg-emerald-50 p-2 rounded z-20 shadow-sm border border-emerald-100">
+                                            Anabolizma (Yapım) <br/>+<br/> Katabolizma (Yıkım)
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Connection 2 */}
+                                <div className="hidden md:block flex-1 h-2 bg-gray-200 rounded relative overflow-hidden">
+                                    {cycleActive && <div className="absolute top-0 left-0 h-full w-full bg-emerald-400 animate-slide-right delay-500"></div>}
+                                </div>
+
+                                {/* Output Node */}
+                                <div className="text-center group w-32">
+                                    <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-2 border-4 border-blue-200 group-hover:scale-110 transition">
+                                        {currentConfig.outputIcon}
+                                    </div>
+                                    <p className="font-bold text-gray-700 text-sm md:text-base">{currentConfig.outputLabel}</p>
+                                    <p className="text-[10px] md:text-xs text-gray-500">{currentConfig.outputSub}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 md:mt-12 text-center shrink-0">
+                                <p className="text-xs md:text-sm text-gray-600 max-w-lg mx-auto bg-gray-50 p-4 rounded-lg border border-gray-200 transition-all duration-300">
+                                    {currentConfig.desc}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // --- SCENE 4: Adaptation & Homeostasis ---
+            const AdaptationScene = () => {
+                const [temp, setTemp] = useState(25);
+                
+                let state = 'normal';
+                let message = "Ortam sıcaklığı ideal seviyede. Metabolizma dengede.";
+                let bgColor = "bg-green-50";
+
+                if (temp > 35) {
+                    state = 'hot';
+                    message = "Sıcaklık çok yüksek! Terleme ile vücut ısısı düşürülmeye çalışılıyor (Homeostazi).";
+                    bgColor = "bg-orange-100";
+                } else if (temp < 10) {
+                    state = 'cold';
+                    message = "Sıcaklık çok düşük! Titreme ile vücut ısısı üretilmeye çalışılıyor (Homeostazi).";
+                    bgColor = "bg-blue-100";
+                }
+
+                return (
+                    <div className={`h-full flex flex-col p-4 md:p-6 rounded-xl transition-colors duration-700 ${bgColor}`}>
+                        <div className="mb-4 md:mb-6 flex items-center justify-between shrink-0">
+                            <h3 className="text-lg md:text-xl font-bold text-gray-800">Homeostazi: İç Dengeyi Koruma</h3>
+                            <div className="flex items-center gap-2 bg-white px-3 py-1 md:px-4 md:py-2 rounded-full shadow-sm">
+                                <span className="text-gray-500 text-sm">Sıcaklık:</span>
+                                <span className="font-mono font-bold text-lg md:text-2xl w-12 md:w-16 text-center">{temp}°C</span>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 flex flex-col md:flex-row gap-6 md:gap-8 items-center justify-center overflow-hidden">
+                            {/* Sol: Termometre */}
+                            <div className="w-full md:w-16 h-48 md:h-64 bg-gray-200 rounded-full relative shadow-inner flex flex-col justify-between items-center py-2 order-2 md:order-1 shrink-0">
+                                <Sun className="text-orange-500" />
+                                <input 
+                                    type="range" 
+                                    min="-10" 
+                                    max="50" 
+                                    value={temp} 
+                                    onChange={(e) => setTemp(parseInt(e.target.value))}
+                                    className="h-32 md:h-48 -rotate-90 origin-center translate-y-2 w-32 md:w-48 cursor-pointer"
+                                />
+                                <Snowflake className="text-blue-500" />
+                            </div>
+
+                            {/* Orta: Karakter */}
+                            <div className="flex-1 text-center order-1 md:order-2 shrink-0">
+                                <div className="w-32 h-32 md:w-48 md:h-48 mx-auto bg-white rounded-full border-4 border-gray-300 flex items-center justify-center relative shadow-lg overflow-hidden">
+                                    <div className={`text-5xl md:text-6xl transition-transform duration-300 ${state === 'hot' ? 'scale-110' : state === 'cold' ? 'scale-90' : 'scale-100'}`}>
+                                        {state === 'hot' ? '🥵' : state === 'cold' ? '🥶' : '🙂'}
+                                    </div>
+                                    
+                                    {state === 'hot' && (
+                                        <div className="absolute inset-0 pointer-events-none">
+                                            <Droplets className="absolute top-8 right-8 text-blue-400 animate-bounce w-4 h-4 md:w-5 md:h-5" />
+                                            <Droplets className="absolute top-10 left-8 text-blue-400 animate-bounce delay-100 w-3 h-3 md:w-4 md:h-4" />
+                                        </div>
+                                    )}
+                                    {state === 'cold' && (
+                                        <div className="absolute inset-0 pointer-events-none border-8 border-blue-200/50 rounded-full animate-pulse"></div>
+                                    )}
+                                </div>
+                                
+                                <div className="mt-4 md:mt-6 p-3 md:p-4 bg-white/80 rounded-lg shadow-sm border-l-4 border-purple-500 text-left w-64 mx-auto md:w-auto">
+                                    <h4 className="font-bold text-purple-700 mb-1 flex items-center gap-2 text-sm md:text-base">
+                                        <Activity size={18} /> Sistem Tepkisi
+                                    </h4>
+                                    <p className="text-gray-700 text-xs md:text-sm">{message}</p>
+                                </div>
+                            </div>
+
+                            {/* Sağ: Adaptasyon Listesi */}
+                            <div className="w-full md:w-72 bg-white p-4 rounded-xl shadow-md order-3 flex flex-col h-full md:h-auto max-h-[220px] md:max-h-[400px]">
+                                <h4 className="font-bold text-gray-800 mb-2 text-sm border-b pb-2 shrink-0">Adaptasyon Örnekleri</h4>
+                                <div className="space-y-3 overflow-y-auto custom-scrollbar pr-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-green-100 rounded flex items-center justify-center text-xl shrink-0">🌵</div>
+                                        <div className="text-xs">
+                                            <strong>Kaktüs:</strong> Su kaybını önlemek için yaprakları dikene dönüşmüştür.
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center text-xl shrink-0">🪷</div>
+                                        <div className="text-xs">
+                                            <strong>Nilüfer:</strong> Fazla suyu atmak için geniş yaprakları vardır.
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-xl shrink-0">🐻‍❄️</div>
+                                        <div className="text-xs">
+                                            <strong>Kutup Ayısı:</strong> Isı yalıtımı için kalın kürk ve yağ tabakası.
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-green-50 rounded flex items-center justify-center text-xl shrink-0">🦎</div>
+                                        <div className="text-xs">
+                                            <strong>Bukalemun:</strong> Avlanmak ve korunmak için renk değiştirir.
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-orange-100 rounded flex items-center justify-center text-xl shrink-0">🐪</div>
+                                        <div className="text-xs">
+                                            <strong>Deve:</strong> Örgüçlerinde yağ depolayarak susuzluğa dayanır.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            // --- SCENE 5: Quiz & Critical Thinking (10 Soruluk Test) ---
+            const AnalysisScene = () => {
+                const [currentQIndex, setCurrentQIndex] = useState(0);
+                const [selectedOptionIndex, setSelectedOptionIndex] = useState(null);
+                const [isAnswered, setIsAnswered] = useState(false);
+                const [score, setScore] = useState(0);
+                const [showResult, setShowResult] = useState(false);
+
+                const currentQ = quizQuestions[currentQIndex];
+
+                const handleOptionClick = (index, isCorrect) => {
+                    if (isAnswered) return;
+                    setSelectedOptionIndex(index);
+                    setIsAnswered(true);
+                    if (isCorrect) setScore(score + 1);
+                };
+
+                const handleNextQuestion = () => {
+                    if (currentQIndex < quizQuestions.length - 1) {
+                        setCurrentQIndex(currentQIndex + 1);
+                        setSelectedOptionIndex(null);
+                        setIsAnswered(false);
+                    } else {
+                        setShowResult(true);
+                    }
+                };
+
+                const restartQuiz = () => {
+                    setCurrentQIndex(0);
+                    setSelectedOptionIndex(null);
+                    setIsAnswered(false);
+                    setScore(0);
+                    setShowResult(false);
+                };
+
+                if (showResult) {
+                    return (
+                        <div className="h-full flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+                            <div className="bg-white p-8 rounded-2xl shadow-xl border-4 border-emerald-200 max-w-md w-full">
+                                <h3 className="text-3xl font-bold text-emerald-800 mb-4">Test Tamamlandı!</h3>
+                                <div className="text-6xl mb-6">🏆</div>
+                                <p className="text-lg text-gray-600 mb-2">Toplam Puanınız:</p>
+                                <p className="text-4xl font-bold text-emerald-600 mb-6">{score} / {quizQuestions.length}</p>
+                                <div className="w-full bg-gray-200 rounded-full h-4 mb-6">
+                                    <div 
+                                        className="bg-emerald-500 h-4 rounded-full transition-all duration-1000" 
+                                        style={{ width: `${(score / quizQuestions.length) * 100}%` }}
+                                    ></div>
+                                </div>
+                                <p className="text-sm text-gray-500 mb-8">
+                                    {score >= 8 ? "Mükemmel! Konuyu çok iyi anlamışsın." : 
+                                     score >= 5 ? "Güzel, ama biraz daha tekrar yapabilirsin." : 
+                                     "Konuyu tekrar gözden geçirmeni öneririm."}
+                                </p>
+                                <button 
+                                    onClick={restartQuiz}
+                                    className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 shadow-md transition w-full"
+                                >
+                                    Testi Tekrar Çöz
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className="h-full flex flex-col p-2 md:p-4 max-w-6xl mx-auto w-full">
+                        <div className="flex justify-between items-center mb-3 md:mb-4 shrink-0">
+                            <h3 className="text-lg md:text-xl font-bold text-emerald-800">Değerlendirme Testi</h3>
+                            <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs md:text-sm font-semibold">
+                                Soru {currentQIndex + 1}/{quizQuestions.length}
+                            </span>
+                        </div>
+
+                        <div className="flex-1 bg-white rounded-xl shadow-md border border-gray-200 p-4 md:p-6 flex flex-col overflow-y-auto custom-scrollbar">
+                            <p className="text-base md:text-lg font-medium text-gray-800 mb-4 md:mb-6">{currentQ.question}</p>
+
+                            <div className="space-y-2 md:space-y-3">
+                                {currentQ.answerOptions.map((option, idx) => {
+                                    let optionClass = "w-full text-left p-3 md:p-4 rounded-lg border-2 transition-all flex items-center justify-between group text-sm md:text-base ";
+                                    
+                                    if (isAnswered) {
+                                        if (option.isCorrect) {
+                                            optionClass += "bg-green-50 border-green-500 text-green-800"; // Doğru şık her zaman yeşil
+                                        } else if (selectedOptionIndex === idx) {
+                                            optionClass += "bg-red-50 border-red-500 text-red-800"; // Seçilen yanlış şık kırmızı
+                                        } else {
+                                            optionClass += "bg-gray-50 border-gray-200 text-gray-400 opacity-60"; // Diğerleri soluk
+                                        }
+                                    } else {
+                                        optionClass += "bg-white border-gray-200 hover:border-blue-400 hover:bg-blue-50 text-gray-700";
+                                    }
+
+                                    return (
+                                        <button 
+                                            key={idx}
+                                            onClick={() => handleOptionClick(idx, option.isCorrect)}
+                                            disabled={isAnswered}
+                                            className={optionClass}
+                                        >
+                                            <span className="flex-1">{option.text}</span>
+                                            {isAnswered && option.isCorrect && <CheckCircle className="text-green-600 ml-2 shrink-0" size={20} />}
+                                            {isAnswered && selectedOptionIndex === idx && !option.isCorrect && <XCircle className="text-red-600 ml-2 shrink-0" size={20} />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {isAnswered && (
+                                <div className="mt-4 md:mt-6 p-3 md:p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg animate-fade-in">
+                                    <h4 className="font-bold text-blue-800 mb-1 text-sm md:text-base">Açıklama:</h4>
+                                    <p className="text-blue-700 text-xs md:text-sm">
+                                        {currentQ.answerOptions.find(opt => opt.isCorrect).rationale}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-3 md:mt-4 flex justify-between items-center shrink-0">
+                            <div className="text-xs md:text-sm text-gray-500 italic">
+                                {isAnswered ? "Sonraki soruya geçebilirsiniz." : currentQ.hint ? `İpucu: ${currentQ.hint}` : "Bir şık seçiniz."}
+                            </div>
+                            <button 
+                                onClick={handleNextQuestion}
+                                disabled={!isAnswered}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition shadow-md text-sm ${
+                                    isAnswered 
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700 transform hover:scale-105' 
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                            >
+                                {currentQIndex === quizQuestions.length - 1 ? 'Testi Bitir' : 'Sonraki Soru'} <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            // --- MAIN RENDER ---
+            return (
+                <div className="h-full flex flex-col font-sans text-slate-800">
+                    <Header />
+
+                    <div className="flex-1 container mx-auto p-2 md:p-4 max-w-5xl flex flex-col justify-center overflow-hidden">
+                        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 h-full max-h-[650px] flex flex-col relative overflow-hidden">
+                            <div className="h-1 bg-gray-100 w-full absolute top-0 left-0">
+                                <div 
+                                    className="h-full bg-emerald-500 transition-all duration-500" 
+                                    style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+                                ></div>
+                            </div>
+
+                            <div className="flex-1 overflow-hidden h-full">
+                                {currentStep === 0 && <ObservationScene />}
+                                {currentStep === 1 && <CellScene />}
+                                {currentStep === 2 && <MetabolismScene />}
+                                {currentStep === 3 && <AdaptationScene />}
+                                {currentStep === 4 && <AnalysisScene />}
+                            </div>
+
+                            <div className="p-3 md:p-4 border-t bg-gray-50 flex items-center justify-between shrink-0">
+                                <button 
+                                    onClick={handlePrev}
+                                    disabled={currentStep === 0}
+                                    className={`flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-semibold transition text-sm md:text-base ${currentStep === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-200'}`}
+                                >
+                                    <ChevronLeft size={20} /> Geri
+                                </button>
+
+                                <div className="flex flex-col items-center">
+                                    <span className="text-xs md:text-sm font-bold text-emerald-800">{steps[currentStep].title}</span>
+                                    <div className="flex gap-1 mt-1">
+                                        {steps.map((_, idx) => (
+                                            <div key={idx} className={`w-1.5 h-1.5 md:w-2 md:h-2 rounded-full ${idx === currentStep ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {currentStep < steps.length - 1 ? (
+                                    <button 
+                                        onClick={handleNext}
+                                        className="flex items-center gap-2 px-4 py-1.5 md:px-6 md:py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 shadow-md transition transform hover:scale-105 text-sm md:text-base"
+                                    >
+                                        İleri <ChevronRight size={20} />
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={() => setCurrentStep(0)}
+                                        className="flex items-center gap-2 px-4 py-1.5 md:px-6 md:py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 shadow-md transition text-sm md:text-base"
+                                    >
+                                        <RefreshCw size={18} /> Tekrar Başlat
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<BiologySimulation />);
+    </script>
+</body>
+</html>

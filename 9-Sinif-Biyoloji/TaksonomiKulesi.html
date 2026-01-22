@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taksonomi Kulesi | 9. Sınıf Biyoloji</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .mono { font-family: 'Roboto Mono', monospace; }
+        .animate-slide-up { animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .tool-btn:active { transform: scale(0.95); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- VERİ HAVUZU (DATA) ---
+        const organisms = [
+            {
+                id: 1,
+                commonName: "Siyanobakteri",
+                scientificName: "Anabaena sp.",
+                image: "🦠",
+                clues: {
+                    cell: "Prokaryot (Çekirdek zarı yok). Peptidoglikan duvar var.",
+                    nutrition: "Fotoototrof (Klorofili sitoplazmada, kloroplast yok).",
+                    environment: "Tatlı sular, nemli topraklar."
+                },
+                taxonomy: {
+                    domain: "Bakteri",
+                    kingdom: "Eubacteria",
+                    feature: "Atmosfere oksijen veren ilk canlı grubudur."
+                }
+            },
+            {
+                id: 2,
+                commonName: "Bağırsak Bakterisi",
+                scientificName: "Escherichia coli",
+                image: "🔬",
+                clues: {
+                    cell: "Prokaryot. Çubuk şeklinde. Peptidoglikan duvar var.",
+                    nutrition: "Heterotrof (Hazır besin kullanır).",
+                    environment: "Memeli hayvanların kalın bağırsağı."
+                },
+                taxonomy: {
+                    domain: "Bakteri",
+                    kingdom: "Eubacteria",
+                    feature: "B ve K vitamini sentezleyerek insana fayda sağlar."
+                }
+            },
+            {
+                id: 3,
+                commonName: "Termofilik Arke",
+                scientificName: "Sulfolobus sp.",
+                image: "🌋",
+                clues: {
+                    cell: "Prokaryot. Duvarı 'Psödopeptidoglikan'. DNA'sı histonlu.",
+                    nutrition: "Kemosentez yapabilir (Kükürt oksitler).",
+                    environment: "80°C üzeri volkanik kaynak suları."
+                },
+                taxonomy: {
+                    domain: "Arke",
+                    kingdom: "Archaebacteria",
+                    feature: "Enzimleri yüksek sıcaklığa dayanıklıdır."
+                }
+            },
+            {
+                id: 4,
+                commonName: "Halofil (Tuzcul) Arke",
+                scientificName: "Halobacterium salinarum",
+                image: "🧂",
+                clues: {
+                    cell: "Prokaryot. Histon proteini var.",
+                    nutrition: "Fotoototrof (Bakteriyorodopsin ile).",
+                    environment: "Tuz Gölü gibi aşırı tuzlu ortamlar."
+                },
+                taxonomy: {
+                    domain: "Arke",
+                    kingdom: "Archaebacteria",
+                    feature: "Tuz oranı düşük ortamda yaşayamazlar."
+                }
+            },
+            {
+                id: 5,
+                commonName: "Amip",
+                scientificName: "Amoeba proteus",
+                image: "💦",
+                clues: {
+                    cell: "Ökaryot. Tek hücreli. Çeperi yok. Belirgin şekli yok.",
+                    nutrition: "Heterotrof (Yalancı ayakla fagositoz yapar).",
+                    environment: "Tatlı sular."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Protista",
+                    feature: "Hareket ve beslenme için yalancı ayak (pseudopod) kullanır."
+                }
+            },
+            {
+                id: 6,
+                commonName: "Öglena",
+                scientificName: "Euglena gracilis",
+                image: "🌿",
+                clues: {
+                    cell: "Ökaryot. Tek hücreli. Kloroplastı var. Çeperi yok.",
+                    nutrition: "Miksotrof (Işıkta ototrof, karanlıkta heterotrof).",
+                    environment: "Kirli tatlı sular."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Protista",
+                    feature: "Bitki ve hayvan özelliği gösteren kamçılı bir canlıdır."
+                }
+            },
+            {
+                id: 7,
+                commonName: "Paramesyum",
+                scientificName: "Paramecium caudatum",
+                image: "👟",
+                clues: {
+                    cell: "Ökaryot. Silleri var. Çift çekirdekli (Makro/Mikro).",
+                    nutrition: "Heterotrof (Ağız açıklığından besin alır).",
+                    environment: "Tatlı sular."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Protista",
+                    feature: "Silleri ile hareket eder, kontraktil koful ile su atar."
+                }
+            },
+            {
+                id: 8,
+                commonName: "Cıvık Mantar",
+                scientificName: "Physarum polycephalum",
+                image: "🟡",
+                clues: {
+                    cell: "Ökaryot. Hücre çeperi YOKTUR. Amipsi hareket eder.",
+                    nutrition: "Heterotrof (Saprofit/Ayrıştırıcı).",
+                    environment: "Nemli, çürükçül orman tabanı."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Protista",
+                    feature: "Adı mantar olsa da, çeperi olmadığı için Protista alemindedir."
+                }
+            },
+            {
+                id: 9,
+                commonName: "Bira Mayası",
+                scientificName: "Saccharomyces cerevisiae",
+                image: "🍺",
+                clues: {
+                    cell: "Ökaryot. Tek hücreli. Kitin yapılı çeperi var.",
+                    nutrition: "Heterotrof (Saprofit). Oksijensiz solunum yapar.",
+                    environment: "Şekerli ortamlar."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Mantarlar (Fungi)",
+                    feature: "Tomurcuklanarak çoğalır, hamuru kabartır."
+                }
+            },
+            {
+                id: 10,
+                commonName: "Şapkalı Mantar",
+                scientificName: "Amanita muscaria",
+                image: "🍄",
+                clues: {
+                    cell: "Ökaryot. Çok hücreli. Kitin çeper. Kloroplast YOK.",
+                    nutrition: "Heterotrof (Hücre dışı sindirim yapar).",
+                    environment: "Nemli toprak ve ağaç dipleri."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Mantarlar (Fungi)",
+                    feature: "Kök, gövde, yaprak yoktur. Miselyum yapısı vardır."
+                }
+            },
+            {
+                id: 11,
+                commonName: "Küf Mantarı",
+                scientificName: "Rhizopus stolonifer",
+                image: "🍞",
+                clues: {
+                    cell: "Ökaryot. Çok hücreli. Kitin çeper.",
+                    nutrition: "Heterotrof (Saprofit).",
+                    environment: "Besinlerin üzeri (Ekmek, limon)."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Mantarlar (Fungi)",
+                    feature: "Sporla çoğalır, antibiyotik yapımında kullanılabilir."
+                }
+            },
+            {
+                id: 12,
+                commonName: "Kara Yosunu",
+                scientificName: "Funaria hygrometrica",
+                image: "🌱",
+                clues: {
+                    cell: "Ökaryot. Selüloz çeper. Kloroplast var.",
+                    nutrition: "Fotoototrof.",
+                    environment: "Nemli karasal alanlar."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Bitkiler (Plantae)",
+                    feature: "Damarsız, tohumsuz bitkidir. Gerçek kökü yoktur."
+                }
+            },
+            {
+                id: 13,
+                commonName: "Eğrelti Otu",
+                scientificName: "Dryopteris filix-mas",
+                image: "🌿",
+                clues: {
+                    cell: "Ökaryot. Selüloz çeper. İletim demetleri var.",
+                    nutrition: "Fotoototrof.",
+                    environment: "Gölge ve nemli yerler."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Bitkiler (Plantae)",
+                    feature: "Damarlı, tohumsuz bitkidir. Sporla çoğalır."
+                }
+            },
+            {
+                id: 14,
+                commonName: "Çam Ağacı",
+                scientificName: "Pinus sylvestris",
+                image: "🌲",
+                clues: {
+                    cell: "Ökaryot. Selüloz çeper. İğne yapraklı.",
+                    nutrition: "Fotoototrof.",
+                    environment: "Karasal iklimler."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Bitkiler (Plantae)",
+                    feature: "Açık tohumlu bitkidir. Kozalak oluşturur."
+                }
+            },
+            {
+                id: 15,
+                commonName: "Lale",
+                scientificName: "Tulipa gesneriana",
+                image: "🌷",
+                clues: {
+                    cell: "Ökaryot. Selüloz çeper. Çiçekli.",
+                    nutrition: "Fotoototrof.",
+                    environment: "Ilıman bölgeler."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Bitkiler (Plantae)",
+                    feature: "Kapalı tohumlu (Angiosperm) bitkidir. Gerçek çiçek taşır."
+                }
+            },
+            {
+                id: 16,
+                commonName: "Sünger",
+                scientificName: "Spongia officinalis",
+                image: "🧽",
+                clues: {
+                    cell: "Ökaryot. Çok hücreli. Çeper YOK.",
+                    nutrition: "Heterotrof (Sudaki maddeleri süzerek).",
+                    environment: "Deniz tabanı."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Hayvanlar (Animalia)",
+                    feature: "En ilkel hayvan grubudur. Sinir ve kas sistemi yoktur."
+                }
+            },
+            {
+                id: 17,
+                commonName: "Toprak Solucanı",
+                scientificName: "Lumbricus terrestris",
+                image: "🪱",
+                clues: {
+                    cell: "Ökaryot. Çok hücreli. Çeper yok.",
+                    nutrition: "Heterotrof (Çürükçül beslenir).",
+                    environment: "Nemli toprak altı."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Hayvanlar (Animalia)",
+                    feature: "Omurgasızdır. Deri solunumu yapar."
+                }
+            },
+            {
+                id: 18,
+                commonName: "Ahtapot",
+                scientificName: "Octopus vulgaris",
+                image: "🐙",
+                clues: {
+                    cell: "Ökaryot. Çok hücreli. Çeper yok.",
+                    nutrition: "Heterotrof (Avcı).",
+                    environment: "Denizler."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Hayvanlar (Animalia)",
+                    feature: "Yumuşakçalar şubesindedir. Gelişmiş gözleri vardır."
+                }
+            },
+            {
+                id: 19,
+                commonName: "Hamsi",
+                scientificName: "Engraulis encrasicolus",
+                image: "🐟",
+                clues: {
+                    cell: "Ökaryot. Çok hücreli. Çeper yok.",
+                    nutrition: "Heterotrof.",
+                    environment: "Denizler."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Hayvanlar (Animalia)",
+                    feature: "Omurgalıdır (Balıklar). Solungaç solunumu yapar."
+                }
+            },
+            {
+                id: 20,
+                commonName: "Kurt",
+                scientificName: "Canis lupus",
+                image: "🐺",
+                clues: {
+                    cell: "Ökaryot. Çok hücreli. Çeper yok.",
+                    nutrition: "Holozoik (Etçil).",
+                    environment: "Karasal ormanlar."
+                },
+                taxonomy: {
+                    domain: "Ökaryot",
+                    kingdom: "Hayvanlar (Animalia)",
+                    phylum: "Kordalılar",
+                    feature: "Omurgalı (Memeli). Vücudu kıllı, yavrusunu sütle besler."
+                }
+            }
+        ];
+
+        // --- ICONS (SVG) ---
+        const Icons = {
+            Microscope: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>,
+            Dna: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993"/><path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993"/><path d="M17 6l-2.5-2.5"/><path d="M14 8l-1-1"/><path d="M7 18l2.5 2.5"/><path d="M3.5 14.5l.5.5"/><path d="M20 9l.5.5"/><path d="M6.5 12.5l1 1"/><path d="M16.5 10.5l1 1"/><path d="M10 16l1.5 1.5"/></svg>,
+            Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500"><polyline points="20 6 9 17 4 12"/></svg>,
+            X: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+            Info: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        };
+
+        const App = () => {
+            const [currentOrgIndex, setCurrentOrgIndex] = useState(0);
+            const [discoveredClues, setDiscoveredClues] = useState([]);
+            const [stage, setStage] = useState('analyze'); // analyze, classify, naming, success
+            const [feedback, setFeedback] = useState(null);
+            const [score, setScore] = useState(0);
+
+            const activeOrganism = organisms[currentOrgIndex];
+
+            // --- ANALİZ FONKSİYONLARI ---
+            const revealClue = (type) => {
+                if (!discoveredClues.includes(type)) {
+                    setDiscoveredClues([...discoveredClues, type]);
+                }
+            };
+
+            const getClueText = (type) => {
+                if (!activeOrganism.clues[type]) return "Bu analiz için veri yok.";
+                return activeOrganism.clues[type];
+            };
+
+            // --- SINIFLANDIRMA FONKSİYONLARI ---
+            const handleClassification = (selectedDomain, selectedKingdom) => {
+                let isDomainCorrect = false;
+                let isKingdomCorrect = false;
+
+                // Domain Kontrolü
+                if (selectedDomain === activeOrganism.taxonomy.domain) {
+                    isDomainCorrect = true;
+                } else {
+                    if (selectedDomain === "Bakteri" && activeOrganism.taxonomy.domain === "Arke") {
+                        setFeedback({ type: 'error', msg: "Yanlış. Histon proteini ve ekstrem koşullar Bakterilerde görülmez." });
+                        return;
+                    }
+                    if (selectedDomain === "Ökaryot" && activeOrganism.taxonomy.domain !== "Ökaryot") {
+                        setFeedback({ type: 'error', msg: "Yanlış. Bu canlının çekirdek zarı ve zarlı organelleri yok." });
+                        return;
+                    }
+                }
+
+                // Kingdom (Eğer domain doğruysa)
+                if (isDomainCorrect) {
+                     if (selectedKingdom === activeOrganism.taxonomy.kingdom || 
+                        (activeOrganism.taxonomy.kingdom === "Eubacteria" && selectedKingdom === "Bakteriler") ||
+                        (activeOrganism.taxonomy.kingdom === "Archaebacteria" && selectedKingdom === "Arkeler") 
+                        ) {
+                         isKingdomCorrect = true;
+                     }
+                }
+
+                if (isDomainCorrect && isKingdomCorrect) {
+                    setFeedback({ type: 'success', msg: `Doğru! ${activeOrganism.taxonomy.feature}` });
+                    setTimeout(() => {
+                        setFeedback(null);
+                        setStage('naming'); // İsimlendirme aşamasına geç
+                    }, 2000);
+                } else {
+                    setFeedback({ type: 'error', msg: "Sınıflandırma hatalı. İpuçlarını tekrar incele." });
+                }
+            };
+
+            // --- İSİMLENDİRME (BINOMIAL) FONKSİYONLARI ---
+            const checkNaming = (genusInput, speciesInput) => {
+                const correctGenus = activeOrganism.scientificName.split(" ")[0];
+                const correctSpecies = activeOrganism.scientificName.split(" ")[1];
+
+                if (genusInput === correctGenus && speciesInput === correctSpecies) {
+                    setScore(prev => prev + 25);
+                    setStage('success');
+                } else {
+                    setFeedback({ type: 'error', msg: "Binomial kurallara dikkat! Cins adı Büyük, tanımlayıcı ad küçük harfle başlar." });
+                }
+            };
+
+            const nextOrganism = () => {
+                if (currentOrgIndex < organisms.length - 1) {
+                    setCurrentOrgIndex(prev => prev + 1);
+                    setDiscoveredClues([]);
+                    setStage('analyze');
+                    setFeedback(null);
+                } else {
+                    alert("Tüm analizler tamamlandı! Tebrikler.");
+                }
+            };
+
+            // --- RENDER BİLEŞENLERİ ---
+
+            const AnalysisPanel = () => (
+                <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg h-full">
+                    <h2 className="text-xl font-bold text-cyan-400 mb-4 flex items-center gap-2">
+                        <Icons.Microscope /> LABORATUVAR ANALİZİ
+                    </h2>
+                    <p className="text-sm text-slate-400 mb-6">Önce analiz araçlarını kullanarak canlının özelliklerini keşfet.</p>
+                    
+                    <div className="grid grid-cols-1 gap-4">
+                        <button 
+                            onClick={() => revealClue('cell')}
+                            className={`tool-btn flex items-center gap-4 p-4 rounded-lg text-left transition-all ${discoveredClues.includes('cell') ? 'bg-slate-700 border-l-4 border-cyan-500' : 'bg-slate-700/50 hover:bg-slate-700'}`}
+                        >
+                            <div className="bg-cyan-900 p-2 rounded text-cyan-300"><Icons.Microscope /></div>
+                            <div>
+                                <div className="font-bold text-sm text-slate-200">HÜCRE YAPISI ANALİZİ</div>
+                                <div className="text-xs text-slate-400">Çeper, organel, çekirdek kontrolü</div>
+                                {discoveredClues.includes('cell') && (
+                                    <div className="mt-2 text-sm text-cyan-300 font-mono bg-black/30 p-2 rounded animate-slide-up">
+                                        &gt; {getClueText('cell')}
+                                    </div>
+                                )}
+                            </div>
+                        </button>
+
+                        <button 
+                            onClick={() => revealClue('nutrition')}
+                            className={`tool-btn flex items-center gap-4 p-4 rounded-lg text-left transition-all ${discoveredClues.includes('nutrition') ? 'bg-slate-700 border-l-4 border-green-500' : 'bg-slate-700/50 hover:bg-slate-700'}`}
+                        >
+                            <div className="bg-green-900 p-2 rounded text-green-300">⚛️</div>
+                            <div>
+                                <div className="font-bold text-sm text-slate-200">METABOLİZMA & BESLENME</div>
+                                <div className="text-xs text-slate-400">Ototrof/Heterotrof testi</div>
+                                {discoveredClues.includes('nutrition') && (
+                                    <div className="mt-2 text-sm text-green-300 font-mono bg-black/30 p-2 rounded animate-slide-up">
+                                        &gt; {getClueText('nutrition')}
+                                    </div>
+                                )}
+                            </div>
+                        </button>
+
+                        <button 
+                            onClick={() => revealClue('environment')} 
+                            className={`tool-btn flex items-center gap-4 p-4 rounded-lg text-left transition-all ${discoveredClues.includes('environment') ? 'bg-slate-700 border-l-4 border-orange-500' : 'bg-slate-700/50 hover:bg-slate-700'}`}
+                        >
+                            <div className="bg-orange-900 p-2 rounded text-orange-300">🌡️</div>
+                            <div>
+                                <div className="font-bold text-sm text-slate-200">YAŞAM ORTAMI ANALİZİ</div>
+                                <div className="text-xs text-slate-400">Habitat ve çevresel koşullar</div>
+                                {discoveredClues.includes('environment') && (
+                                    <div className="mt-2 text-sm text-orange-300 font-mono bg-black/30 p-2 rounded animate-slide-up">
+                                        &gt; {getClueText('environment')}
+                                    </div>
+                                )}
+                            </div>
+                        </button>
+                    </div>
+
+                    {discoveredClues.length >= 2 && (
+                        <button 
+                            onClick={() => setStage('classify')}
+                            className="w-full mt-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded shadow-lg transition-all animate-pulse"
+                        >
+                            VERİLER YETERLİ -> SINIFLANDIRMAYA GEÇ
+                        </button>
+                    )}
+                </div>
+            );
+
+            const ClassificationPanel = () => {
+                const [selectedD, setSelectedD] = useState(null);
+
+                return (
+                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg h-full animate-slide-up">
+                        <h2 className="text-xl font-bold text-purple-400 mb-2">TAKSONOMİ KULESİ</h2>
+                        <p className="text-sm text-slate-400 mb-6">Analiz sonuçlarına göre canlıyı doğru çekmeceye yerleştir.</p>
+
+                        <div className="flex gap-4 mb-4">
+                            {['Bakteri', 'Arke', 'Ökaryot'].map(dom => (
+                                <button
+                                    key={dom}
+                                    onClick={() => setSelectedD(dom)}
+                                    className={`flex-1 py-3 rounded border-2 font-bold transition-all
+                                        ${selectedD === dom 
+                                            ? 'border-purple-500 bg-purple-900/50 text-white' 
+                                            : 'border-slate-600 text-slate-500 hover:border-slate-400'}
+                                    `}
+                                >
+                                    {dom.toUpperCase()}
+                                </button>
+                            ))}
+                        </div>
+
+                        {selectedD && (
+                            <div className="grid grid-cols-2 gap-3 mt-4 animate-slide-up">
+                                {selectedD === 'Bakteri' && (
+                                    <button onClick={() => handleClassification('Bakteri', 'Bakteriler')} className="p-4 bg-slate-700 hover:bg-slate-600 rounded text-left border border-slate-600">
+                                        <div className="font-bold">Bakteriler Âlemi</div>
+                                        <div className="text-xs text-slate-400 mt-1">Peptidoglikan çeperli</div>
+                                    </button>
+                                )}
+                                {selectedD === 'Arke' && (
+                                    <button onClick={() => handleClassification('Arke', 'Arkeler')} className="p-4 bg-slate-700 hover:bg-slate-600 rounded text-left border border-slate-600">
+                                        <div className="font-bold">Arkeler Âlemi</div>
+                                        <div className="text-xs text-slate-400 mt-1">Ekstrem koşullar, histonlu DNA</div>
+                                    </button>
+                                )}
+                                {selectedD === 'Ökaryot' && (
+                                    <>
+                                        <button onClick={() => handleClassification('Ökaryot', 'Protista')} className="p-4 bg-slate-700 hover:bg-slate-600 rounded text-left border border-slate-600">
+                                            <div className="font-bold text-yellow-300">Protista</div>
+                                            <div className="text-xs text-slate-400">Tek hücreli ökaryotlar (Genel)</div>
+                                        </button>
+                                        <button onClick={() => handleClassification('Ökaryot', 'Mantarlar (Fungi)')} className="p-4 bg-slate-700 hover:bg-slate-600 rounded text-left border border-slate-600">
+                                            <div className="font-bold text-orange-300">Mantarlar (Fungi)</div>
+                                            <div className="text-xs text-slate-400">Kitin çeper, saprofit</div>
+                                        </button>
+                                        <button onClick={() => handleClassification('Ökaryot', 'Bitkiler (Plantae)')} className="p-4 bg-slate-700 hover:bg-slate-600 rounded text-left border border-slate-600">
+                                            <div className="font-bold text-green-300">Bitkiler (Plantae)</div>
+                                            <div className="text-xs text-slate-400">Selüloz çeper, fotosentez</div>
+                                        </button>
+                                        <button onClick={() => handleClassification('Ökaryot', 'Hayvanlar (Animalia)')} className="p-4 bg-slate-700 hover:bg-slate-600 rounded text-left border border-slate-600">
+                                            <div className="font-bold text-red-300">Hayvanlar (Animalia)</div>
+                                            <div className="text-xs text-slate-400">Çepersiz, holozoik</div>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                        <button onClick={() => setStage('analyze')} className="mt-6 text-sm text-slate-500 underline">Geri Dön</button>
+                    </div>
+                );
+            };
+
+            const NamingPanel = () => {
+                // FIXED: Options are now stable and won't reshuffle on every render/click
+                const options = useMemo(() => {
+                    const parts = activeOrganism.scientificName.split(" ");
+                    return [
+                        { g: parts[0], s: parts[1] }, // Doğru
+                        { g: parts[0].toLowerCase(), s: parts[1] }, // Cins küçük
+                        { g: parts[0], s: parts[1].charAt(0).toUpperCase() + parts[1].slice(1) }, // Tür büyük
+                        { g: parts[1], s: parts[0] } // Ters
+                    ].sort(() => Math.random() - 0.5);
+                }, [activeOrganism]);
+
+                return (
+                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg h-full animate-slide-up text-center">
+                        <h2 className="text-xl font-bold text-pink-400 mb-4">BİNOMİAL İSİMLENDİRME</h2>
+                        <p className="text-sm text-slate-300 mb-6">
+                            Linnaeus kurallarına göre bu canlının bilimsel adı nasıl yazılmalıdır?<br/>
+                            <span className="text-xs text-slate-500">(İpucu: Cins adı büyük, tanımlayıcı ad küçük harfle başlar ve eğik yazılır.)</span>
+                        </p>
+
+                        <div className="space-y-3">
+                            {options.map((opt, idx) => (
+                                <button 
+                                    key={idx}
+                                    onClick={() => checkNaming(opt.g, opt.s)}
+                                    className="w-full p-4 bg-slate-900 border border-slate-600 rounded hover:bg-slate-700 font-serif italic text-lg"
+                                >
+                                    {opt.g} {opt.s}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const SuccessPanel = () => (
+                <div className="bg-green-900/20 p-8 rounded-xl border border-green-500/50 text-center animate-slide-up h-full flex flex-col items-center justify-center">
+                    <div className="text-6xl mb-4">{activeOrganism.image}</div>
+                    <h2 className="text-3xl font-bold text-green-400 mb-2">ANALİZ TAMAMLANDI</h2>
+                    <p className="text-xl text-white mb-1">{activeOrganism.scientificName}</p>
+                    <p className="text-slate-400 mb-6">({activeOrganism.commonName})</p>
+                    
+                    <div className="bg-black/40 p-4 rounded text-left text-sm text-slate-300 w-full mb-6">
+                        <p><span className="text-green-400 font-bold">Domain:</span> {activeOrganism.taxonomy.domain}</p>
+                        <p><span className="text-green-400 font-bold">Alem:</span> {activeOrganism.taxonomy.kingdom}</p>
+                        {activeOrganism.taxonomy.phylum && <p><span className="text-green-400 font-bold">Şube:</span> {activeOrganism.taxonomy.phylum}</p>}
+                        <p className="mt-2 text-xs italic">{activeOrganism.taxonomy.feature}</p>
+                    </div>
+
+                    <button 
+                        onClick={nextOrganism}
+                        className="px-8 py-3 bg-green-600 hover:bg-green-500 text-white rounded font-bold shadow-lg"
+                    >
+                        SONRAKİ NUMUNE
+                    </button>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen p-8 flex flex-col max-w-6xl mx-auto">
+                    {/* Üst Bilgi */}
+                    <header className="flex justify-between items-center mb-6 bg-slate-900/80 p-4 rounded-lg border border-slate-700 backdrop-blur">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center font-bold text-xl">T</div>
+                            <div>
+                                <h1 className="text-xl font-bold text-white tracking-tight">TAKSONOMİ KULESİ</h1>
+                                <p className="text-xs text-slate-400">9. Sınıf Biyoloji Simülasyonu</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-6 text-sm font-mono">
+                            <div className="text-slate-400">NUMUNE: <span className="text-white">{currentOrgIndex + 1}/{organisms.length}</span></div>
+                            <div className="text-slate-400">SKOR: <span className="text-green-400">{score}</span></div>
+                        </div>
+                    </header>
+
+                    {/* Ana Alan */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-6">
+                        
+                        {/* Sol: Canlı Görseli */}
+                        <div className="md:col-span-4 flex flex-col gap-4">
+                            <div className="bg-slate-800 rounded-xl p-8 flex items-center justify-center border border-slate-700 shadow-inner min-h-[300px] relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <div className="text-9xl transition-transform duration-500 group-hover:scale-110 relative z-10">
+                                    {stage === 'success' ? activeOrganism.image : '?'}
+                                </div>
+                                {stage !== 'success' && <div className="absolute bottom-4 text-slate-300 font-mono">BİLİNMEYEN ORGANİZMA</div>}
+                            </div>
+                            
+                            {/* Geri Bildirim Kutusu */}
+                            {feedback && (
+                                <div className={`p-4 rounded-lg border flex items-start gap-3 animate-slide-up ${feedback.type === 'success' ? 'bg-green-900/30 border-green-500/50 text-green-200' : 'bg-red-900/30 border-red-500/50 text-red-200'}`}>
+                                    {feedback.type === 'success' ? <Icons.Check /> : <Icons.X />}
+                                    <p className="text-sm">{feedback.msg}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Sağ: Etkileşim Paneli */}
+                        <div className="md:col-span-8">
+                            {stage === 'analyze' && <AnalysisPanel />}
+                            {stage === 'classify' && <ClassificationPanel />}
+                            {stage === 'naming' && <NamingPanel />}
+                            {stage === 'success' && <SuccessPanel />}
+                        </div>
+
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
