@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bio-Keşif Simülasyonu: 9. Sınıf Biyoloji</title>
+    
+    <!-- React ve ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel (JSX Derleyicisi) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS (Tasarım) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts (İsteğe bağlı, daha güzel görünüm için) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- İKON BİLEŞENLERİ (SVG) ---
+        // Lucide-react kütüphanesi yerine inline SVG kullanımı
+        const IconBase = ({ children, className, size = 24, ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
+        );
+
+        const Microscope = (props) => <IconBase {...props}><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></IconBase>;
+        const Sprout = (props) => <IconBase {...props}><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.2.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1.7-1.3 2.9-3.3 3-5.5a7 7 0 0 0-6.2 2.9z"/></IconBase>;
+        const ShieldAlert = (props) => <IconBase {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></IconBase>;
+        const XCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></IconBase>;
+        const ArrowRight = (props) => <IconBase {...props}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></IconBase>;
+        const Activity = (props) => <IconBase {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></IconBase>;
+        const FlaskConical = (props) => <IconBase {...props}><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></IconBase>;
+        const History = (props) => <IconBase {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12"/><path d="M3 3v9h9"/><path d="M12 7v5l4 2"/></IconBase>;
+        const Scale = (props) => <IconBase {...props}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></IconBase>;
+        const FileText = (props) => <IconBase {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></IconBase>;
+        const BrainCircuit = (props) => <IconBase {...props}><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M9 13a4.5 4.5 0 0 0 3-4"/><path d="M6.003 5.125A3 3 0 0 1 19.5 8"/><path d="M12 18a4 4 0 0 0 4-3 4.5 4.5 0 0 0-3-4"/><path d="M15.5 8a4 4 0 0 1 3.124 6.875"/></IconBase>;
+        const AlertTriangle = (props) => <IconBase {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></IconBase>;
+        const Thermometer = (props) => <IconBase {...props}><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></IconBase>;
+        const Dna = (props) => <IconBase {...props}><path d="m2 15 6 6"/><path d="m22 15-6 6"/><path d="m10.17 10.17 3.66 3.66"/><path d="m2 9 6-6"/><path d="m22 9-6-6"/><path d="M7 17a5.5 5.5 0 0 1 5.5-5.5 4.5 4.5 0 0 0 4.5 4.5 5.5 5.5 0 0 1 5 5.5"/><path d="M17 7a5.5 5.5 0 0 1-5.5 5.5 4.5 4.5 0 0 0-4.5-4.5 5.5 5.5 0 0 1-5-5.5"/></IconBase>;
+        const Droplets = (props) => <IconBase {...props}><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></IconBase>;
+        const Bug = (props) => <IconBase {...props}><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></IconBase>;
+        const Wind = (props) => <IconBase {...props}><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></IconBase>;
+        const LayoutGrid = (props) => <IconBase {...props}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></IconBase>;
+        const Handshake = (props) => <IconBase {...props}><path d="m11 17 2 2a1 1 0 1 0 3-1.47l-10-10a2.5 2.5 0 0 0-4 0l-1 1a2.5 2.5 0 0 0 0 4l9 9a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2l-5-5"/><path d="m22 8-4.12 4.12a2.51 2.51 0 0 1-3.42 0l-1.42-1.42a2.5 2.5 0 0 1 0-3.54l4-4a2.5 2.5 0 0 1 3.54 0L22 4.46a2.51 2.51 0 0 1 0 3.54Z"/></IconBase>;
+
+        const App = () => {
+            const [stage, setStage] = useState('intro'); // intro, history, selection, lab, ethics, success, fail
+            const [labStep, setLabStep] = useState(0); 
+            const [feedback, setFeedback] = useState(null); 
+            const [selectedOptionIndex, setSelectedOptionIndex] = useState(null);
+            const [currentScenario, setCurrentScenario] = useState(null);
+
+            // --- SENARYO VERİ TABANI ---
+            const scenariosData = [
+                {
+                    id: 1,
+                    title: "Neon-Buğday Krizi",
+                    icon: <Sprout size={32} className="text-green-600"/>,
+                    difficulty: "Kolay",
+                    topic: "Bitki Biyolojisi / Mineral Eksikliği",
+                    isComplex: false,
+                    ethics: {
+                        title: "Sponsorluk Teklifi",
+                        scenario: "Tarlayı kurtardın, tebrikler! Ancak büyük bir gübre firması sana ulaştı: \"Raporunda fosfor eksikliğini sadece bizim 'Süper-P' markalı pahalı gübremizin çözdüğünü yaz. Karşılığında laboratuvarına son model cihazlar bağışlayacağız. Normal fosforun da işe yaradığını kimse bilmemeli.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: Laboratuvarımın gelişmesi, gelecekte daha çok bitki kurtarmamı sağlar.", outcome: 'fail', feedback: "Hata: Bilimsel gerçekleri çarpıtarak haksız kazanç sağladın. Bilim tarafsız olmalıdır." },
+                            { text: "Teklifi Reddet: Herhangi bir fosfor kaynağının sorunu çözeceğini şeffafça raporlarım.", outcome: 'success', feedback: "Doğru Karar: Bilimsel dürüstlük, kısa vadeli kazançlardan önemlidir." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Gözlem ve Problem", scenario: "Buğday tarlalarında yapraklar morarıyor ve bitkiler cüce kalıyor. Problem nedir?", options: [{ text: "Bitkiler susuz kalmıştır, hemen sulama kanallarını açarım.", correct: false, feedback: "Hata: Gözlem yapmadan eyleme geçmemelisin. Önce sorunu tanımla." }, { text: "Bitkilerde görülen morarma ve cüceleşmenin temel sebebi nedir?", correct: true, feedback: "Doğru! Nitel ve nicel gözlemlere dayalı net bir problem cümlesi." }, { text: "Tarlayı böcekler basmıştır, ilaçlama yaparım.", correct: false, feedback: "Hata: Ortada böcek kanıtı yok. Varsayımla hareket ediyorsun." }, { text: "Tohumlar kalitesizdir, hepsini söküp atarım.", correct: false, feedback: "Hata: Bu çok maliyetli ve veriye dayanmayan bir karar." }] },
+                        { title: "2. Veri Toplama", scenario: "Toprak analiz raporlarına baktın. pH normal, Su normal, Fosfor (P) çok düşük.", options: [{ text: "Literatürden fosfor eksikliğinin bitkilerdeki belirtilerini araştırırım.", correct: true, feedback: "Harika! Veri (P eksikliği) ile literatür bilgisini eşleştiriyorsun." }, { text: "Komşu tarladan toprak taşıyıp sorunu çözerim.", correct: false, feedback: "Hata: Bu geçici ve bilimsel olmayan bir çözümdür." }, { text: "Hemen tarlaya rastgele vitamin takviyesi yaparım.", correct: false, feedback: "Hata: Hangi vitamin? Veriler fosfor eksikliğini gösteriyor, rastgele iş yapılmaz." }] },
+                        { title: "3. Hipotez Kurma", scenario: "Verilere dayanarak bir çözüm önerisi sun.", options: [{ text: "Bitkiler güneş sevmiyor, gölgelik yapmalıyız.", correct: false, feedback: "Hata: Verilerde ışıkla ilgili bir sorun yok." }, { text: "Sorunun nedeni topraktaki fosfor eksikliğidir.", correct: true, feedback: "Mükemmel! Test edilebilir, verilere dayalı bir hipotez." }, { text: "Toprakta çok fazla solucan var.", correct: false, feedback: "Hata: Analiz raporunda böyle bir veri yok." }] },
+                        { title: "4. Kontrollü Deney", scenario: "Hipotezi nasıl test edersin?", options: [{ text: "Tüm tarlayı bolca sularım.", correct: false, feedback: "Hata: Hipotezin fosfor üzerineydi, değişkenin su olamaz." }, { text: "İki grup seçerim. Birine fosfor veririm (Deney), diğerine vermem (Kontrol).", correct: true, feedback: "Doğru! Tek değişkenli kontrollü deney tasarımı." }, { text: "Bir gruba su, diğer gruba ışık veririm.", correct: false, feedback: "Hata: Hipotezinle (fosfor) alakasız değişkenleri test ediyorsun." }] },
+                        { title: "5. Sonuç ve Analiz", scenario: "Fosfor verilenler iyileşti, diğerleri cüce kaldı.", options: [{ text: "Veriler hipotezimi destekliyor. Sorun fosfor eksikliği.", correct: true, feedback: "Tebrikler, bilimsel süreci tamamladın." }, { text: "Bu sonuç tesadüftür, deney başarısız.", correct: false, feedback: "Hata: Kontrollü deney sonuçları tesadüf değildir." }, { text: "Bitkiler kendi kendine iyileşti.", correct: false, feedback: "Hata: Kontrol grubu iyileşmedi, demek ki sebep fosfor." }] }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Gölün Sessizliği",
+                    icon: <Droplets size={32} className="text-blue-600"/>,
+                    difficulty: "Zor (Hipotez Döngüsü İçerir)",
+                    topic: "Ekoloji / Su Kirliliği",
+                    isComplex: true,
+                    ethics: {
+                        title: "Köyün Geleceği mi, Doğanın Geleceği mi?",
+                        scenario: "Termal kirlilik raporunu hazırladın. Fabrika müdürü seni aradı: \"Eğer bu raporu yayınlarsan fabrika kapatılır. Köydeki 500 işçi işsiz kalır, aileler aç kalır. Raporu 'doğal sebep' olarak değiştir, biz de 2 yıl içinde gizlice soğutma sistemi kuralım. Köyü kurtar.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: İnsanların işsiz kalmasını engellemek için geçici olarak gerçeği saklarım.", outcome: 'fail', feedback: "Hata: 2 yıl içinde göl tamamen ölebilir. Bilim insanı tehdit veya duygu sömürüsü ile verileri gizleyemez." },
+                            { text: "Teklifi Reddet: Gerçeği yayınlarım. Fabrika kapatılmadan da soğutma sistemi zorunlu hale getirilebilir.", outcome: 'success', feedback: "Doğru Karar: Şeffaflık, hem doğayı hem de uzun vadede insan sağlığını korur." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Gözlem", scenario: "Köyün yanındaki gölde balıklar aniden ölmeye başladı. Ne yaparsın?", options: [{ text: "Balıkların ölüm sebebini araştırmak için su ve ölü balık örneği alırım.", correct: true, feedback: "Doğru başlangıç." }, { text: "Köy halkına balık tutmayı yasaklarım.", correct: false, feedback: "Hata: Bu bir önlemdir ama bilimsel araştırma adımı değildir." }, { text: "Gölün suyunu tamamen boşaltırım.", correct: false, feedback: "Hata: Bu ekosistemi tamamen yok eder." }] },
+                        { title: "2. Veri Toplama", scenario: "Göl kenarında bir fabrika var. Su sıcaklığı normalden 5 derece yüksek. pH normal.", options: [{ text: "Fabrika atıklarını ve su sıcaklığını veri olarak kaydederim.", correct: true, feedback: "Veriler toplandı." }, { text: "Sadece ölü balıkları toplar, suya bakmam.", correct: false, feedback: "Hata: Balıklar suda yaşar, su analizi şarttır." }, { text: "Fabrika müdürüyle kavga ederim.", correct: false, feedback: "Hata: Bilim insanı verilere odaklanır, duygusal tepkilere değil." }] },
+                        { title: "3. Hipotez - 1 (İlk Deneme)", scenario: "Fabrikayı görünce aklına ilk ne geliyor?", options: [{ text: "Balıklar fabrikadan sızan zehirli kimyasallar yüzünden ölmektedir.", correct: true, feedback: "Mantıklı bir ilk hipotez." }, { text: "Balıklar yaşlılıktan ölüyor.", correct: false, feedback: "Hata: Toplu ölümler yaşlılıkla açıklanamaz." }, { text: "Balıklar başka bir göle göç etmiştir.", correct: false, feedback: "Hata: Ölü balıklar var, göç değil." }] },
+                        { title: "4. Deney - 1", scenario: "Hipotezini (Zehirli Kimyasal) test et.", options: [{ text: "Su örneklerinde toksin analizi yaparım.", correct: true, feedback: "Doğru test yöntemi." }, { text: "Suyun sıcaklığını tekrar ölçerim.", correct: false, feedback: "Hata: Hipotezin kimyasal üzerine, sıcaklık değil." }, { text: "Balıkların midesine bakarım.", correct: false, feedback: "Hata: Su kirliliği analizinde öncelik suyun kendisidir." }] },
+                        { title: "5. Analiz - 1 (KRİTİK AŞAMA)", scenario: "SONUÇ: Suda toksik kimyasal madde BULUNAMADI. Su temiz çıktı. Ne yapacaksın?", options: [{ text: "Araştırmayı bitiririm, sebep bulunamadı.", correct: false, feedback: "Hata: Bilim pes etmez." }, { text: "Hipotezim çürütüldü. Verilere (Sıcaklık) tekrar bakıp YENİ BİR HİPOTEZ kurmalıyım.", correct: true, feedback: "Harika! Bilimsel süreç budur." }, { text: "Laboratuvar sonuçları yanlıştır, toksin olduğuna eminim.", correct: false, feedback: "Hata: Verileri reddetmek yerine hipotezini sorgulamalısın." }] },
+                        { title: "6. Hipotez - 2 (Revize)", scenario: "Kimyasal yok ama su sıcaktı. Yeni hipotezin ne?", options: [{ text: "Balıklar oksijensizlikten ölüyor çünkü sıcak suda oksijen azalır (Termal Kirlilik).", correct: true, feedback: "Mükemmel bağlantı." }, { text: "Balıklar sese dayanamadı.", correct: false, feedback: "Hata: Veri yok." }, { text: "Balıklar sıcak suyu çok sevdiği için ölmüştür.", correct: false, feedback: "Hata: Bilimsel mantığa aykırı." }] },
+                        { title: "7. Sonuç", scenario: "Oksijen ölçümü yaptın ve seviyenin kritik derecede düşük olduğunu buldun.", options: [{ text: "Hipotez desteklendi: Sebep Termal Kirlilik.", correct: true, feedback: "Problemi çözdün." }, { text: "Sonuçlar hala belirsiz.", correct: false, feedback: "Hata: Veriler net." }, { text: "Suya buz atarsak sorun çözülür.", correct: false, feedback: "Hata: Bu bir sonuç değil, geçici bir çözümdür." }] }
+                    ]
+                },
+                {
+                    id: 3,
+                    title: "Yorgun Sporcular",
+                    icon: <Activity size={32} className="text-red-600"/>,
+                    difficulty: "Orta",
+                    topic: "Hücre Biyolojisi / Fermantasyon",
+                    isComplex: false,
+                    ethics: {
+                        title: "Mucize İçecek Yalanı",
+                        scenario: "Büyük bir enerji içeceği firması sana geldi: \"Araştırmanda, laktik asidi engelleyen tek şeyin bizim içeceğimiz olduğunu söyle. Aslında sadece şekerli su ama bu sayede Milli Takım'a devasa bir sponsorluk bütçesi vereceğiz. Sporcular kazanacak.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: Milli takımın paraya ihtiyacı var, küçük bir bilimsel abartıdan zarar gelmez.", outcome: 'fail', feedback: "Hata: Bu abartı değil, halkı kandırmaktır. İnsanların sağlığıyla oynamak etik dışıdır." },
+                            { text: "Teklifi Reddet: İçeceğin laktik aside etkisi olmadığını açıklarım. Sporcuların sağlığı yalandan değerlidir.", outcome: 'success', feedback: "Doğru Karar: Bilimsel itibar ve halk sağlığı satılık değildir." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "Koşucular yarış sonu bacaklarında yanma hissediyor.", options: [{ text: "Kaslarda yanmaya sebep olan biyokimyasal süreç nedir?", correct: true, feedback: "Doğru soru." }, { text: "Sporcuların ayakkabıları mı kalitesiz?", correct: false, feedback: "Hata: Biyolojik bir süreç araştırıyoruz." }, { text: "Yarış pisti çok mu yokuşlu?", correct: false, feedback: "Hata: Bu çevresel bir faktördür, fizyolojik değil." }] },
+                        { title: "2. Veri", scenario: "Sporcular hızlı nefes alıyor ama oksijen yetmiyor.", options: [{ text: "Oksijensiz solunum süreçlerini incelerim.", correct: true, feedback: "Doğru." }, { text: "Sporcuların beslenme çantalarına bakarım.", correct: false, feedback: "Hata: Sorun anlık oksijen yetersizliği." }, { text: "Hava durumunu kontrol ederim.", correct: false, feedback: "Hata: Konu hücresel solunum." }] },
+                        { title: "3. Hipotez", scenario: "Oksijen yetmeyince ne olur?", options: [{ text: "Hücreler laktik asit fermantasyonu yapar, biriken asit yorgunluk verir.", correct: true, feedback: "Doğru hipotez." }, { text: "Kaslar oksijen yokluğunda erir.", correct: false, feedback: "Hata: Bilimsel olarak yanlış." }, { text: "Hücreler etil alkol üretir.", correct: false, feedback: "Hata: İnsan hücreleri etil alkol fermantasyonu yapmaz." }] },
+                        { title: "4. Deney", scenario: "Hipotezi test et.", options: [{ text: "Sporcunun kanındaki laktik asidi ölçerim (Yarış öncesi ve sonrası).", correct: true, feedback: "Kontrollü deney." }, { text: "Sporcunun nabzını ölçerim.", correct: false, feedback: "Hata: Nabız artışı genel bir veridir, asit birikimini kanıtlamaz." }, { text: "Kaslardan parça alıp mikroskopta bakarım.", correct: false, feedback: "Hata: Gereksiz ve invaziv bir yöntem." }] },
+                        { title: "5. Sonuç", scenario: "Yarış sonrası laktik asit 10 kat artmış.", options: [{ text: "Veriler hipotezi destekliyor.", correct: true, feedback: "Başarılı." }, { text: "Laktik asit yorgunluk yapmaz.", correct: false, feedback: "Hata: Literatürle çelişiyor." }, { text: "Sporcular hasta olmuş.", correct: false, feedback: "Hata: Laktik asit artışı doğal bir süreçtir." }] }
+                    ]
+                },
+                {
+                    id: 4,
+                    title: "Göçmen Kuşlar",
+                    icon: <Wind size={32} className="text-sky-500"/>,
+                    difficulty: "Zor (Hipotez Döngüsü)",
+                    topic: "Davranış / İklim",
+                    isComplex: true,
+                    ethics: {
+                        title: "İnşaat Rantı ve Doğa",
+                        scenario: "Kuşların erken göç sebebinin iklim değişikliği olduğunu buldun. Ancak bir inşaat firması o bölgeye lüks otel yapmak istiyor. \"Raporunda kuşların rotayı kalıcı olarak değiştirdiğini yaz. Böylece arazi 'koruma alanı' olmaktan çıkar. Sana da kuşlar için başka yerde barınak yapman için büyük fon veririz.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: O fonla başka yerdeki binlerce kuşu kurtarabilirim, burası feda edilebilir.", outcome: 'fail', feedback: "Hata: Ekosistemler bütündür, feda edilemez. Bilimsel veriyi çarpıtmak habitat kaybına yol açar." },
+                            { text: "Teklifi Reddet: Kuşların bölgeyi hala kullandığını ve iklimden etkilendiğini raporlarım.", outcome: 'success', feedback: "Doğru Karar: Doğal yaşam alanlarını korumak için gerçekleri söylemek zorundayız." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "Leylekler bu yıl 1 ay erken göç etmeye başladı.", options: [{ text: "Göç zamanını değiştiren faktör nedir?", correct: true, feedback: "Problem belirlendi." }, { text: "Kuşlar hastalanmış mıdır?", correct: false, feedback: "Hata: Tüm sürünün aynı anda hastalanıp göç etmesi düşük ihtimal." }, { text: "Yırtıcı kuşlar mı arttı?", correct: false, feedback: "Hata: Bu göçü hızlandırmaz, yönünü değiştirebilir." }] },
+                        { title: "2. Veri", scenario: "Bölgede böcek sayısı normal, hava sıcaklığı normalden düşük.", options: [{ text: "Meteoroloji ve besin verilerini kaydederim.", correct: true, feedback: "Veri tamam." }, { text: "Kuşların yuvalarını incelerim.", correct: false, feedback: "Hata: Göç nedeni yuvada değil, çevrededir." }, { text: "Avcıların sayısını araştırırım.", correct: false, feedback: "Hata: Verilerde avcı artışı yok." }] },
+                        { title: "3. Hipotez - 1", scenario: "İlk tahminin?", options: [{ text: "Kuşlar aç kaldığı için (besin yetersizliği) erken göç ediyor.", correct: true, feedback: "Mantıklı ilk hipotez." }, { text: "Kuşlar yolu şaşırdı.", correct: false, feedback: "Hata: Her yıl aynı rotayı kullanırlar." }, { text: "Dünyanın manyetik alanı değişti.", correct: false, feedback: "Hata: Çok büyük bir iddia, daha basit açıklamalar varken buna gidilmez." }] },
+                        { title: "4. Deney - 1", scenario: "Besin hipotezini test et.", options: [{ text: "Böcek popülasyonunu sayar ve kuşların beslenme durumuna bakarım.", correct: true, feedback: "Ölçüm yapıldı." }, { text: "Kuşları tartarım.", correct: false, feedback: "Hata: Zayıf olmaları nedeni açıklamaz (Soğuktan da olabilir)." }, { text: "Kuşlara verici takarım.", correct: false, feedback: "Hata: Bu sadece nereye gittiklerini gösterir, neden gittiklerini değil." }] },
+                        { title: "5. Analiz - 1 (Hata)", scenario: "SONUÇ: Böcekler çok bol. Kuşlar aç değil. Hipotez ÇÜRÜDÜ.", options: [{ text: "Hipotezi reddet ve iklim verilerine odaklanan YENİ HİPOTEZ kur.", correct: true, feedback: "Doğru adım. Besin değilse geriye sıcaklık kalıyor." }, { text: "Belki sayım yanlıştır, tekrar sayarım.", correct: false, feedback: "Hata: Verilere güvenmelisin." }, { text: "Kuşlar böcekleri sevmemiştir.", correct: false, feedback: "Hata: Bilimsel değil." }] },
+                        { title: "6. Hipotez - 2", scenario: "Besin tamamsa sorun ne?", options: [{ text: "Erken soğuyan havalar göç içgüdüsünü tetikledi.", correct: true, feedback: "Yeni hipotez." }, { text: "Kuşlar sıkıldı.", correct: false, feedback: "Hata: Antropomorfik (insansı) yaklaşım yanlıştır." }, { text: "Yırtıcı hayvanlar arttı.", correct: false, feedback: "Hata: Verilerde bu yok." }] },
+                        { title: "7. Sonuç", scenario: "Sıcaklık düşüşü ile göç tarihleri örtüşüyor.", options: [{ text: "Hipotez desteklendi.", correct: true, feedback: "Sonuç." }, { text: "Bu bir tesadüftür.", correct: false, feedback: "Hata: Korelasyon çok güçlü." }, { text: "Sonuçlar yetersiz.", correct: false, feedback: "Hata: Veriler yeterli." }] }
+                    ]
+                },
+                {
+                    id: 5,
+                    title: "Kabarmayan Ekmek",
+                    icon: <Bug size={32} className="text-amber-700"/>,
+                    difficulty: "Kolay",
+                    topic: "Mikrobiyoloji / Enzimler",
+                    isComplex: false,
+                    ethics: {
+                        title: "Suçlu Kim?",
+                        scenario: "Sorunun yüksek sıcaklık olduğunu buldun. Ancak fırın zinciri sahibi sana baskı yapıyor: \"Benim hatam olduğunu söyleme. 'X Marka Maya' bozuktu de. O marka bizim rakibimiz, onları piyasadan silersek sana danışmanlık ücreti öderiz.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: Küçük bir yalanla kariyerimi garantiye alırım, maya firması zaten batmaz.", outcome: 'fail', feedback: "Hata: Bu ticari bir iftiradır ve bilimsel etiğe aykırıdır. Haksız rekabete alet oldun." },
+                            { text: "Teklifi Reddet: Sorunun mayada değil, suyun sıcaklığında olduğunu raporlarım.", outcome: 'success', feedback: "Doğru Karar: Bilim insanı, hatayı kimin yaptığına bakmaksızın gerçeği söyler." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "Fırındaki hamurlar bugün hiç kabarmadı.", options: [{ text: "Hamurun kabarmasını sağlayan maya neden çalışmadı?", correct: true, feedback: "Problem net." }, { text: "Un bayat mıydı?", correct: false, feedback: "Hata: Maya canlıdır, önce ona odaklanmak gerekir." }, { text: "Fırın mı bozuk?", correct: false, feedback: "Hata: Hamur fırına girmeden kabarır." }] },
+                        { title: "2. Veri", scenario: "Su çok sıcaktı (90°C). Maya canlı bir mantardır.", options: [{ text: "Sıcaklığın enzim yapısına etkisini hatırlarım.", correct: true, feedback: "Veri." }, { text: "Mayanın markasını kontrol ederim.", correct: false, feedback: "Hata: Sıcaklık verisi daha kritik." }, { text: "Suyun kireç oranına bakarım.", correct: false, feedback: "Hata: İkincil bir faktördür." }] },
+                        { title: "3. Hipotez", scenario: "90 derece su ve maya...", options: [{ text: "Aşırı sıcak su mayanın enzimlerini denatüre etti (bozdu).", correct: true, feedback: "Hipotez." }, { text: "Sıcak su mayayı daha hızlı çalıştırır, sorun başka.", correct: false, feedback: "Hata: 90 derecede enzimler bozulur." }, { text: "Maya soğuk sever.", correct: false, feedback: "Hata: Maya ılık sever, soğuk değil." }] },
+                        { title: "4. Deney", scenario: "Hipotezi test et.", options: [{ text: "İki hamur hazırlarım: Biri ılık su (Kontrol), biri kaynar su (Deney).", correct: true, feedback: "Deney." }, { text: "Sadece kaynar suyla tekrar denerim.", correct: false, feedback: "Hata: Kontrol grubu yok." }, { text: "Unu değiştirip denerim.", correct: false, feedback: "Hata: Değişkeni (sıcaklık) değiştirdin." }] },
+                        { title: "5. Sonuç", scenario: "Ilık sulu hamur kabardı, kaynar sulu kabarmadı.", options: [{ text: "Hipotez doğrulandı: Yüksek sıcaklık enzimleri bozar.", correct: true, feedback: "Sonuç." }, { text: "Maya bozukmuş.", correct: false, feedback: "Hata: Ilık suda çalıştı, demek ki sağlam." }, { text: "Deney başarısız.", correct: false, feedback: "Hata: Sonuç gayet açık." }] }
+                    ]
+                },
+                {
+                    id: 6,
+                    title: "Obezite Köyü",
+                    icon: <Dna size={32} className="text-purple-600"/>,
+                    difficulty: "Zor (Hipotez Döngüsü)",
+                    topic: "Genetik vs Çevre",
+                    isComplex: true,
+                    ethics: {
+                        title: "Kolay Yolun Cazibesi",
+                        scenario: "Sorunun beslenme olduğunu kanıtladın. Bir 'Zayıflama Hapı' firması aradı: \"Raporda sebebin 'Genetik' olduğunu söyle. Bizim hapın da bu genleri düzelttiğini iddia edeceğiz. Köy halkı diyet yapmaktan kurtulur, sen de hisse alırsın.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: İnsanlar zaten diyet yapmayı sevmiyor, onlara kolay bir umut verelim.", outcome: 'fail', feedback: "Hata: İşe yaramayan bir ilacı satmak için halk sağlığını tehlikeye attın ve bilimi alet ettin." },
+                            { text: "Teklifi Reddet: Gerçek çözümün sağlıklı beslenme olduğunu söylerim. Sahte umutlar satmam.", outcome: 'success', feedback: "Doğru Karar: Bilim insanı topluma acı da olsa doğruları söylemekle yükümlüdür." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "X Köyünde herkes aşırı kilolu. Komşu köyde ise herkes zayıf.", options: [{ text: "Bu farkın sebebi genetik mi yoksa beslenme mi?", correct: true, feedback: "Problem." }, { text: "Köyün suyu mu kirli?", correct: false, feedback: "Hata: Su kirliliği obezite yapmaz." }, { text: "Köy lanetli mi?", correct: false, feedback: "Hata: Bilim dışı." }] },
+                        { title: "2. Veri", scenario: "İki köy akraba (aynı soy). X köyü sürekli hamur işi yiyor.", options: [{ text: "Genetik ve beslenme verilerini toplarım.", correct: true, feedback: "Veri." }, { text: "Köydeki spor salonlarını sayarım.", correct: false, feedback: "Hata: Yeme alışkanlığı daha baskın bir veri." }, { text: "İnsanların boyunu ölçerim.", correct: false, feedback: "Hata: Konu kilo." }] },
+                        { title: "3. Hipotez - 1", scenario: "Genellikle ilk akla gelen?", options: [{ text: "Bu köyde obezite geni mutasyonu var.", correct: true, feedback: "Güçlü bir ilk hipotez." }, { text: "Köy halkı çok uyuyor.", correct: false, feedback: "Hata: Zayıf hipotez." }, { text: "Hava kirliliği kilo yapıyor.", correct: false, feedback: "Hata: İlişkisiz." }] },
+                        { title: "4. Deney - 1", scenario: "Genetik hipotezini test et.", options: [{ text: "Genetik tarama (DNA analizi) yaparım.", correct: true, feedback: "Deney." }, { text: "İnsanları tartarım.", correct: false, feedback: "Hata: Tartmak sebebi açıklamaz." }, { text: "Yediklerini keserim.", correct: false, feedback: "Hata: Bu deney değil müdahaledir." }] },
+                        { title: "5. Analiz - 1 (Hata)", scenario: "SONUÇ: İki köyün genetiği %99.9 aynı. Obezite geni YOK. Hipotez ÇÜRÜDÜ.", options: [{ text: "Hipotezi reddet. Çevresel faktörlere (Beslenme) odaklan.", correct: true, feedback: "Doğru dönüş." }, { text: "Israr ederim, genetik olmalı.", correct: false, feedback: "Hata: Veriler yalan söylemez." }, { text: "Testler yanlıştır.", correct: false, feedback: "Hata: Bilimsel şüphecilik iyidir ama inatçılık kötüdür." }] },
+                        { title: "6. Hipotez - 2", scenario: "Genetik değilse...", options: [{ text: "Aşırı karbonhidrat tüketimi obeziteye yol açıyor.", correct: true, feedback: "Yeni hipotez." }, { text: "Köyün havası kilo aldırıyor.", correct: false, feedback: "Hata: Bilimsel değil." }, { text: "İnsanlar az su içiyor.", correct: false, feedback: "Hata: Beslenme verisi varken suya odaklanmak yanlış." }] },
+                        { title: "7. Sonuç", scenario: "Diyeti değiştiren köylüler zayıfladı.", options: [{ text: "Hipotez desteklendi: Çevresel etki.", correct: true, feedback: "Sonuç." }, { text: "Genetik yapıları değişti.", correct: false, feedback: "Hata: Diyet genetiği değiştirmez (Epigenetik hariç ama bu basit senaryo)." }, { text: "Tesadüfen zayıfladılar.", correct: false, feedback: "Hata: Diyet-Sonuç ilişkisi net." }] }
+                    ]
+                },
+                {
+                    id: 7,
+                    title: "Kaybolan Likenler",
+                    icon: <AlertTriangle size={32} className="text-yellow-600"/>,
+                    difficulty: "Orta",
+                    topic: "Çevre / Biyoindikatörler",
+                    isComplex: false,
+                    ethics: {
+                        title: "Siyaset ve Bilim",
+                        scenario: "Hava kirliliğinin likenleri öldürdüğünü kanıtladın. Belediye Başkanı seçim öncesi seni ziyaret etti: \"'Kirlilik' kelimesini kullanma. Turistler korkar. 'Mevsimsel kuruma' de. Seçimi kazanırsam söz veriyorum seneye 10.000 ağaç dikeceğiz.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: 10.000 ağaç dikilmesi kirlilikten bahsetmekten daha faydalı olabilir.", outcome: 'fail', feedback: "Hata: Halkın sağlığını etkileyen bir bilgiyi (hava kirliliği) gizlemek suçtur. Politik vaatler bilimin üzerini örtemez." },
+                            { text: "Teklifi Reddet: Hava kirliliği verilerini olduğu gibi açıklarım. Halkın gerçeği bilmeye hakkı var.", outcome: 'success', feedback: "Doğru Karar: Bilim insanı kamu yararını gözetir ve verileri sansürlemez." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "Şehir merkezindeki ağaçlarda likenler yok oldu, ormanda var.", options: [{ text: "Likenlerin yok olma sebebi hava kirliliği mi?", correct: true, feedback: "Problem." }, { text: "Ağaçlar hasta mı?", correct: false, feedback: "Hata: Sadece likenler etkilenmiş." }, { text: "Böcekler likenleri yedi mi?", correct: false, feedback: "Hata: Şehirde daha çok böcek olması mantıksız." }] },
+                        { title: "2. Hipotez", scenario: "Likenler temiz havayı sever.", options: [{ text: "Kükürtdioksit (SO2) kirliliği likenleri öldürmektedir.", correct: true, feedback: "Hipotez." }, { text: "Şehir çok gürültülü olduğu için likenler öldü.", correct: false, feedback: "Hata: Ses kirliliği likenleri etkilemez." }, { text: "İnsanlar likenleri topladı.", correct: false, feedback: "Hata: Mantıksız." }] },
+                        { title: "3. Deney", scenario: "Hipotezi test et.", options: [{ text: "Şehir ve orman havasındaki SO2 oranını ölçüp kıyaslarım.", correct: true, feedback: "Deney." }, { text: "Ağaçları sularım.", correct: false, feedback: "Hata: Hava kirliliğini ölçmez." }, { text: "Likenleri mikroskopla incelerim.", correct: false, feedback: "Hata: Bu sadece öldüklerini gösterir, nedenini değil." }] },
+                        { title: "4. Sonuç", scenario: "Şehirde SO2 yüksek, liken yok.", options: [{ text: "Hipotez desteklendi: Likenler biyoindikatördür.", correct: true, feedback: "Sonuç." }, { text: "Likenler susuzluktan ölmüş.", correct: false, feedback: "Hata: SO2 verisi ortada." }, { text: "Ağaç türü farkı etkili.", correct: false, feedback: "Hata: Deney hava üzerineydi." }] }
+                    ]
+                },
+                {
+                    id: 8,
+                    title: "Beyaz Kaplan",
+                    icon: <Dna size={32} className="text-gray-800"/>,
+                    difficulty: "Kolay",
+                    topic: "Kalıtım / Mutasyon",
+                    isComplex: false,
+                    ethics: {
+                        title: "Ticari Hırs vs Hayvan Refahı",
+                        scenario: "Beyaz kaplanın çekinik genle oluştuğunu buldun. Hayvanat bahçesi müdürü: \"Bu kaplanlar çok turist çekiyor! Beyaz yavrular elde etmek için sürekli kardeş kaplanları çiftleştirelim (akraba evliliği). Genetik hastalık risklerini raporunda gizle, onay ver.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: Hayvanat bahçesinin geliri artarsa diğer hayvanlara daha iyi bakarlar.", outcome: 'fail', feedback: "Hata: Akraba eşleşmesi sakat ve hasta hayvanların doğmasına yol açar. Hayvan refahını hiçe saydın." },
+                            { text: "Teklifi Reddet: Yakın akraba eşleşmesinin genetik bozukluklara yol açacağını rapor eder ve onay vermem.", outcome: 'success', feedback: "Doğru Karar: Bir canlının sağlığı, ticari kaygılardan önce gelir." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "Normal anne-baba kaplandan beyaz yavru doğdu.", options: [{ text: "Beyaz kürk rengi nasıl ortaya çıktı?", correct: true, feedback: "Problem." }, { text: "Yavru hasta mı?", correct: false, feedback: "Hata: Renk değişimi doğrudan hastalık demek değildir." }, { text: "Anne baba aslında beyaz mıydı?", correct: false, feedback: "Hata: Gözlemle turuncu oldukları belli." }] },
+                        { title: "2. Hipotez", scenario: "Anne baba turuncu, yavru beyaz.", options: [{ text: "Çekinik bir genin (albinizm) bir araya gelmesiyle oluştu.", correct: true, feedback: "Hipotez." }, { text: "Yavru güneşte rengi soldu.", correct: false, feedback: "Hata: Genetik özellikler sonradan solmaz." }, { text: "Yavru boyandı.", correct: false, feedback: "Hata: Doğal ortamda imkansız." }] },
+                        { title: "3. Deney", scenario: "Hipotezi test et.", options: [{ text: "Aile üyelerinin genotip analizini yaparım.", correct: true, feedback: "Deney." }, { text: "Yavruyu yıkarım.", correct: false, feedback: "Hata: Boya olmadığını biliyoruz." }, { text: "Yavruyu güneşe koyarım.", correct: false, feedback: "Hata: Etik değil ve bilimsel değil." }] },
+                        { title: "4. Sonuç", scenario: "Her iki ebeveyn de taşıyıcı (Aa).", options: [{ text: "Hipotez desteklendi: Çekinik genlerin buluşması.", correct: true, feedback: "Sonuç." }, { text: "Bu bir mutasyon değil adaptasyondur.", correct: false, feedback: "Hata: Bu bireysel bir genetik durum." }, { text: "Babası başkasıdır.", correct: false, feedback: "Hata: Gen analizi ebeveynleri doğruladı." }] }
+                    ]
+                },
+                {
+                    id: 9,
+                    title: "Penceredeki Çiçek",
+                    icon: <Sprout size={32} className="text-lime-600"/>,
+                    difficulty: "Kolay",
+                    topic: "Bitki Fizyolojisi / Oksin",
+                    isComplex: false,
+                    ethics: {
+                        title: "Sözde Bilim ve Teknoloji",
+                        scenario: "Oksin hormonunu kanıtladın. 'Akıllı Saksı' firması teklif yaptı: \"Yönelimin doğal hormonla değil, bizim saksımızın 'manyetik dalgalarıyla' olduğunu söyle. Bu sayede okullara binlerce tablet bağışlayacağız.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: Öğrencilerin tablete ihtiyacı var, bitki hormonunu yanlış bilseler de olur.", outcome: 'fail', feedback: "Hata: Sözde bilimi (uydurma bilgiyi) desteklemek, eğitimin temeline dinamit koymaktır." },
+                            { text: "Teklifi Reddet: Bitkilerin doğal fizyolojisini dürüstçe anlatırım. Teknoloji yalanla gelmemeli.", outcome: 'success', feedback: "Doğru Karar: Bilimsel gerçekler, hediyelerle takas edilemez." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "Saksı çiçeği yamuk büyüyüp pencereye yöneliyor.", options: [{ text: "Bitkinin yönelim hareketinin sebebi nedir?", correct: true, feedback: "Problem." }, { text: "Bitkinin gövdesi mi kırık?", correct: false, feedback: "Hata: Kırık değil, eğimli büyüme var." }, { text: "Saksı mı yamuk duruyor?", correct: false, feedback: "Hata: Gözlemle saksı düz." }] },
+                        { title: "2. Hipotez", scenario: "Işık tek yönden geliyor.", options: [{ text: "Oksin hormonu ışık almayan tarafta birikir ve bitkiyi ışığa yöneltir (Fototropizma).", correct: true, feedback: "Hipotez." }, { text: "Bitki manzarayı izlemek istiyor.", correct: false, feedback: "Hata: Bitkilerde bilinç yoktur." }, { text: "Rüzgar bitkiyi itiyor.", correct: false, feedback: "Hata: İç mekanda rüzgar yok." }] },
+                        { title: "3. Deney", scenario: "Hipotezi test et.", options: [{ text: "Bitkinin ucunu (koleoptil) folyo ile kapatıp ışık algısını engellerim.", correct: true, feedback: "Deney." }, { text: "Bitkiyi sularım.", correct: false, feedback: "Hata: Su yönelimi açıklamaz." }, { text: "Bitkiyle konuşurum.", correct: false, feedback: "Hata: Bilimsel değil." }] },
+                        { title: "4. Sonuç", scenario: "Ucu kapalı bitki düz büyüdü, yönelmedi.", options: [{ text: "Hipotez desteklendi: Işık algısı uçtadır.", correct: true, feedback: "Sonuç." }, { text: "Bitki küstü.", correct: false, feedback: "Hata: Yanlış yorum." }, { text: "Deney hatalı.", correct: false, feedback: "Hata: Sonuç gayet net." }] }
+                    ]
+                },
+                {
+                    id: 10,
+                    title: "Donmayan Balıklar",
+                    icon: <Thermometer size={32} className="text-cyan-600"/>,
+                    difficulty: "Orta",
+                    topic: "Adaptasyon / Proteinler",
+                    isComplex: false,
+                    ethics: {
+                        title: "Biyoçeşitlilik mi, Güzellik mi?",
+                        scenario: "Balıktaki antifriz proteinini keşfettin. Bir kozmetik devi: \"Bu balıkları avlayıp proteinlerini 'Gençleştirici Krem' yapalım. Raporda balık popülasyonunun 'tükenmez' olduğunu yaz. Deniz biyolojisi araştırmalarına devasa fon sağlarız.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: Bu fonla okyanusları daha iyi araştırabilirim, birkaç balık feda edilebilir.", outcome: 'fail', feedback: "Hata: Bir türün aşırı avlanmasına göz yummak ekosistemi çökertir. Bilim doğayı sömürmek için değil, anlamak içindir." },
+                            { text: "Teklifi Reddet: Bu türün hassas dengesini ve avlanma risklerini raporlarım.", outcome: 'success', feedback: "Doğru Karar: Türlerin devamlılığı, ticari kârdan önemlidir." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "Antarktika suları -2°C ama balıklar donmuyor.", options: [{ text: "Bu balıkların kanının donmasını engelleyen nedir?", correct: true, feedback: "Problem." }, { text: "Balıkların derisi çok mu kalın?", correct: false, feedback: "Hata: Deri soğuğu engellemez." }, { text: "Balıklar sıcak su kaynaklarında mı yaşıyor?", correct: false, feedback: "Hata: Her yerde yüzüyorlar." }] },
+                        { title: "2. Hipotez", scenario: "Normal kan 0 derecede donar.", options: [{ text: "Kanlarında antifriz özellikli özel proteinler vardır.", correct: true, feedback: "Hipotez." }, { text: "Balıklar kanlarını ısıtıyor.", correct: false, feedback: "Hata: Balıklar soğukkanlıdır." }, { text: "Sürekli hareket ettikleri için donmuyorlar.", correct: false, feedback: "Hata: Uyurken de donmuyorlar." }] },
+                        { title: "3. Deney", scenario: "Kan örneğini analiz et.", options: [{ text: "Kan proteinlerini analiz ederim.", correct: true, feedback: "Deney." }, { text: "Balığı buzluğa atarım.", correct: false, feedback: "Hata: Etik değil." }, { text: "Suyun tuz oranını ölçerim.", correct: false, feedback: "Hata: Kanın yapısına bakmalısın." }] },
+                        { title: "4. Sonuç", scenario: "Glikoprotein yapılı antifriz molekülleri bulundu.", options: [{ text: "Hipotez desteklendi.", correct: true, feedback: "Sonuç." }, { text: "Bu proteinler işe yaramaz.", correct: false, feedback: "Hata: Donmayı engelliyorlar." }, { text: "Sonuçlar tesadüf.", correct: false, feedback: "Hata: Bilimsel kanıt bulundu." }] }
+                    ]
+                },
+                {
+                    id: 11,
+                    title: "İyileşmeyen Hasta",
+                    icon: <Bug size={32} className="text-rose-600"/>,
+                    difficulty: "Zor (Hipotez Döngüsü)",
+                    topic: "Mikrobiyoloji / Antibiyotik Direnci",
+                    isComplex: true,
+                    ethics: {
+                        title: "Gereksiz İlaç Tüketimi",
+                        scenario: "Hastalığın virüs olduğunu kanıtladın. İlaç firması temsilcisi: \"Yine de raporda 'ikincil enfeksiyon riski için antibiyotik önerilir' de. Satış kotamı doldurursam hastaneye solunum cihazı bağışlayacağız.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: Hastanenin cihaza ihtiyacı var, fazladan antibiyotik kimseyi öldürmez.", outcome: 'fail', feedback: "Hata: Gereksiz antibiyotik kullanımı dirençli bakterilerin (süper mikropların) oluşmasına neden olur. Bu küresel bir tehdittir." },
+                            { text: "Teklifi Reddet: Viral enfeksiyonlarda antibiyotiğin yeri olmadığını belirtirim.", outcome: 'success', feedback: "Doğru Karar: İlaçlar sadece gerektiğinde kullanılmalıdır." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Gözlem", scenario: "Hastaneye yüksek ateş ve boğaz ağrısı şikayetiyle gelen hastalara standart tedavi uygulanıyor ama iyileşmiyorlar.", options: [{ text: "Tedaviye neden yanıt alınamıyor?", correct: true, feedback: "Problem belirlendi." }, { text: "Hastalar ilaçlarını içmemiştir.", correct: false, feedback: "Gözlem yapmadan yargılama." }, { text: "İlaçlar bozuktur.", correct: false, feedback: "Hata: Düşük ihtimal." }] },
+                        { title: "2. Veri", scenario: "Kan testlerinde yüksek enfeksiyon (WBC) var. Hastaların boğazında kızarıklık mevcut.", options: [{ text: "Enfeksiyon etkenini (patojen) belirlemek için kültür testi yaparım.", correct: true, feedback: "Veri toplama." }, { text: "Hemen ateş düşürücü veririm.", correct: false, feedback: "Hata: Bu semptomu çözer, nedeni değil." }, { text: "Hastaları eve gönderirim.", correct: false, feedback: "Hata: Etik değil." }] },
+                        { title: "3. Hipotez - 1 (Yaygın Hata)", scenario: "Boğaz enfeksiyonu denince akla ilk ne gelir?", options: [{ text: "Hastalığa bakteriler sebep olmaktadır (Bakteriyel Enfeksiyon).", correct: true, feedback: "Mantıklı ilk hipotez." }, { text: "Hastalar zehirlenmiştir.", correct: false, feedback: "Hata: Belirtiler enfeksiyonu gösteriyor." }, { text: "Genetik bir hastalıktır.", correct: false, feedback: "Hata: Bulaşıcı görünüyor." }] },
+                        { title: "4. Deney - 1", scenario: "Bakterileri öldürmek için ne yaparsın?", options: [{ text: "Hastalara güçlü antibiyotik tedavisi uygularım.", correct: true, feedback: "Deney." }, { text: "Bitki çayı içiririm.", correct: false, feedback: "Hata: Bilimsel tedavi değil." }, { text: "Ameliyat ederim.", correct: false, feedback: "Hata: Enfeksiyon için gereksiz." }] },
+                        { title: "5. Analiz - 1 (Hata)", scenario: "SONUÇ: 3 gün geçti, antibiyotik alan hastalarda HİÇBİR düzelme yok. Hipotez ÇÜRÜDÜ.", options: [{ text: "Hipotezi reddet. Antibiyotik işe yaramıyorsa etken bakteri değildir. Yeni hipotez kur.", correct: true, feedback: "Doğru! Antibiyotikler sadece bakterileri öldürür." }, { text: "Daha güçlü antibiyotik veririm.", correct: false, feedback: "Hata: İşe yaramayan tedaviyi artırmak bilimsel değildir." }, { text: "İlacın markasını değiştiririm.", correct: false, feedback: "Hata: Etken madde aynıysa sonuç değişmez." }] },
+                        { title: "6. Hipotez - 2", scenario: "Bakteri değilse ve antibiyotik işlemiyorsa?", options: [{ text: "Hastalığın sebebi virüslerdir (Viral Enfeksiyon).", correct: true, feedback: "Yeni hipotez." }, { text: "Hastalar numara yapıyor.", correct: false, feedback: "Hata: Ateş ve kızarıklık gerçektir." }, { text: "Hastalık mantar kaynaklıdır.", correct: false, feedback: "Hata: Viral enfeksiyon boğazda daha yaygındır." }] },
+                        { title: "7. Sonuç", scenario: "Elektron mikroskobu ile virüs tespit edildi. İstirahat ve antiviral tedavi ile iyileştiler.", options: [{ text: "Hipotez desteklendi: Antibiyotikler virüslere etki etmez.", correct: true, feedback: "Kritik kazanım öğrenildi." }, { text: "Keşke antibiyotik vermeye devam etseydik.", correct: false, feedback: "Hata: Virüslere faydası yok, zararı var." }, { text: "Sonuçlar şüpheli.", correct: false, feedback: "Hata: Mikroskopla görüldü." }] }
+                    ]
+                },
+                {
+                    id: 12,
+                    title: "Sönük Ateşböcekleri",
+                    icon: <Activity size={32} className="text-yellow-400"/>,
+                    difficulty: "Zor (Hipotez Döngüsü)",
+                    topic: "Enzimler / İnhibitörler",
+                    isComplex: true,
+                    ethics: {
+                        title: "Gerçeği Örtbas Etmek",
+                        scenario: "Pestisit X'in enzimleri durdurduğunu buldun. İlaç firması: \"Bu ilaç dünyadaki gıda üretimini %20 artırıyor. Eğer zararını açıklarsan açlık krizi çıkar. Sessiz kal, biz de gizlice ateşböceklerini koruma altına alıp laboratuvarda çoğaltalım. Kimse zarar görmez.\"",
+                        options: [
+                            { text: "Teklifi Kabul Et: Gıda krizi daha önemli, ateşböceklerini laboratuvarda korumak mantıklı.", outcome: 'fail', feedback: "Hata: Doğal ekosistemi laboratuvarla değiştiremezsin. İlacın diğer böceklere zarar vermeyeceğinin garantisi yok. Şeffaflık şarttır." },
+                            { text: "Teklifi Reddet: İlacın yan etkilerini yayınlarım. Daha güvenli ilaçlar geliştirilmelidir.", outcome: 'success', feedback: "Doğru Karar: Bir sorunu (açlık) çözerken başka bir felakete (ekosistem çöküşü) yol açamayız." }
+                        ]
+                    },
+                    steps: [
+                        { title: "1. Problem", scenario: "Bir tarım arazisi yakınındaki ormanda ateşböcekleri artık ışık saçmıyor ama hepsi hayatta.", options: [{ text: "Canlı olmalarına rağmen neden ışık üretemiyorlar?", correct: true, feedback: "Problem." }, { text: "Ateşböcekleri uyuyor mu?", correct: false, feedback: "Hata: Gece oldu, uyanıklar." }, { text: "Pilleri mi bitti?", correct: false, feedback: "Hata: Canlılar pil ile çalışmaz." }] },
+                        { title: "2. Veri", scenario: "Tarım arazisinde yeni bir böcek ilacı (Pestisit X) kullanılmaya başlanmış.", options: [{ text: "Böcek ilacının ateşböcekleri üzerindeki etkisini araştırırım.", correct: true, feedback: "Veri." }, { text: "Çiftçiyi tutuklarım.", correct: false, feedback: "Hata: Yetkin yok ve kanıt yok." }, { text: "Ormanı yakarım.", correct: false, feedback: "Hata: Saçmalık." }] },
+                        { title: "3. Hipotez - 1", scenario: "İlaç ve böcek ilişkisi?", options: [{ text: "Pestisit X, ateşböceklerinin sinir sistemini bozarak onları felç etmiştir.", correct: true, feedback: "İlk hipotez." }, { text: "Böcekler ışıktan sıkılmış.", correct: false, feedback: "Hata: Bilimsel değil." }, { text: "İlaç böcekleri kör etmiştir.", correct: false, feedback: "Hata: Işık üretimi ile görme farklıdır." }] },
+                        { title: "4. Deney - 1", scenario: "Hipotezi (Felç) test et.", options: [{ text: "Ateşböceklerinin uçuş ve hareketlerini gözlemlerim.", correct: true, feedback: "Deney." }, { text: "Böcekleri gıdıklarım.", correct: false, feedback: "Hata: Bilimsel bir test değil." }, { text: "İlacı kendim içerim.", correct: false, feedback: "Hata: Çok tehlikeli!" }] },
+                        { title: "5. Analiz - 1 (Hata)", scenario: "SONUÇ: Ateşböcekleri gayet sağlıklı uçuyor ve besleniyor. Sadece ışık yok. Felç yok. Hipotez ÇÜRÜDÜ.", options: [{ text: "Hipotezi reddet. Sorun sinir sistemi değil, ışık üretim mekanizması (Kimyasal).", correct: true, feedback: "Doğru dönüş." }, { text: "Demek ki felçli taklidi yapıyorlar.", correct: false, feedback: "Hata: Böcekler taklit yapmaz." }, { text: "Gözlem yanlıştır.", correct: false, feedback: "Hata: Veri net." }] },
+                        { title: "6. Hipotez - 2", scenario: "Işık üretimi 'Lusiferaz' enzimi ile olur. İlaç ne yapıyor olabilir?", options: [{ text: "Pestisit X, Lusiferaz enzimine bağlanarak onu durduruyordur (İnhibitör Etki).", correct: true, feedback: "Mükemmel biyokimya hipotezi." }, { text: "İlaç böceklerin pilini bitirdi.", correct: false, feedback: "Hata: Hala aynı hata." }, { text: "İlaç böcekleri mutsuz etti.", correct: false, feedback: "Hata: Duygusal yaklaşım." }] },
+                        { title: "7. Sonuç", scenario: "Laboratuvarda enzime ilaç damlatılınca ışık kesildi.", options: [{ text: "Hipotez desteklendi: Enzimatik durdurma (İnhibisyon).", correct: true, feedback: "Sonuç." }, { text: "Enzim bozuldu.", correct: false, feedback: "Hata: İnhibe oldu (durduruldu), bozulmadı (denatüre olmadı)." }, { text: "Bu bir sihir.", correct: false, feedback: "Hata: Bilim sihir değildir." }] }
+                    ]
+                }
+            ];
+
+            const startGame = (scenarioId) => {
+                const scenario = scenariosData.find(s => s.id === scenarioId);
+                setCurrentScenario(scenario);
+                setLabStep(0);
+                setStage('lab');
+                setFeedback(null);
+                setSelectedOptionIndex(null);
+            };
+
+            const handleOptionClick = (isCorrect, feedbackMsg, index) => {
+                setSelectedOptionIndex(index);
+                if (isCorrect) {
+                    setFeedback({ type: 'success', message: feedbackMsg });
+                } else {
+                    setFeedback({ type: 'error', message: feedbackMsg });
+                }
+            };
+            
+            const handleEthicsDecision = (outcome, feedbackMsg) => {
+                if (outcome === 'success') {
+                    setStage('success');
+                } else {
+                    setStage('fail');
+                }
+            };
+
+            const nextStep = () => {
+                setFeedback(null);
+                setSelectedOptionIndex(null);
+                
+                if (currentScenario && labStep < currentScenario.steps.length - 1) {
+                    setLabStep(labStep + 1);
+                } else {
+                    setStage('ethics'); 
+                }
+            };
+
+            // --- COMPONENTS ---
+
+            const IntroSection = () => (
+                <div className="flex flex-col items-center justify-center space-y-6 text-center animate-fadeIn max-w-4xl">
+                    <div className="bg-emerald-100 p-6 rounded-full shadow-lg">
+                        <BrainCircuit size={64} className="text-emerald-600" />
+                    </div>
+                    <h2 className="text-4xl font-extrabold text-gray-800">BİO-KEŞİF LABORATUVARI</h2>
+                    <div className="bg-white p-6 rounded-lg shadow-md border-l-4 border-emerald-500 text-left">
+                        <p className="text-lg text-gray-700 mb-4">
+                            <span className="font-bold text-emerald-700">Hoş Geldin Bilim İnsanı!</span> <br/>
+                            Dünyanın dört bir yanından gelen gizemli biyolojik vakalar çözüm bekliyor.
+                            Bilimsel araştırma basamaklarını kullanarak bu gizemleri aydınlatmalısın.
+                        </p>
+                        <p className="text-gray-600 text-sm italic">
+                            <AlertTriangle size={16} className="inline mr-1 text-amber-500"/> 
+                            Dikkat: Bazen veriler ilk hipotezini desteklemez. Gerçek bir bilim insanı gibi hatalarından ders çıkarıp yeni hipotezler kurmalısın.
+                        </p>
+                    </div>
+                    <button 
+                        onClick={() => setStage('history')}
+                        className="mt-6 px-10 py-4 bg-emerald-600 text-white rounded-full font-bold hover:bg-emerald-700 transition flex items-center gap-3 shadow-xl transform hover:scale-105"
+                    >
+                        Simülasyona Başla <ArrowRight size={24} />
+                    </button>
+                </div>
+            );
+
+            const HistorySection = () => (
+                <div className="flex flex-col items-center space-y-6 animate-fadeIn w-full max-w-4xl">
+                    <div className="flex items-center gap-3 mb-4 w-full border-b pb-4">
+                        <History className="text-amber-600" size={32} />
+                        <h2 className="text-2xl font-bold text-gray-800">Bilimin İzi: Penisilin Örneği</h2>
+                    </div>
+                    <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 flex flex-col md:flex-row gap-6 items-center">
+                        <div className="flex-1">
+                            <p className="text-gray-600 mb-4 leading-relaxed">
+                                Alexander Fleming, küflenen kapları çöpe atmak yerine <strong>gözlemledi</strong>. Küfün bakterileri öldürdüğünü fark etti. 
+                                Bu "şans" değildi; bilimsel merak ve gözlem yeteneğiydi.
+                            </p>
+                            <div className="bg-blue-50 p-3 rounded text-blue-900 text-sm font-semibold">
+                                Şimdi sıra sende. Aşağıdaki dosyalardan birini seç ve bilimsel süreci başlat.
+                            </div>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setStage('selection')}
+                        className="px-8 py-3 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition flex items-center justify-center gap-2 mx-auto"
+                    >
+                        Vaka Dosyalarını Görüntüle <LayoutGrid size={20} />
+                    </button>
+                </div>
+            );
+
+            const ScenarioSelection = () => (
+                <div className="w-full max-w-6xl animate-fadeIn">
+                    <div className="text-center mb-8">
+                        <h2 className="text-3xl font-bold text-gray-800">Vaka Dosyası Seçin</h2>
+                        <p className="text-gray-500">Çözmek istediğiniz bilimsel problemi seçin.</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {scenariosData.map((scenario) => (
+                            <button
+                                key={scenario.id}
+                                onClick={() => startGame(scenario.id)}
+                                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-xl border-2 border-gray-100 hover:border-emerald-400 transition-all text-left flex flex-col h-full group"
+                            >
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="p-3 bg-gray-50 rounded-full group-hover:bg-emerald-50 transition-colors">
+                                        {scenario.icon}
+                                    </div>
+                                    <span className={`text-xs px-2 py-1 rounded font-bold ${scenario.isComplex ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
+                                        {scenario.difficulty}
+                                    </span>
+                                </div>
+                                <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-emerald-700">{scenario.title}</h3>
+                                <p className="text-sm text-gray-500 mb-4 flex-grow">{scenario.topic}</p>
+                                <div className="flex items-center text-emerald-600 font-semibold text-sm mt-auto">
+                                    Araştırmaya Başla <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform"/>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            const LabSection = () => {
+                if (!currentScenario) return null;
+                const currentStepData = currentScenario.steps[labStep];
+                const progress = ((labStep + 1) / currentScenario.steps.length) * 100;
+
+                return (
+                    <div className="w-full max-w-5xl animate-fadeIn">
+                        <div className="flex justify-between items-center mb-6">
+                            <button onClick={() => setStage('selection')} className="text-gray-500 hover:text-gray-800 text-sm flex items-center gap-1">
+                                &larr; Dosyalara Dön
+                            </button>
+                            <div className="text-emerald-800 font-bold bg-emerald-100 px-4 py-1 rounded-full text-sm">
+                                Dosya: {currentScenario.title}
+                            </div>
+                        </div>
+
+                        <div className="mb-8">
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div 
+                                    className="bg-sky-600 h-3 rounded-full transition-all duration-500"
+                                    style={{ width: `${progress}%` }}
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg border-t-4 border-sky-600 h-fit">
+                                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                    <Activity className="text-sky-600"/> Saha Raporu
+                                </h3>
+                                <p className="text-gray-700 leading-relaxed mb-6">{currentStepData.scenario}</p>
+                                <div className="flex justify-center text-sky-200">
+                                    {currentScenario.icon}
+                                </div>
+                            </div>
+
+                            <div className="lg:col-span-2">
+                                <div className="mb-4">
+                                    <h2 className="text-2xl font-bold text-gray-800">{currentStepData.title}</h2>
+                                    <p className="text-sky-700 text-sm font-semibold">Bilimsel hamleni seç:</p>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-3">
+                                    {currentStepData.options.map((option, index) => {
+                                        let buttonStyleClass = "bg-white border-gray-200 hover:border-sky-400 hover:shadow-md"; 
+                                        let icon = null;
+
+                                        if (feedback) { 
+                                            if (option.correct) {
+                                                buttonStyleClass = "bg-emerald-100 border-emerald-500 ring-2 ring-emerald-300 opacity-100";
+                                                icon = <CheckCircle className="text-emerald-600 shrink-0 ml-2" />;
+                                            } else if (index === selectedOptionIndex) {
+                                                buttonStyleClass = "bg-red-100 border-red-500 opacity-100";
+                                                icon = <XCircle className="text-red-600 shrink-0 ml-2" />;
+                                            } else {
+                                                buttonStyleClass = "bg-gray-50 border-gray-200 opacity-50";
+                                            }
+                                        }
+
+                                        return (
+                                            <button
+                                                key={index}
+                                                onClick={() => handleOptionClick(option.correct, option.feedback, index)}
+                                                disabled={feedback !== null} 
+                                                className={`p-4 text-left rounded-lg border-2 transition-all flex justify-between items-center group ${buttonStyleClass}`}
+                                            >
+                                                <span className={`font-medium ${feedback && option.correct ? 'text-emerald-900' : 'text-gray-700'}`}>
+                                                    {option.text}
+                                                </span>
+                                                {icon}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {feedback && (
+                                    <div className={`mt-6 p-4 rounded-lg border flex flex-col md:flex-row items-center gap-4 animate-fadeIn ${
+                                        feedback.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-red-50 border-red-200 text-red-900'
+                                    }`}>
+                                        <div className="flex-1">
+                                            <p className="font-bold">{feedback.type === 'success' ? 'Doğru Karar!' : 'Hatalı Yaklaşım'}</p>
+                                            <p className="text-sm">{feedback.message}</p>
+                                            {feedback.type === 'error' && <p className="text-xs font-bold text-emerald-700 mt-2">Doğru cevap yeşil ile işaretlenmiştir.</p>}
+                                        </div>
+                                        <button 
+                                            onClick={nextStep}
+                                            className="px-6 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 font-bold shadow-md whitespace-nowrap"
+                                        >
+                                            Sonraki Adım <ArrowRight className="inline ml-1" size={16}/>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const EthicsSection = () => {
+                if (!currentScenario || !currentScenario.ethics) return null;
+                const { ethics } = currentScenario;
+
+                return (
+                    <div className="flex flex-col items-center justify-center space-y-8 animate-fadeIn max-w-3xl mx-auto">
+                        <div className="w-full text-center mb-4">
+                            <h2 className="text-3xl font-bold text-gray-800 flex justify-center items-center gap-3">
+                                <Scale size={32} className="text-purple-600" /> Kritik Karar: {ethics.title}
+                            </h2>
+                            <div className="h-1 w-20 bg-purple-600 mx-auto mt-2 rounded"></div>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-xl shadow-2xl border-t-8 border-purple-600 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-5">
+                                <Handshake size={120} />
+                            </div>
+                            <h3 className="text-xl font-bold mb-4 text-gray-800">Etik İkilem</h3>
+                            <p className="text-gray-700 mb-8 text-lg leading-relaxed border-l-4 border-purple-300 pl-4 italic">
+                                "{ethics.scenario}"
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {ethics.options.map((option, index) => (
+                                    <button 
+                                        key={index}
+                                        onClick={() => handleEthicsDecision(option.outcome, option.feedback)}
+                                        className={`p-5 border-2 rounded-xl transition text-left group shadow-sm hover:shadow-md
+                                            ${option.outcome === 'fail' 
+                                                ? 'bg-gray-50 hover:bg-red-50 border-gray-200 hover:border-red-400' 
+                                                : 'bg-gray-50 hover:bg-emerald-50 border-gray-200 hover:border-emerald-400'}`
+                                        }
+                                    >
+                                        <span className={`font-bold block text-lg mb-2 ${option.outcome === 'fail' ? 'text-red-900' : 'text-emerald-900'}`}>
+                                            {option.text.split(':')[0]}
+                                        </span>
+                                        <span className="text-sm text-gray-600">
+                                            {option.text.split(':')[1]}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const SuccessScreen = () => (
+                <div className="text-center animate-fadeIn p-10 bg-white rounded-2xl shadow-xl max-w-2xl border-4 border-emerald-500">
+                    <div className="inline-block p-4 bg-emerald-100 rounded-full mb-6">
+                        <Activity size={64} className="text-emerald-600" />
+                    </div>
+                    <h2 className="text-4xl font-extrabold text-emerald-800 mb-4">GÖREV BAŞARILI!</h2>
+                    <p className="text-xl text-gray-700 mb-8">
+                        Hem bilimsel yöntemi doğru kullandın hem de etik duruşunu korudun. Gerçek bir bilim insanı gibi davrandın.
+                    </p>
+                    <div className="bg-emerald-50 p-4 rounded text-sm text-emerald-800 mb-6 italic">
+                        "Bilim sadece ne bildiğimizle değil, bilgiyi nasıl kullandığımızla da ilgilidir."
+                    </div>
+                    <button 
+                        onClick={() => { setStage('selection'); setLabStep(0); setFeedback(null); setSelectedOptionIndex(null); }}
+                        className="px-8 py-3 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900 shadow-lg transition"
+                    >
+                        Başka Bir Vaka Seç
+                    </button>
+                </div>
+            );
+
+            const FailScreen = () => (
+                <div className="text-center animate-fadeIn p-10 bg-white rounded-2xl shadow-xl max-w-2xl border-4 border-red-500">
+                    <div className="inline-block p-4 bg-red-100 rounded-full mb-6">
+                        <ShieldAlert size={64} className="text-red-600" />
+                    </div>
+                    <h2 className="text-4xl font-extrabold text-red-800 mb-4">ETİK İHLALİ!</h2>
+                    <p className="text-lg text-gray-700 mb-6">
+                        Kısa vadeli kazançlar veya baskılar yüzünden bilimsel dürüstlükten ödün verdin.
+                        Bilim insanı olmak sadece zeki olmak değil, aynı zamanda ahlaklı olmaktır.
+                    </p>
+                    <button 
+                        onClick={() => { setStage('ethics'); setFeedback(null); setSelectedOptionIndex(null); }}
+                        className="px-8 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 shadow-lg transition"
+                    >
+                        Hatayı Düzelt
+                    </button>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen bg-slate-50 font-sans flex flex-col text-gray-800">
+                    <header className="bg-white shadow-sm border-b-4 border-emerald-600 sticky top-0 z-10">
+                        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <img 
+                                    src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" 
+                                    alt="MEB Logo" 
+                                    className="h-12 md:h-14 w-auto" 
+                                />
+                                <div className="hidden md:block h-10 w-px bg-gray-300 mx-2"></div>
+                                <div>
+                                    <h1 className="text-xl md:text-2xl font-extrabold text-emerald-800 tracking-tight">BİO-KEŞİF SİMÜLASYONU</h1>
+                                    <p className="text-[10px] md:text-xs text-emerald-600 font-bold tracking-wider uppercase">9. Sınıf Yaşam Bilimi Biyoloji</p>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="flex-grow container mx-auto px-4 py-8 flex items-center justify-center">
+                        {stage === 'intro' && <IntroSection />}
+                        {stage === 'history' && <HistorySection />}
+                        {stage === 'selection' && <ScenarioSelection />}
+                        {stage === 'lab' && <LabSection />}
+                        {stage === 'ethics' && <EthicsSection />}
+                        {stage === 'success' && <SuccessScreen />}
+                        {stage === 'fail' && <FailScreen />}
+                    </main>
+
+                    <footer className="bg-white border-t border-gray-200 py-4 text-center text-gray-500 text-sm"></footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
