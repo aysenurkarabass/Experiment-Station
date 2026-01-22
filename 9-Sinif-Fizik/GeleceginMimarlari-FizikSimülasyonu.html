@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geleceğin Mimarları: İstasyonun Kalbi</title>
+    
+    <!-- React ve ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Özel Animasyonlar -->
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+        .animate-slideUp { animation: slideUp 0.5s ease-out; }
+    </style>
+</head>
+<body class="bg-slate-950 text-white font-sans overflow-hidden selection:bg-cyan-500 selection:text-black">
+    <div id="root" class="w-full h-screen"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- İKONLAR ---
+        const ShieldCheck = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>
+        );
+        const Thermometer = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+        );
+        const Activity = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        );
+        const Settings = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        );
+        const Eye = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        );
+        const Radio = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><circle cx="12" cy="12" r="2"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/></svg>
+        );
+        const CheckCircle = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        );
+        const AlertTriangle = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        );
+        const Award = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        );
+        const ChevronRight = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6"/></svg>
+        );
+        const Terminal = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+        );
+        const Cpu = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
+        );
+        const AtomIcon = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="4"/><path d="M12 12m-8 0a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" transform="rotate(45 12 12)"/><path d="M12 12m-8 0a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" transform="rotate(135 12 12)"/></svg>
+        );
+        const Radiation = ({ size = 24, className = "" }) => (
+             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 2a10 10 0 1 0 10 10H12V2Z"/><path d="M12 12 4.93 4.93"/><path d="M12 12 4.93 19.07"/></svg>
+        );
+        const Flame = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.1.2-2.2.5-3.3.5-.5 1.5-1 3.5-1.2z"/></svg>
+        );
+        // Yeni İkonlar
+        const BookOpen = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        );
+        const X = ({ size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>
+        );
+
+        // --- ANA UYGULAMA ---
+
+        const Simulation = () => {
+            const [gameState, setGameState] = useState('intro');
+            const [currentMissionIndex, setCurrentMissionIndex] = useState(0);
+            const [correctCount, setCorrectCount] = useState(0); 
+            const [feedbackMessage, setFeedbackMessage] = useState('');
+            const [isCorrect, setIsCorrect] = useState(false);
+            const [showExplanation, setShowExplanation] = useState(false);
+            
+            // Yeni State: Örnekler Penceresi Kontrolü
+            const [showExamplesModal, setShowExamplesModal] = useState(false);
+
+            // Fizik Alt Dalları ve Günlük Yaşam Örnekleri Verisi
+            const physicsExamples = [
+                {
+                    title: "Mekanik",
+                    desc: "Kuvvet, hareket ve denge",
+                    examples: ["Gezegenlerin Güneş etrafında dönmesi", "Sesin oluşumu ve yayılması (Dalga hareketi)", "Köprü ve binaların dengede durması"]
+                },
+                {
+                    title: "Termodinamik",
+                    desc: "Isı ve sıcaklık",
+                    examples: ["Buzulların erimesi ve küresel ısınma", "Termosun içeceği sıcak/soğuk tutması", "Klimaların ve buzdolaplarının çalışması"]
+                },
+                {
+                    title: "Elektromanyetizma",
+                    desc: "Elektrik ve manyetizma",
+                    examples: ["Pusulanın kuzeyi göstermesi", "MR (Manyetik Rezonans) cihazları", "Şimşek ve yıldırım oluşumu"]
+                },
+                {
+                    title: "Optik",
+                    desc: "Işık ve görme olayları",
+                    examples: ["Gökkuşağının oluşumu", "Gözlük, büyüteç ve teleskop kullanımı", "Fiber optik kablolarla internet iletimi"]
+                },
+                {
+                    title: "Katı Hâl Fiziği",
+                    desc: "Kristal yapı ve teknoloji",
+                    examples: ["Güneş pilleri (Solar paneller)", "Leke tutmayan akıllı kumaşlar", "Şarj edilebilir piller ve mikroçipler"]
+                },
+                {
+                    title: "Atom Fiziği",
+                    desc: "Atomun yapısı",
+                    examples: ["Lazer teknolojisi", "Kuantum bilgisayarlar", "Hassas atom saatleri"]
+                },
+                {
+                    title: "Nükleer Fizik",
+                    desc: "Çekirdek tepkimeleri",
+                    examples: ["Nükleer santrallerde enerji üretimi", "Tarihi eserlerde Karbon-14 yaş tayini", "Güneş ve yıldızlarda enerji üretimi"]
+                },
+                {
+                    title: "Yüksek Enerji ve Plazma",
+                    desc: "Atom altı parçacıklar ve plazma",
+                    examples: ["Kutup Işıkları (Aurora Borealis)", "Floresan ve neon lambalar", "Uzay roketlerindeki plazma motorları"]
+                }
+            ];
+
+            // 8 Alt Dalı Kapsayan Senaryolar
+            const missions = [
+                {
+                    id: 1,
+                    title: "MEKANİK ARIZA: ANA KAPI",
+                    situation: "Üssün dış dünyaya açılan ana kapısı sıkıştı. Hidrolik dişli sistemleri dönmüyor ve kapının ağırlık merkezi kaydığı için denge bozuldu.",
+                    question: "Kuvvet, hareket ve denge sorunlarını çözmek için hangi ekibi çağırmalısın?",
+                    icon: <Settings size={48} className="text-orange-400" />,
+                    options: [
+                        { id: 'mek', label: 'Mekanik', correct: true },
+                        { id: 'opt', label: 'Optik', correct: false },
+                        { id: 'nuk', label: 'Nükleer Fizik', correct: false }
+                    ],
+                    explanation: "Mekanik; kuvvet, hareket, denge ve enerji ilişkilerini inceler. Kapı sistemleri, dişliler ve denge mekaniğin alanıdır."
+                },
+                {
+                    id: 2,
+                    title: "TERMODİNAMİK KRİZ: ISINMA",
+                    situation: "Yaşam modüllerinde yalıtım panelleri hasar gördü. İçerideki ısı hızla düşüyor ve enerji transferi kontrolsüz gerçekleşiyor.",
+                    question: "Isı alışverişi ve sıcaklık kontrolü için hangi uzmanlık gerekir?",
+                    icon: <Thermometer size={48} className="text-red-500" />,
+                    options: [
+                        { id: 'kati', label: 'Katı Hâl Fiziği', correct: false },
+                        { id: 'ter', label: 'Termodinamik', correct: true },
+                        { id: 'atom', label: 'Atom Fiziği', correct: false }
+                    ],
+                    explanation: "Termodinamik; ısı enerjisi, sıcaklık, genleşme ve hal değişimi konularını inceler."
+                },
+                {
+                    id: 3,
+                    title: "ELEKTROMANYETİZMA: HABERLEŞME",
+                    situation: "Manyetik kalkanlar arızalı ve telsiz bobinleri aşırı yüklendiği için sinyal iletimi sağlanamıyor. Pusulalar sürekli sapıyor.",
+                    question: "Elektrik yükleri, manyetik alanlar ve sinyal dalgaları hangi alanın konusudur?",
+                    icon: <Radio size={48} className="text-green-400" />,
+                    options: [
+                        { id: 'em', label: 'Elektromanyetizma', correct: true },
+                        { id: 'mek', label: 'Mekanik', correct: false },
+                        { id: 'yuk', label: 'Yüksek Enerji Fiziği', correct: false }
+                    ],
+                    explanation: "Elektromanyetizma; elektrik yükleri, mıknatıslar, manyetik alanlar ve elektromanyetik dalgaları inceler."
+                },
+                {
+                    id: 4,
+                    title: "OPTİK SORUN: LAZER SİSTEMİ",
+                    situation: "Savunma sistemindeki lazerlerin ışığı kırılıyor ve mercekler odaklama yapamıyor. Görüntüler bulanık.",
+                    question: "Işığın yapısı, kırılması ve mercekleri inceleyen dal hangisidir?",
+                    icon: <Eye size={48} className="text-blue-400" />,
+                    options: [
+                        { id: 'opt', label: 'Optik', correct: true },
+                        { id: 'atom', label: 'Atom Fiziği', correct: false },
+                        { id: 'ter', label: 'Termodinamik', correct: false }
+                    ],
+                    explanation: "Optik; ışığın doğası, yansıması, kırılması, aynalar ve mercekler gibi konuları inceler."
+                },
+                {
+                    id: 5,
+                    title: "KATI HÂL FİZİĞİ: GÜNEŞ PANELLERİ",
+                    situation: "Enerji üreten güneş panellerindeki yarı iletken kristaller verimliliğini yitirdi. Mikroçip devrelerinde iletkenlik sorunu var.",
+                    question: "Kristal yapıları ve yarı iletken teknolojilerini inceleyen dal hangisidir?",
+                    icon: <Cpu size={48} className="text-purple-400" />,
+                    options: [
+                        { id: 'nuk', label: 'Nükleer Fizik', correct: false },
+                        { id: 'kati', label: 'Katı Hâl Fiziği', correct: true },
+                        { id: 'plazma', label: 'Plazma Fiziği', correct: false }
+                    ],
+                    explanation: "Katı Hâl Fiziği; kristal yapıdaki maddelerin elektrik, manyetik ve optik özelliklerini inceler (nano teknoloji, yarı iletkenler)."
+                },
+                {
+                    id: 6,
+                    title: "ATOM FİZİĞİ: NAVİGASYON",
+                    situation: "İstasyonun konumunu belirleyen atomik saatler senkronizasyonu kaybetti. Atomların elektron dizilimlerinde hata tespit edildi.",
+                    question: "Atomun yapısını, elektron hareketlerini ve atomik boyuttaki olayları kim inceler?",
+                    icon: <AtomIcon size={48} className="text-cyan-300" />,
+                    options: [
+                        { id: 'nuk', label: 'Nükleer Fizik', correct: false },
+                        { id: 'atom', label: 'Atom Fiziği', correct: true },
+                        { id: 'mek', label: 'Mekanik', correct: false }
+                    ],
+                    explanation: "Atom Fiziği; atomun genel yapısını, elektron dizilimlerini ve atomlar arası ilişkileri (nanoteknoloji vb.) inceler."
+                },
+                {
+                    id: 7,
+                    title: "NÜKLEER FİZİK: REAKTÖR",
+                    situation: "Ana enerji reaktörünün çekirdeğindeki fisyon (bölünme) tepkimeleri kararsızlaştı. Radyasyon sızıntısı riski var!",
+                    question: "Atom çekirdeğini, radyoaktiviteyi ve çekirdek tepkimelerini inceleyen dal hangisidir?",
+                    icon: <Radiation size={48} className="text-yellow-500" />,
+                    options: [
+                        { id: 'atom', label: 'Atom Fiziği', correct: false },
+                        { id: 'nuk', label: 'Nükleer Fizik', correct: true },
+                        { id: 'em', label: 'Elektromanyetizma', correct: false }
+                    ],
+                    explanation: "Nükleer Fizik; sadece atomun çekirdeğini (proton-nötron), nükleer enerjiyi ve radyasyon olaylarını inceler."
+                },
+                {
+                    id: 8,
+                    title: "YÜKSEK ENERJİ VE PLAZMA: İTKİ",
+                    situation: "Uzay istasyonunu yörüngede tutan motorlardaki iyonize gaz (plazma) akışı kontrolden çıktı. Güneş rüzgarları kalkanı zorluyor.",
+                    question: "Maddenin 4. halini ve atom altı parçacıkları inceleyen dal hangisidir?",
+                    icon: <Flame size={48} className="text-indigo-400" />,
+                    options: [
+                        { id: 'plazma', label: 'Yüksek Enerji ve Plazma Fiziği', correct: true },
+                        { id: 'ter', label: 'Termodinamik', correct: false },
+                        { id: 'kati', label: 'Katı Hâl Fiziği', correct: false }
+                    ],
+                    explanation: "Yüksek Enerji ve Plazma Fiziği; atom altı parçacıkları (CERN vb.) ve maddenin plazma halini (Yıldızlar, Güneş) inceler."
+                }
+            ];
+
+            const handleStart = () => {
+                setGameState('playing');
+            };
+
+            const handleChoice = (option) => {
+                const currentMission = missions[currentMissionIndex];
+                const correct = option.correct;
+                setIsCorrect(correct);
+                
+                if (correct) {
+                    setCorrectCount(prev => prev + 1); // Doğru sayısını artır
+                    setFeedbackMessage("Sistem Onarılıyor... Başarılı!");
+                } else {
+                    setFeedbackMessage("Hatalı Yönlendirme! Sistem tepki vermiyor.");
+                }
+                
+                setGameState('feedback');
+                setShowExplanation(true);
+            };
+
+            const nextMission = () => {
+                setShowExplanation(false);
+                if (currentMissionIndex < missions.length - 1) {
+                    setCurrentMissionIndex(currentMissionIndex + 1);
+                    setGameState('playing');
+                } else {
+                    setGameState('complete');
+                }
+            };
+
+            // --- YENİ BİLEŞEN: ÖRNEKLER PENCERESİ (MODAL) ---
+            const renderExamplesModal = () => (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-slate-900/95 border-2 border-cyan-500 rounded-xl w-full max-w-5xl max-h-[85vh] flex flex-col shadow-2xl relative">
+                        {/* Modal Header */}
+                        <div className="p-5 border-b border-slate-700 flex justify-between items-center bg-slate-800/80 rounded-t-xl sticky top-0 z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-cyan-500/20 p-2 rounded-lg">
+                                    <BookOpen className="text-cyan-400" size={28} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl md:text-2xl font-bold text-white">Günlük Yaşamdan Örnekler</h2>
+                                    <p className="text-slate-400 text-sm">Fiziğin alt dallarının hayatımızdaki yerleri</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowExamplesModal(false)}
+                                className="p-2 hover:bg-red-500/20 rounded-full text-slate-400 hover:text-red-400 transition-colors"
+                            >
+                                <X size={32} />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6 overflow-y-auto custom-scrollbar">
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {physicsExamples.map((item, index) => (
+                                    <div key={index} className="bg-slate-800 border border-slate-700 rounded-lg p-5 hover:border-cyan-500/50 transition-colors">
+                                        <h3 className="text-lg font-bold text-cyan-300 mb-1">{item.title}</h3>
+                                        <p className="text-xs text-slate-400 mb-3 italic">{item.desc}</p>
+                                        <ul className="space-y-2">
+                                            {item.examples.map((ex, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-sm text-gray-300">
+                                                    <span className="text-cyan-500 mt-1">▹</span>
+                                                    {ex}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            // Render Functions
+            const renderIntro = () => (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 space-y-6 animate-fadeIn">
+                <div className="relative">
+                    <div className="absolute -inset-1 bg-cyan-500 rounded-full blur opacity-25 animate-pulse"></div>
+                    <ShieldCheck size={80} className="relative text-cyan-400 mb-4" />
+                </div>
+                <h1 className="text-4xl font-bold text-white tracking-wider">GELECEĞİN MİMARLARI</h1>
+                <h2 className="text-xl text-cyan-200">GÖREV: İSTASYONUN KALBİ</h2>
+                
+                <div className="bg-slate-800/80 border border-slate-600 p-6 rounded-lg max-w-2xl shadow-xl backdrop-blur-sm">
+                    <div className="flex items-start gap-4 text-left">
+                    <div className="bg-blue-900 p-2 rounded-full border border-blue-500 min-w-[60px]">
+                        <img src="https://api.dicebear.com/9.x/avataaars/svg?seed=Commander&backgroundColor=b6e3f4" alt="Komutan" className="w-12 h-12 rounded-full" />
+                    </div>
+                    <div className="space-y-2">
+                        <p className="text-blue-300 font-mono text-sm">ÜS KOMUTANI:</p>
+                        <p className="text-gray-200">
+                        "Hoş geldin Aday. İstasyonun tüm sistemlerinde (mekanik, enerji, kuantum, optik vb.) arızalar tespit edildi. 
+                        Toplam 8 kritik görevin var. Uzmanlığını kanıtlamak için doğru ekipleri yönlendir."
+                        </p>
+                    </div>
+                    </div>
+                </div>
+
+                <button 
+                    onClick={handleStart}
+                    className="group relative px-8 py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-[0_0_20px_rgba(8,145,178,0.5)]"
+                >
+                    <span className="flex items-center gap-2">
+                    SİMÜLASYONU BAŞLAT <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+                    </span>
+                </button>
+                </div>
+            );
+
+            const renderMission = () => {
+                const mission = missions[currentMissionIndex];
+                
+                return (
+                <div className="flex flex-col h-full max-w-4xl mx-auto p-4 animate-slideUp">
+                    {/* HUD Header */}
+                    <div className="flex justify-between items-center mb-6 bg-slate-900/90 p-4 rounded-t-lg border-b-2 border-cyan-500">
+                    <div className="flex items-center gap-3">
+                        <Activity className="text-green-500 animate-pulse" />
+                        <span className="text-cyan-400 font-mono text-lg">GÖREV İLERLEMESİ: {currentMissionIndex + 1} / {missions.length}</span>
+                    </div>
+                    <div className="font-mono text-white bg-slate-800 px-4 py-1 rounded border border-slate-600 flex gap-2 items-center">
+                        <CheckCircle size={16} className="text-green-400"/>
+                        BAŞARI: {correctCount} / {missions.length}
+                    </div>
+                    </div>
+
+                    {/* Main Content Grid */}
+                    <div className="grid md:grid-cols-3 gap-6 flex-grow">
+                    
+                    {/* Visual/Status Panel */}
+                    <div className="md:col-span-1 bg-slate-800/50 border border-slate-700 rounded-lg p-6 flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-900/90 z-0"></div>
+                        <div className="z-10 transform group-hover:scale-110 transition-duration-700 transition-transform">
+                        {mission.icon}
+                        </div>
+                        <h3 className="z-10 mt-4 text-xl font-bold text-white uppercase">{mission.title}</h3>
+                        <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
+                    </div>
+
+                    {/* Dialogue & Interaction Panel */}
+                    <div className="md:col-span-2 flex flex-col gap-4">
+                        {/* Scenario Box */}
+                        <div className="bg-slate-800 border-l-4 border-orange-500 p-6 rounded-r-lg shadow-lg">
+                        <p className="text-orange-400 font-mono text-xs mb-2">ACİL DURUM RAPORU #392-{mission.id}</p>
+                        <p className="text-lg text-gray-200 leading-relaxed">
+                            {mission.situation}
+                        </p>
+                        </div>
+
+                        {/* Question */}
+                        <div className="bg-slate-900/50 p-4 rounded-lg">
+                        <p className="text-cyan-100 font-medium flex items-center gap-2">
+                            <Terminal size={18} />
+                            {mission.question}
+                        </p>
+                        </div>
+
+                        {/* Options */}
+                        <div className="grid gap-3 mt-auto">
+                        {mission.options.map((option) => (
+                            <button
+                            key={option.id}
+                            onClick={() => handleChoice(option)}
+                            className="p-4 text-left bg-slate-700 hover:bg-cyan-700 border border-slate-600 hover:border-cyan-400 rounded-lg transition-colors duration-200 flex items-center justify-between group"
+                            >
+                            <span className="text-white font-semibold group-hover:text-white">{option.label}</span>
+                            <ChevronRight className="text-slate-500 group-hover:text-white opacity-0 group-hover:opacity-100 transition-all" />
+                            </button>
+                        ))}
+                        </div>
+                    </div>
+                    </div>
+                </div>
+                );
+            };
+
+            const renderFeedback = () => {
+                const mission = missions[currentMissionIndex];
+                
+                return (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className={`max-w-xl w-full bg-slate-900 border-2 ${isCorrect ? 'border-green-500' : 'border-red-500'} rounded-xl shadow-2xl overflow-hidden transform transition-all scale-100`}>
+                    <div className={`p-6 ${isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'} text-center`}>
+                        {isCorrect ? (
+                        <CheckCircle size={64} className="mx-auto text-green-500 mb-4" />
+                        ) : (
+                        <AlertTriangle size={64} className="mx-auto text-red-500 mb-4" />
+                        )}
+                        
+                        <h2 className={`text-2xl font-bold mb-2 ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>
+                        {feedbackMessage}
+                        </h2>
+                        
+                        <div className="mt-6 bg-slate-800 p-4 rounded-lg text-left border border-slate-700">
+                        <p className="text-gray-300 text-sm leading-relaxed">
+                            <span className="text-cyan-400 font-bold block mb-2">BİLGİ NOTU:</span>
+                            {mission.explanation}
+                        </p>
+                        </div>
+
+                        <button
+                        onClick={isCorrect ? nextMission : nextMission} // Her durumda ilerle, öğrenme amaçlı
+                        className="mt-6 px-6 py-3 rounded-lg font-bold text-white w-full transition-colors bg-cyan-600 hover:bg-cyan-700"
+                        >
+                        Sıradaki Göreve Geç
+                        </button>
+                    </div>
+                    </div>
+                </div>
+                );
+            };
+
+            const renderComplete = () => {
+                const ratio = correctCount / missions.length;
+                let message = "";
+                if(ratio === 1) message = "MÜKEMMEL! Tam bir Fizik Uzmanısın.";
+                else if(ratio > 0.7) message = "ÇOK İYİ! Çoğu sorunu başarıyla çözdün.";
+                else message = "GELİŞTİRİLMELİ. Fizik alt dallarını tekrar gözden geçir.";
+
+                return (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 space-y-8 animate-fadeIn">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-yellow-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
+                    <Award size={100} className="relative text-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+                </div>
+                
+                <div className="space-y-4">
+                    <h1 className="text-4xl font-bold text-white">SİMÜLASYON TAMAMLANDI</h1>
+                    <p className="text-2xl text-cyan-300">{message}</p>
+                    <div className="inline-block bg-slate-800 border-2 border-cyan-500 rounded-xl p-6 shadow-lg transform hover:scale-105 transition-transform">
+                        <p className="text-gray-400 font-mono text-sm mb-2">GÖREV TAMAMLAMA ORANI</p>
+                        <p className="text-6xl font-bold text-white tracking-widest">{correctCount}/{missions.length}</p>
+                    </div>
+                </div>
+
+                <div className="bg-slate-800/90 border border-cyan-500/30 p-8 rounded-xl max-w-2xl shadow-2xl">
+                    <h3 className="text-xl font-bold text-cyan-400 mb-4 flex items-center justify-center gap-2">
+                    <Cpu className="text-cyan-400" />
+                    ÖZET
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                        Fizik biliminin 8 temel alt dalı olan; Mekanik, Termodinamik, Elektromanyetizma, Optik, 
+                        Katı Hâl Fiziği, Atom Fiziği, Nükleer Fizik ve Yüksek Enerji/Plazma Fiziği alanlarındaki sorunlarla yüzleştin.
+                    </p>
+                </div>
+
+                <button 
+                    onClick={() => window.location.reload()}
+                    className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg border border-slate-500 transition-all"
+                >
+                    Simülasyonu Yeniden Başlat
+                </button>
+                </div>
+            );
+            };
+
+            return (
+                <div className="w-full h-screen bg-slate-950 text-white font-sans overflow-hidden selection:bg-cyan-500 selection:text-black">
+                {/* Background Elements */}
+                <div className="fixed inset-0 pointer-events-none opacity-20">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(rgba(16,185,129,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.05)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+                </div>
+                
+                {/* Main Container */}
+                <div className="relative z-10 w-full h-full flex flex-col">
+                    {/* Header */}
+                    <header className="flex items-center justify-between px-6 py-4 bg-slate-900/90 border-b border-cyan-900/50 backdrop-blur-md z-40 shadow-lg">
+                        <div className="flex items-center gap-4">
+                            <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="Geleceğin Mimarları Logo" className="h-10 w-auto drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
+                            <div className="h-8 w-px bg-slate-600 mx-2 hidden sm:block"></div>
+                            <h1 className="text-lg md:text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-100 tracking-wide">
+                                Geleceğin Mimarları: Fizik Simülasyonu
+                            </h1>
+                        </div>
+                        
+                        {/* Yeni: Örnekler Butonu */}
+                        <button 
+                            onClick={() => setShowExamplesModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-cyan-900/40 text-cyan-400 border border-slate-600 hover:border-cyan-500/50 rounded-lg transition-all text-sm font-medium"
+                        >
+                            <BookOpen size={18} />
+                            <span className="hidden md:inline">Günlük Yaşamdan Örnekler</span>
+                            <span className="md:hidden">Örnekler</span>
+                        </button>
+                    </header>
+
+                    <main className="flex-grow overflow-hidden relative">
+                        {gameState === 'intro' && renderIntro()}
+                        {gameState === 'playing' && renderMission()}
+                        {gameState === 'feedback' && renderFeedback()}
+                        {gameState === 'complete' && renderComplete()}
+                        
+                        {/* Modal Gösterimi */}
+                        {showExamplesModal && renderExamplesModal()}
+                    </main>
+                </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Simulation />);
+    </script>
+</body>
+</html>
