@@ -6,32 +6,10 @@
     <title>5. Sınıf Geometri Laboratuvarı</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5', // Logo ana rengine yakın canlı indigo
-                            700: '#4338ca',
-                            900: '#312e81',
-                        },
-                        accent: {
-                            500: '#f97316', // Turuncu aksan
-                            600: '#ea580c',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f1f5f9; /* Daha ferah bir arka plan */
+            background-color: #e2e8f0; 
             overscroll-behavior: none;
             user-select: none;
             display: flex;
@@ -39,60 +17,50 @@
             justify-content: center;
             height: 100vh;
             margin: 0;
-            padding: 10px;
         }
         
         #app-frame {
-            width: 100%;
-            max-width: 940px;
-            height: 90vh;
-            max-height: 600px;
+            width: 940px;
+            height: 520px;
             background-color: white;
-            box-shadow: 0 25px 50px -12px rgba(79, 70, 229, 0.15); /* Gölgelendirmede marka rengi */
-            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 0.75rem;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             position: relative;
-            border: 1px solid #e0e7ff;
         }
 
         canvas {
             cursor: crosshair;
             background-color: #ffffff;
-            /* Grid çizgileri daha canlı (mavimsi) */
             background-image: 
-                linear-gradient(#e0e7ff 1px, transparent 1px),
-                linear-gradient(90deg, #e0e7ff 1px, transparent 1px);
+                linear-gradient(#e5e7eb 1px, transparent 1px),
+                linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
             background-size: 40px 40px;
             background-position: -1px -1px;
             touch-action: none;
-            width: 100%;
-            height: 100%;
         }
         .tool-btn {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .tool-btn:hover {
-            transform: translateY(-2px);
+            transition: all 0.2s;
         }
         .tool-btn.active {
-            background-color: #4f46e5; /* Brand 600 */
+            background-color: #3b82f6;
             color: white;
             transform: scale(1.05);
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
-            border-color: #4338ca;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-color: #2563eb;
         }
         .tool-group-label {
             font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #6366f1; /* Brand 500 */
+            letter-spacing: 0.05em;
+            color: #9ca3af;
             margin-bottom: 0.5rem;
             margin-top: 1rem;
             width: 100%;
             text-align: center;
-            font-weight: 800;
+            font-weight: 700;
         }
 
         /* Scrollbar Hide */
@@ -110,33 +78,32 @@
     <div id="app-frame">
         
         <!-- Header -->
-        <header class="bg-white border-b border-indigo-100 h-16 shadow-sm z-20 shrink-0 px-4 flex items-center justify-between relative">
-            <!-- Üst çizgi aksanı -->
-            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 via-brand-600 to-accent-500"></div>
-
-            <div class="flex items-center gap-3">
-                <!-- Logo -->
-                <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="E12 Logo" class="h-10 w-auto object-contain hover:scale-105 transition-transform">
-                <div>
-                    <h1 class="text-lg font-bold text-gray-800 leading-tight tracking-tight">Geometri Laboratuvarı</h1>
-                    <p class="text-[10px] text-brand-500 font-medium">5. Sınıf: Çizimler, Açılar ve Çemberler</p>
+        <header class="bg-white border-b border-gray-200 p-3 shadow-sm z-20 shrink-0">
+            <div class="flex justify-between items-center h-full">
+                <div class="flex items-center gap-3">
+                    <!-- Logo -->
+                    <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" onerror="this.src='https://placehold.co/40x40?text=E12'" alt="E12 Logo" class="h-10 w-auto object-contain">
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-800 leading-tight">Geometri Laboratuvarı</h1>
+                        <p class="text-[10px] text-gray-500">5. Sınıf: Çizimler, Açılar ve Çemberler</p>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="hidden md:flex flex-1 mx-8 justify-center min-w-0">
-                 <div class="text-xs text-brand-700 bg-brand-50 px-4 py-2 rounded-full border border-brand-100 flex items-center shadow-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[400px] min-w-0">
-                    <i class="fas fa-lightbulb mr-2 text-accent-500 text-sm shrink-0"></i>
-                    <span id="instruction-text" class="font-semibold truncate block">Bir araç seçin ve çizim alanına tıklayın.</span>
+                
+                <div class="hidden md:flex flex-1 mx-8 justify-center">
+                     <div class="text-xs text-blue-800 bg-blue-50 px-4 py-1.5 rounded-full border border-blue-100 flex items-center shadow-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[400px]">
+                        <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>
+                        <span id="instruction-text" class="font-medium truncate">Bir araç seçin ve çizim alanına tıklayın.</span>
+                    </div>
                 </div>
-            </div>
-
-            <div class="flex gap-2">
-                <button onclick="toggleHelp()" class="bg-white text-brand-600 hover:bg-brand-50 hover:text-brand-700 px-4 py-2 rounded-lg text-xs font-bold transition-colors border border-brand-200 flex items-center gap-2 whitespace-nowrap shadow-sm">
-                    <i class="fas fa-question-circle text-sm"></i> Yardım
-                </button>
-                <button onclick="clearCanvas()" class="bg-white text-red-500 hover:bg-red-50 hover:text-red-600 px-4 py-2 rounded-lg text-xs font-bold transition-colors border border-red-200 flex items-center gap-2 whitespace-nowrap shadow-sm">
-                    <i class="fas fa-trash-alt text-sm"></i> Temizle
-                </button>
+    
+                <div class="flex gap-2">
+                    <button onclick="toggleHelp()" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-blue-200 flex items-center gap-2">
+                        <i class="fas fa-question-circle"></i> Yardım
+                    </button>
+                    <button onclick="clearCanvas()" class="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-red-200 flex items-center gap-2">
+                        <i class="fas fa-trash-alt"></i> Temizle
+                    </button>
+                </div>
             </div>
         </header>
     
@@ -144,48 +111,69 @@
         <div class="flex flex-1 relative overflow-hidden">
             
             <!-- Sidebar Tools -->
-            <div class="w-16 md:w-20 bg-white border-r border-indigo-50 flex flex-col items-center py-2 gap-3 z-10 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] overflow-y-auto scrollbar-hide">
+            <div class="w-16 md:w-20 bg-white border-r border-gray-200 flex flex-col items-center py-2 gap-2 z-10 shadow-lg overflow-y-auto scrollbar-hide">
                 
-                <div class="tool-group-label mt-2">Araçlar</div>
-    
-                <button onclick="setTool('angle')" id="btn-angle" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white text-gray-500 hover:bg-brand-50 hover:text-brand-600 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
-                    <i class="fas fa-chart-pie text-sm"></i>
-                    <span class="text-[9px] font-bold">Açı</span>
+                <div class="tool-group-label mt-2">Temel</div>
+                
+                <button onclick="setTool('point')" id="btn-point" class="tool-btn active w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
+                    <i class="fas fa-circle text-[8px]"></i>
+                    <span class="text-[8px] font-bold">Nokta</span>
                 </button>
     
-                <button onclick="setTool('polygon')" id="btn-polygon" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white text-gray-500 hover:bg-brand-50 hover:text-brand-600 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
-                    <i class="fas fa-draw-polygon text-sm"></i>
-                    <span class="text-[9px] font-bold">Çokgen</span>
+                <button onclick="setTool('segment')" id="btn-segment" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
+                    <i class="fas fa-grip-lines text-xs"></i>
+                    <span class="text-[8px] font-bold">Çizgi</span>
                 </button>
     
-                <button onclick="setTool('circle')" id="btn-circle" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white text-gray-500 hover:bg-brand-50 hover:text-brand-600 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
-                    <i class="far fa-circle text-sm"></i>
-                    <span class="text-[9px] font-bold">Çember</span>
+                <button onclick="setTool('line')" id="btn-line" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
+                    <i class="fas fa-arrows-alt-h text-xs"></i>
+                    <span class="text-[8px] font-bold">Doğru</span>
                 </button>
     
-                <div class="h-px w-10 bg-indigo-100 my-2"></div>
+                 <button onclick="setTool('ray')" id="btn-ray" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
+                    <i class="fas fa-long-arrow-alt-right text-xs"></i>
+                    <span class="text-[8px] font-bold">Işın</span>
+                </button>
     
-                <button onclick="undo()" class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 flex flex-col items-center justify-center gap-0.5 border border-red-100 transition-colors shadow-sm">
-                    <i class="fas fa-undo text-sm"></i>
-                    <span class="text-[9px] font-bold">Geri</span>
+                <div class="tool-group-label">Şekil</div>
+    
+                <button onclick="setTool('angle')" id="btn-angle" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
+                    <i class="fas fa-chart-pie text-xs"></i>
+                    <span class="text-[8px] font-bold">Açı</span>
+                </button>
+    
+                <button onclick="setTool('polygon')" id="btn-polygon" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
+                    <i class="fas fa-draw-polygon text-xs"></i>
+                    <span class="text-[8px] font-bold">Çokgen</span>
+                </button>
+    
+                <button onclick="setTool('circle')" id="btn-circle" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
+                    <i class="far fa-circle text-xs"></i>
+                    <span class="text-[8px] font-bold">Çember</span>
+                </button>
+    
+                <div class="h-px w-8 bg-gray-200 my-1"></div>
+    
+                <button onclick="undo()" class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex flex-col items-center justify-center gap-0.5 border border-red-100 transition-colors">
+                    <i class="fas fa-undo text-xs"></i>
+                    <span class="text-[8px] font-bold">Geri</span>
                 </button>
     
             </div>
     
             <!-- Canvas Area -->
-            <div class="flex-1 relative bg-slate-50 overflow-hidden" id="canvas-container">
+            <div class="flex-1 relative bg-gray-50 overflow-hidden" id="canvas-container">
                 <canvas id="geometryCanvas" class="absolute top-0 left-0"></canvas>
                 
                 <!-- Info Box -->
-                <div id="info-box" class="absolute bottom-6 right-6 bg-white/90 backdrop-blur-md p-4 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-indigo-100 max-w-[220px] hidden pointer-events-none transform transition-all duration-300 translate-y-2 group">
-                    <div class="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-accent-500 rounded-r-full"></div>
-                    <div class="flex items-start gap-3">
-                        <div class="bg-brand-100 p-2 rounded-lg text-brand-600 shrink-0">
-                            <i class="fas fa-info text-xs"></i>
+                <div id="info-box" class="absolute bottom-6 right-6 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-xl border border-blue-100 max-w-[200px] hidden pointer-events-none transform transition-all duration-300 translate-y-2">
+                    <div class="flex items-start gap-2">
+                        <div class="bg-blue-100 p-1.5 rounded-full text-blue-600 mt-0.5">
+                            <i class="fas fa-info text-[10px]"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-gray-800 text-xs mb-1 uppercase tracking-wide" id="info-title">Bilgi</h3>
-                            <p class="text-xs text-gray-600 leading-snug" id="info-desc">Açıklama burada.</p>
+                            <h3 class="font-bold text-gray-800 text-xs mb-0.5" id="info-title">Bilgi</h3>
+                            <p class="text-[10px] text-gray-600 leading-tight" id="info-desc">Açıklama burada.</p>
                         </div>
                     </div>
                 </div>
@@ -193,123 +181,135 @@
         </div>
 
         <!-- 1. INTRO SCREEN (Absolute Overlay) -->
-        <div id="intro-screen" class="absolute inset-0 z-50 bg-white/95 backdrop-blur-sm flex flex-col items-center justify-center text-center p-8">
-            <div class="mb-8 animate-[bounce_2s_infinite]">
+        <div id="intro-screen" class="absolute inset-0 z-50 bg-white flex flex-col items-center justify-center text-center p-8">
+            <div class="mb-6 animate-bounce">
                  <!-- Logo -->
-                <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="E12 Logo" class="h-28 w-auto object-contain drop-shadow-lg">
+                <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" onerror="this.src='https://placehold.co/100x100?text=E12'" alt="E12 Logo" class="h-24 w-auto object-contain drop-shadow-sm">
             </div>
-            <h1 class="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">Geometri Laboratuvarı</h1>
-            <p class="text-gray-600 mb-10 max-w-lg leading-relaxed text-lg">
-                Kenar uzunluklarını ölç, açıları keşfet ve geometrik şekillerin dünyasında özgürce dolaş!
+            <h1 class="text-3xl font-bold text-gray-800 mb-3">Geometri Laboratuvarına Hoş Geldiniz</h1>
+            <p class="text-gray-600 mb-8 max-w-lg leading-relaxed">
+                Bu dijital atölyede noktalar, doğrular ve açılarla deneyler yapabilir, kendi şekillerini oluşturabilir ve geometrinin temellerini keşfedebilirsin!
             </p>
             
-            <div class="grid grid-cols-2 gap-x-12 gap-y-8 text-left mb-12 w-full max-w-lg">
-                <div class="flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm border border-brand-100">
-                        <i class="fas fa-draw-polygon"></i>
-                    </div>
-                    <div>
-                        <span class="block font-bold text-gray-800">Çokgenler</span>
-                        <span class="text-xs text-gray-500">İstediğin şekli çiz</span>
-                    </div>
+            <div class="grid grid-cols-2 gap-x-8 gap-y-4 text-left mb-10 w-full max-w-md">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-pencil-alt text-blue-500 text-xl w-6 text-center"></i>
+                    <span class="text-lg text-gray-700">Çizim Yap</span>
                 </div>
-                <div class="flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm border border-purple-100">
-                        <i class="far fa-circle"></i>
-                    </div>
-                    <div>
-                        <span class="block font-bold text-gray-800">Çemberler</span>
-                        <span class="text-xs text-gray-500">Yarıçapı keşfet</span>
-                    </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-search-plus text-purple-500 text-xl w-6 text-center"></i>
+                    <span class="text-lg text-gray-700">Keşfet</span>
                 </div>
-                <div class="flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm border border-green-100">
-                        <i class="fas fa-ruler-combined"></i>
-                    </div>
-                    <div>
-                        <span class="block font-bold text-gray-800">Ölçümler</span>
-                        <span class="text-xs text-gray-500">Uzunlukları gör</span>
-                    </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-ruler-combined text-green-500 text-xl w-6 text-center"></i>
+                    <span class="text-lg text-gray-700">Ölçüm Yap</span>
                 </div>
-                <div class="flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-2xl bg-accent-50 text-accent-500 flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm border border-orange-100">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <div>
-                        <span class="block font-bold text-gray-800">Açılar</span>
-                        <span class="text-xs text-gray-500">Dereceleri ölç</span>
-                    </div>
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-lightbulb text-orange-500 text-xl w-6 text-center"></i>
+                    <span class="text-lg text-gray-700">Öğren</span>
                 </div>
             </div>
 
-            <button onclick="startSimulation()" class="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white font-bold py-4 px-12 rounded-full shadow-lg shadow-brand-500/30 transform transition hover:scale-105 active:scale-95 flex items-center gap-3 text-lg">
-                <span>Keşfetmeye Başla</span> <i class="fas fa-arrow-right"></i>
+            <button onclick="startSimulation()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded-full shadow-lg shadow-blue-200 transform transition hover:scale-105 active:scale-95 flex items-center gap-2 text-lg">
+                <span>Hadi Başlayalım</span> <i class="fas fa-arrow-right"></i>
             </button>
         </div>
 
-        <!-- 2. HELP MODAL -->
-        <div id="help-modal" class="absolute inset-0 z-[60] bg-brand-900/40 hidden flex items-center justify-center backdrop-blur-sm">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mx-6 h-[85%] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out] border border-white/50">
+        <!-- 2. HELP MODAL (Absolute Overlay, Hidden by default) -->
+        <div id="help-modal" class="absolute inset-0 z-[60] bg-black/40 hidden flex items-center justify-center backdrop-blur-[2px]">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl mx-6 h-[85%] flex flex-col overflow-hidden animate-[fadeIn_0.2s_ease-out]">
                 
                 <!-- Modal Header -->
-                <div class="bg-gradient-to-r from-brand-50 to-white border-b border-brand-100 p-5 flex justify-between items-center shrink-0">
-                    <h2 class="text-xl font-bold text-brand-900 flex items-center gap-3">
-                        <i class="fas fa-book-open text-accent-500"></i> Kullanım Rehberi
+                <div class="bg-gray-50 border-b border-gray-100 p-4 flex justify-between items-center shrink-0">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i class="fas fa-book-open text-blue-500"></i> Kullanım Rehberi
                     </h2>
-                    <button onclick="toggleHelp()" class="text-gray-400 hover:text-red-500 transition-colors w-10 h-10 rounded-full hover:bg-red-50 flex items-center justify-center">
-                        <i class="fas fa-times text-xl"></i>
+                    <button onclick="toggleHelp()" class="text-gray-400 hover:text-red-500 transition-colors w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center">
+                        <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
 
-                <!-- Modal Content -->
-                <div class="p-8 overflow-y-auto bg-white flex-1">
-                    <div class="grid grid-cols-1 gap-8">
+                <!-- Modal Content (Scrollable) -->
+                <div class="p-6 overflow-y-auto bg-white flex-1">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
-                        <div class="space-y-6">
-                            <h3 class="text-xs font-bold text-brand-400 uppercase tracking-widest border-b border-brand-50 pb-2">Şekil Araçları</h3>
-
-                            <div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                                <div class="w-12 h-12 bg-white border-2 border-brand-100 rounded-xl flex items-center justify-center shrink-0 text-brand-600 shadow-sm">
-                                    <i class="fas fa-chart-pie text-lg"></i>
-                                </div>
+                        <!-- Sol Kolon -->
+                        <div class="space-y-4">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Temel Araçlar</h3>
+                            
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="fas fa-circle text-xs"></i></div>
                                 <div>
-                                    <h4 class="font-bold text-base text-gray-800 mb-1">Açı Ölçer</h4>
-                                    <p class="text-sm text-gray-600 leading-relaxed">Sırasıyla 3 noktaya tıkla: <br>1. <strong class="text-brand-600">Merkez Noktası</strong> (Köşe) <br>2. Birinci kol üzerindeki nokta <br>3. İkinci kol üzerindeki nokta.</p>
+                                    <h4 class="font-bold text-sm text-gray-800">Nokta</h4>
+                                    <p class="text-xs text-gray-600">Ekranın herhangi bir yerine tıkla. Noktalar otomatik olarak (A, B, C...) isimlendirilir.</p>
                                 </div>
                             </div>
 
-                            <div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                                <div class="w-12 h-12 bg-white border-2 border-brand-100 rounded-xl flex items-center justify-center shrink-0 text-brand-600 shadow-sm">
-                                    <i class="fas fa-draw-polygon text-lg"></i>
-                                </div>
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="fas fa-grip-lines text-sm"></i></div>
                                 <div>
-                                    <h4 class="font-bold text-base text-gray-800 mb-1">Çokgen</h4>
-                                    <p class="text-sm text-gray-600 leading-relaxed">Köşeleri oluşturmak için ekrana tıkla. Şekli kapatmak için <strong class="text-brand-600">başlangıç noktasına</strong> tekrar tıkla.</p>
+                                    <h4 class="font-bold text-sm text-gray-800">Çizgi (Doğru Parçası)</h4>
+                                    <p class="text-xs text-gray-600">Başlangıç noktasına tıkla, fareyi basılı tutarak sürükle ve bitiş noktasında bırak.</p>
                                 </div>
                             </div>
 
-                            <div class="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100">
-                                <div class="w-12 h-12 bg-white border-2 border-brand-100 rounded-xl flex items-center justify-center shrink-0 text-brand-600 shadow-sm">
-                                    <i class="far fa-circle text-lg"></i>
-                                </div>
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="fas fa-arrows-alt-h text-sm"></i></div>
                                 <div>
-                                    <h4 class="font-bold text-base text-gray-800 mb-1">Çember</h4>
-                                    <p class="text-sm text-gray-600 leading-relaxed">Merkez noktasına tıkla, basılı tutarak yarıçapı ayarla ve bırak.</p>
+                                    <h4 class="font-bold text-sm text-gray-800">Doğru</h4>
+                                    <p class="text-xs text-gray-600">Sürükleyerek iki nokta belirle. İki yöne sonsuza giden bir çizgi oluşturur.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="fas fa-long-arrow-alt-right text-sm"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-gray-800">Işın</h4>
+                                    <p class="text-xs text-gray-600">Bir noktadan başlayıp tek bir yöne sonsuza giden çizgi. Sürükle ve bırak.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sağ Kolon -->
+                        <div class="space-y-4">
+                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Şekil Araçları</h3>
+
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="fas fa-chart-pie text-sm"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-gray-800">Açı Ölçer</h4>
+                                    <p class="text-xs text-gray-600">Sırasıyla 3 noktaya tıkla: <br>1. Merkez Noktası <br>2. Birinci kol üzerindeki nokta <br>3. İkinci kol üzerindeki nokta.</p>
                                 </div>
                             </div>
 
-                            <div class="mt-6 p-4 bg-orange-50 rounded-xl border border-orange-100 text-sm text-orange-800 flex gap-3 shadow-sm">
-                                <i class="fas fa-lightbulb text-orange-500 mt-1 text-lg"></i>
-                                <span><strong>İpucu:</strong> Kenar uzunluklarını çizim yaparken anlık olarak görebilirsin! Hata yaparsan sol alttaki kırmızı <strong>Geri</strong> butonunu kullan.</span>
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="fas fa-draw-polygon text-sm"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-gray-800">Çokgen</h4>
+                                    <p class="text-xs text-gray-600">Köşeleri oluşturmak için sırayla tıkla. Şekli kapatmak için en baştaki noktaya tekrar tıkla.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-3">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="far fa-circle text-sm"></i></div>
+                                <div>
+                                    <h4 class="font-bold text-sm text-gray-800">Çember</h4>
+                                    <p class="text-xs text-gray-600">Merkez noktasına tıkla, basılı tutarak yarıçapı ayarla ve bırak.</p>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-100 text-xs text-yellow-800 flex gap-2">
+                                <i class="fas fa-info-circle mt-0.5"></i>
+                                <span><strong>İpucu:</strong> Hata yaparsan "Geri" butonunu kullanabilir veya "Temizle" ile sayfayı tamamen silebilirsin.</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Modal Footer -->
-                <div class="bg-gray-50 p-5 border-t border-gray-100 flex justify-end">
-                    <button onclick="toggleHelp()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-8 rounded-xl text-sm transition-all shadow-lg shadow-brand-500/20 transform hover:scale-105">
-                        Harika, Başlayalım!
+                <div class="bg-gray-50 p-4 border-t border-gray-100 flex justify-end">
+                    <button onclick="toggleHelp()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg text-sm transition-colors">
+                        Anladım, Kapat
                     </button>
                 </div>
             </div>
@@ -320,12 +320,12 @@
     <script>
         // --- Yapılandırma ---
         const GRID_SIZE = 40; 
-        const POINT_RADIUS = 6; // Noktalar biraz daha belirgin
+        const POINT_RADIUS = 5;
         const SNAP_THRESHOLD = 15;
         const ALPHABET = "ABCDEFGHIJKLMNOPRSTUVYZ";
         
         // --- Durum Değişkenleri ---
-        let currentTool = 'circle'; 
+        let currentTool = 'point'; 
         let shapes = []; 
         let tempShape = null; 
         let alphabetIndex = 0;
@@ -353,9 +353,8 @@
         // --- UI Functions ---
         function startSimulation() {
             const intro = document.getElementById('intro-screen');
-            intro.style.transition = "opacity 0.5s ease, transform 0.5s ease";
+            intro.style.transition = "opacity 0.5s ease";
             intro.style.opacity = "0";
-            intro.style.transform = "scale(1.05)"; // Hafif zoom out efekti
             setTimeout(() => {
                 intro.style.display = "none";
             }, 500);
@@ -391,7 +390,7 @@
                 'circle': 'Merkeze tıklayın, yarıçapı ayarlamak için sürükleyin.',
                 'angle': 'Sırasıyla 3 noktaya tıklayın: 1.Köşe(Merkez), 2.Kenar, 3.Kenar.'
             };
-            instructionText.innerText = instructions[tool];
+            instructionText.innerHTML = instructions[tool];
             draw();
         }
 
@@ -427,6 +426,11 @@
             if (deg < 0) deg += 360;
             if (deg > 180) deg = 360 - deg;
             return Math.round(deg);
+        }
+
+        // Belirtilen koordinatta nokta var mı kontrol et
+        function getPointAt(pos) {
+            return shapes.find(s => s.type === 'point' && Math.abs(s.x - pos.x) < 1 && Math.abs(s.y - pos.y) < 1);
         }
 
         // --- Event Handlers ---
@@ -523,14 +527,35 @@
                     radiusP: tempShape.end,
                     r: dist(tempShape.start, tempShape.end)
                 });
-                shapes.push({ type: 'point', x: tempShape.start.x, y: tempShape.start.y, label: getNextLabel() });
+                
+                // Merkezde zaten nokta yoksa ekle
+                if (!getPointAt(tempShape.start)) {
+                     shapes.push({ type: 'point', x: tempShape.start.x, y: tempShape.start.y, label: getNextLabel() });
+                }
+
                 showInfo('Çember', 'Merkeze eşit uzaklıktaki noktalar kümesi.');
             }
             else {
-                const p1Label = getNextLabel();
-                const p2Label = getNextLabel();
-                shapes.push({ type: 'point', x: tempShape.start.x, y: tempShape.start.y, label: p1Label });
-                shapes.push({ type: 'point', x: tempShape.end.x, y: tempShape.end.y, label: p2Label });
+                // Başlangıç Noktası Kontrolü
+                let startP = getPointAt(tempShape.start);
+                let p1Label;
+                if (startP) {
+                    p1Label = startP.label; // Mevcut etiketi kullan
+                } else {
+                    p1Label = getNextLabel();
+                    shapes.push({ type: 'point', x: tempShape.start.x, y: tempShape.start.y, label: p1Label });
+                }
+
+                // Bitiş Noktası Kontrolü
+                let endP = getPointAt(tempShape.end);
+                let p2Label;
+                if (endP) {
+                    p2Label = endP.label; // Mevcut etiketi kullan
+                } else {
+                    p2Label = getNextLabel();
+                    shapes.push({ type: 'point', x: tempShape.end.x, y: tempShape.end.y, label: p2Label });
+                }
+
                 shapes.push({ ...tempShape, labels: [p1Label, p2Label] });
                 if(currentTool === 'segment') showInfo('Doğru Parçası', `Uzunluğu ölçülebilen parça. [${p1Label}${p2Label}]`);
             }
@@ -542,6 +567,9 @@
         }
 
         function addPoint(pos) {
+            // Eğer orada zaten nokta varsa ekleme
+            if (getPointAt(pos)) return;
+
             shapes.push({
                 type: 'point',
                 x: pos.x,
@@ -572,133 +600,43 @@
         }
 
         function drawShape(s, isPreview = false) {
-            // Renk Paleti Güncellemesi
-            const MAIN_COLOR = '#4338ca'; // Brand 700 (Koyu İndigo)
-            const PREVIEW_COLOR = '#6366f1'; // Brand 500 (Canlı İndigo)
-            const ACCENT_COLOR = '#f59e0b'; // Amber
-            const POINT_COLOR = '#ef4444'; // Red 500
-
-            ctx.strokeStyle = isPreview ? PREVIEW_COLOR : MAIN_COLOR;
+            ctx.strokeStyle = isPreview ? '#3b82f6' : '#1e40af';
             ctx.lineWidth = isPreview ? 2 : 3;
             ctx.lineCap = 'round';
-            ctx.fillStyle = MAIN_COLOR;
+            ctx.fillStyle = '#1e40af';
 
             if (s.type === 'circle') {
-                const centerX = s.center ? s.center.x : s.start.x;
-                const centerY = s.center ? s.center.y : s.start.y;
+                ctx.beginPath();
                 let r = s.r;
-                let endX, endY;
-
-                if (isPreview) {
-                    r = dist(s.start, s.end);
-                    endX = s.end.x;
-                    endY = s.end.y;
-                } else {
-                    endX = s.radiusP.x;
-                    endY = s.radiusP.y;
-                }
-
-                // Çemberi Çiz
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, r, 0, 2 * Math.PI);
-                ctx.strokeStyle = isPreview ? 'rgba(99, 102, 241, 0.6)' : '#4338ca';
+                if (isPreview) r = dist(s.start, s.end);
+                ctx.arc(s.center ? s.center.x : s.start.x, s.center ? s.center.y : s.start.y, r, 0, 2 * Math.PI);
+                ctx.strokeStyle = isPreview ? 'rgba(59, 130, 246, 0.6)' : '#2563eb';
                 ctx.stroke();
-
-                // Yarıçap Çizgisini Çiz
-                ctx.beginPath();
-                ctx.moveTo(centerX, centerY);
-                ctx.lineTo(endX, endY);
-                ctx.setLineDash([5, 5]);
-                ctx.lineWidth = 1.5;
-                ctx.strokeStyle = isPreview ? 'rgba(99, 102, 241, 0.8)' : '#6366f1';
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                // Yarıçap Ölçüsünü Yaz
-                if (r > 0) {
-                    ctx.save();
-                    ctx.font = "bold 12px 'Segoe UI', sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    
-                    const val = (r / GRID_SIZE).toFixed(1);
-                    const text = `r = ${parseFloat(val)} br`;
-                    
-                    const midX = (centerX + endX) / 2;
-                    const midY = (centerY + endY) / 2;
-                    
-                    const metrics = ctx.measureText(text);
-                    const bgW = metrics.width + 12;
-                    const bgH = 20;
-                    
-                    // Etiket arka planı (Daha şık)
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                if(isPreview) {
                     ctx.beginPath();
-                    ctx.roundRect(midX - bgW/2, midY - bgH/2, bgW, bgH, 4);
-                    ctx.fill();
-                    ctx.strokeStyle = "#e0e7ff";
+                    ctx.moveTo(s.start.x, s.start.y);
+                    ctx.lineTo(s.end.x, s.end.y);
+                    ctx.setLineDash([5, 5]);
                     ctx.lineWidth = 1;
                     ctx.stroke();
-                    
-                    ctx.fillStyle = "#4338ca"; // İndigo metin
-                    ctx.fillText(text, midX, midY);
-                    ctx.restore();
+                    ctx.setLineDash([]);
                 }
-                
                 return;
             }
 
             if (s.type === 'polygon') {
-                ctx.fillStyle = 'rgba(99, 102, 241, 0.15)'; // Hafif indigo dolgu
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
                 ctx.beginPath();
                 ctx.moveTo(s.points[0].x, s.points[0].y);
                 for(let i=1; i<s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
-
-                // --- Kenar Uzunlukları ---
-                if (!isPreview) {
-                    ctx.save();
-                    ctx.font = "bold 11px 'Segoe UI', sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    
-                    for(let i=0; i<s.points.length; i++) {
-                        const p1 = s.points[i];
-                        const p2 = s.points[(i + 1) % s.points.length];
-                        
-                        const d = dist(p1, p2);
-                        const val = (d / GRID_SIZE).toFixed(1);
-                        const text = `${parseFloat(val)} br`;
-                        
-                        const midX = (p1.x + p2.x) / 2;
-                        const midY = (p1.y + p2.y) / 2;
-                        
-                        const metrics = ctx.measureText(text);
-                        const bgW = metrics.width + 8;
-                        const bgH = 18;
-                        
-                        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                        ctx.beginPath();
-                        ctx.roundRect(midX - bgW/2, midY - bgH/2, bgW, bgH, 4);
-                        ctx.fill();
-                        
-                        ctx.fillStyle = "#374151"; 
-                        ctx.fillText(text, midX, midY);
-                    }
-                    ctx.restore();
-                }
-
-                ctx.fillStyle = MAIN_COLOR;
+                ctx.fillStyle = '#1e40af';
                 s.points.forEach(p => {
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, 4, 0, 2*Math.PI); // Noktalar biraz daha büyük
-                    ctx.fillStyle = "#ffffff"; // İçi beyaz
+                    ctx.arc(p.x, p.y, 3, 0, 2*Math.PI);
                     ctx.fill();
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = MAIN_COLOR; // Dışı mavi
-                    ctx.stroke();
                 });
                 return;
             }
@@ -707,39 +645,16 @@
                 ctx.beginPath();
                 ctx.moveTo(s.start.x, s.start.y);
                 ctx.lineTo(s.end.x, s.end.y);
-                ctx.setLineDash([6, 4]);
+                ctx.setLineDash([5, 5]);
                 ctx.stroke();
                 ctx.setLineDash([]);
-                
-                const d = dist(s.start, s.end);
-                if (d > 0) {
-                    ctx.save();
-                    ctx.font = "bold 11px sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    const val = (d / GRID_SIZE).toFixed(1);
-                    const text = `${parseFloat(val)} br`;
-                    const midX = (s.start.x + s.end.x) / 2;
-                    const midY = (s.start.y + s.end.y) / 2;
-                    const metrics = ctx.measureText(text);
-                    const bgW = metrics.width + 8;
-                    const bgH = 18;
-
-                    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                    ctx.beginPath();
-                    ctx.roundRect(midX - bgW/2, midY - bgH/2, bgW, bgH, 4);
-                    ctx.fill();
-                    ctx.fillStyle = "#6b7280";
-                    ctx.fillText(text, midX, midY);
-                    ctx.restore();
-                }
                 return;
             }
 
             if (s.type === 'angle') {
                 ctx.save();
-                ctx.strokeStyle = ACCENT_COLOR; 
-                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)'; 
+                ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(s.p1.x, s.p1.y);
                 ctx.lineTo(s.center.x, s.center.y);
@@ -749,20 +664,14 @@
                 const radius = 30;
                 const startAngle = Math.atan2(s.p1.y - s.center.y, s.p1.x - s.center.x);
                 const endAngle = Math.atan2(s.p2.y - s.center.y, s.p2.x - s.center.x);
-                
-                let diff = endAngle - startAngle;
-                if (diff < 0) diff += 2 * Math.PI;
-                const anticlockwise = diff > Math.PI;
-                
                 ctx.beginPath();
-                ctx.arc(s.center.x, s.center.y, radius, startAngle, endAngle, anticlockwise); 
-
-                ctx.fillStyle = 'rgba(245, 158, 11, 0.15)'; // Daha soft dolgu
+                ctx.arc(s.center.x, s.center.y, radius, startAngle, endAngle, false); 
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
                 ctx.lineTo(s.center.x, s.center.y);
                 ctx.fill();
-                ctx.font = "bold 13px 'Segoe UI', sans-serif";
+                ctx.font = "bold 14px sans-serif";
                 ctx.fillStyle = "#b45309";
-                ctx.fillText(s.deg + "°", s.center.x + 12, s.center.y - 12);
+                ctx.fillText(s.deg + "°", s.center.x + 10, s.center.y - 10);
                 ctx.restore();
                 return;
             }
@@ -770,23 +679,12 @@
             if (s.type === 'point' || s.type === 'temp_dot') {
                 ctx.beginPath();
                 ctx.arc(s.x, s.y, POINT_RADIUS, 0, Math.PI * 2);
-                
-                if (s.type === 'temp_dot') {
-                    ctx.fillStyle = ACCENT_COLOR;
-                    ctx.fill();
-                } else {
-                    // Normal noktalar: Beyaz iç, Kırmızı dış (Daha belirgin)
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fill();
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = POINT_COLOR;
-                    ctx.stroke();
-                }
-
+                ctx.fillStyle = (s.type === 'temp_dot') ? '#f59e0b' : '#1d4ed8';
+                ctx.fill();
                 if (s.label) {
-                    ctx.font = "bold 15px 'Segoe UI', sans-serif";
-                    ctx.fillStyle = "#1e293b"; // Slate 800
-                    ctx.fillText(s.label, s.x + 10, s.y - 10);
+                    ctx.font = "bold 16px sans-serif";
+                    ctx.fillStyle = "#111827";
+                    ctx.fillText(s.label, s.x + 8, s.y - 8);
                 }
                 return;
             }
@@ -794,8 +692,7 @@
             const d = dist(s.start, s.end);
             if (d < 1) return;
 
-            // ... line/ray drawing logic (same structure, updated colors implicit via context) ...
-             let startDraw = { ...s.start };
+            let startDraw = { ...s.start };
             let endDraw = { ...s.end };
             const extension = 1000;
 
@@ -819,8 +716,8 @@
             ctx.moveTo(startDraw.x, startDraw.y);
             ctx.lineTo(endDraw.x, endDraw.y);
             ctx.stroke();
-            // ... arrows logic remains ...
-             if (!isPreview) {
+
+            if (!isPreview) {
                 const dx = s.end.x - s.start.x;
                 const dy = s.end.y - s.start.y;
                 const unitX = dx/d;
@@ -846,58 +743,24 @@
             layers.mid.forEach(s => drawShape(s));
             if (tempShape) drawShape(tempShape, true);
             if (polyPoints.length > 0) {
-                // Çizim halindeki çokgen noktaları
                 polyPoints.forEach(p => {
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, 5, 0, 2*Math.PI);
-                    ctx.fillStyle = '#ffffff';
+                    ctx.arc(p.x, p.y, 4, 0, 2*Math.PI);
+                    ctx.fillStyle = '#3b82f6';
                     ctx.fill();
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = '#6366f1';
-                    ctx.stroke();
                 });
                 if (polyPoints.length > 1) {
                     ctx.beginPath();
                     ctx.moveTo(polyPoints[0].x, polyPoints[0].y);
                     for(let i=1; i<polyPoints.length; i++) ctx.lineTo(polyPoints[i].x, polyPoints[i].y);
-                    ctx.lineWidth = 2;
-                    ctx.strokeStyle = '#6366f1';
+                    ctx.strokeStyle = '#3b82f6';
                     ctx.stroke();
-
-                    // --- YENİ: Çizim sırasındaki kenar uzunlukları ---
-                    ctx.save();
-                    ctx.font = "bold 11px sans-serif";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    for(let i=0; i<polyPoints.length - 1; i++) {
-                        const p1 = polyPoints[i];
-                        const p2 = polyPoints[i+1];
-                        const d = dist(p1, p2);
-                        const val = (d / GRID_SIZE).toFixed(1);
-                        const text = `${parseFloat(val)} br`;
-                        
-                        const midX = (p1.x + p2.x) / 2;
-                        const midY = (p1.y + p2.y) / 2;
-                        
-                        const metrics = ctx.measureText(text);
-                        const bgW = metrics.width + 8;
-                        const bgH = 18;
-                        
-                        ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-                        ctx.beginPath();
-                        ctx.roundRect(midX - bgW/2, midY - bgH/2, bgW, bgH, 4);
-                        ctx.fill();
-                        ctx.fillStyle = "#4f46e5";
-                        ctx.fillText(text, midX, midY);
-                    }
-                    ctx.restore();
-                    // ------------------------------------------------
                 }
             }
             if (anglePoints.length > 0) {
                 anglePoints.forEach(p => {
                      ctx.beginPath();
-                     ctx.arc(p.x, p.y, 5, 0, 2*Math.PI);
+                     ctx.arc(p.x, p.y, 4, 0, 2*Math.PI);
                      ctx.fillStyle = '#f59e0b';
                      ctx.fill();
                 });
@@ -928,9 +791,8 @@
             alphabetIndex = 0;
             polyPoints = [];
             anglePoints = [];
-            setTool('circle'); 
+            setTool('point');
             infoBox.classList.add('hidden');
-            draw();
         }
 
         function showInfo(title, desc) {
@@ -942,24 +804,13 @@
             infoBox.classList.remove('opacity-0');
             infoBox.classList.remove('translate-y-2');
             setTimeout(() => {
-                infoBox.classList.remove('opacity-0');
-                infoBox.classList.remove('translate-y-2');
-            }, 10);
-            
-            // Mevcut zamanlayıcıyı temizle
-            if (window.infoTimeout) clearTimeout(window.infoTimeout);
-            
-            window.infoTimeout = setTimeout(() => {
                 infoBox.classList.add('opacity-0');
                 infoBox.classList.add('translate-y-2');
-                setTimeout(() => {
-                    if(infoBox.classList.contains('opacity-0')) infoBox.classList.add('hidden');
-                }, 300);
-            }, 4000);
+            }, 6000);
         }
 
         setTimeout(resizeCanvas, 100);
-        setTool('circle');
+        setTool('point');
 
     </script>
 </body>
