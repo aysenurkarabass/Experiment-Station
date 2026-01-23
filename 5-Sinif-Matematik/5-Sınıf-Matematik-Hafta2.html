@@ -85,7 +85,7 @@
                     <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" onerror="this.src='https://placehold.co/40x40?text=E12'" alt="E12 Logo" class="h-10 w-auto object-contain">
                     <div>
                         <h1 class="text-lg font-bold text-gray-800 leading-tight">Geometri Laboratuvarı</h1>
-                        <p class="text-[10px] text-gray-500">5. Sınıf: Çizimler, Açılar ve Çemberler</p>
+                        <p class="text-[10px] text-gray-500">5. Sınıf: Noktalar ve Doğrular</p>
                     </div>
                 </div>
                 
@@ -113,7 +113,7 @@
             <!-- Sidebar Tools -->
             <div class="w-16 md:w-20 bg-white border-r border-gray-200 flex flex-col items-center py-2 gap-2 z-10 shadow-lg overflow-y-auto scrollbar-hide">
                 
-                <div class="tool-group-label mt-2">Temel</div>
+                <div class="tool-group-label mt-2">Araçlar</div>
                 
                 <button onclick="setTool('point')" id="btn-point" class="tool-btn active w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
                     <i class="fas fa-circle text-[8px]"></i>
@@ -133,23 +133,6 @@
                  <button onclick="setTool('ray')" id="btn-ray" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
                     <i class="fas fa-long-arrow-alt-right text-xs"></i>
                     <span class="text-[8px] font-bold">Işın</span>
-                </button>
-    
-                <div class="tool-group-label">Şekil</div>
-    
-                <button onclick="setTool('angle')" id="btn-angle" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
-                    <i class="fas fa-chart-pie text-xs"></i>
-                    <span class="text-[8px] font-bold">Açı</span>
-                </button>
-    
-                <button onclick="setTool('polygon')" id="btn-polygon" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
-                    <i class="fas fa-draw-polygon text-xs"></i>
-                    <span class="text-[8px] font-bold">Çokgen</span>
-                </button>
-    
-                <button onclick="setTool('circle')" id="btn-circle" class="tool-btn w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gray-50 text-gray-600 hover:bg-gray-100 flex flex-col items-center justify-center gap-0.5 border border-gray-200">
-                    <i class="far fa-circle text-xs"></i>
-                    <span class="text-[8px] font-bold">Çember</span>
                 </button>
     
                 <div class="h-px w-8 bg-gray-200 my-1"></div>
@@ -188,10 +171,10 @@
             </div>
             <h1 class="text-3xl font-bold text-gray-800 mb-3">Geometri Laboratuvarına Hoş Geldiniz</h1>
             <p class="text-gray-600 mb-8 max-w-lg leading-relaxed">
-                Bu dijital atölyede noktalar, doğrular ve açılarla deneyler yapabilir, kendi şekillerini oluşturabilir ve geometrinin temellerini keşfedebilirsin!
+                Bu dijital atölyede noktalar ve doğrularla deneyler yapabilir ve geometrinin temellerini keşfedebilirsin!
             </p>
             
-            <div class="grid grid-cols-2 gap-x-8 gap-y-4 text-left mb-10 w-full max-w-md">
+            <div class="grid grid-cols-3 gap-x-8 gap-y-4 text-left mb-10 w-full max-w-lg">
                 <div class="flex items-center gap-3">
                     <i class="fas fa-pencil-alt text-blue-500 text-xl w-6 text-center"></i>
                     <span class="text-lg text-gray-700">Çizim Yap</span>
@@ -199,10 +182,6 @@
                 <div class="flex items-center gap-3">
                     <i class="fas fa-search-plus text-purple-500 text-xl w-6 text-center"></i>
                     <span class="text-lg text-gray-700">Keşfet</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-ruler-combined text-green-500 text-xl w-6 text-center"></i>
-                    <span class="text-lg text-gray-700">Ölçüm Yap</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <i class="fas fa-lightbulb text-orange-500 text-xl w-6 text-center"></i>
@@ -272,32 +251,7 @@
 
                         <!-- Sağ Kolon -->
                         <div class="space-y-4">
-                            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Şekil Araçları</h3>
-
-                            <div class="flex gap-3">
-                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="fas fa-chart-pie text-sm"></i></div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-gray-800">Açı Ölçer</h4>
-                                    <p class="text-xs text-gray-600">Sırasıyla 3 noktaya tıkla: <br>1. Merkez Noktası <br>2. Birinci kol üzerindeki nokta <br>3. İkinci kol üzerindeki nokta.</p>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-3">
-                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="fas fa-draw-polygon text-sm"></i></div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-gray-800">Çokgen</h4>
-                                    <p class="text-xs text-gray-600">Köşeleri oluşturmak için sırayla tıkla. Şekli kapatmak için en baştaki noktaya tekrar tıkla.</p>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-3">
-                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center shrink-0 text-gray-600"><i class="far fa-circle text-sm"></i></div>
-                                <div>
-                                    <h4 class="font-bold text-sm text-gray-800">Çember</h4>
-                                    <p class="text-xs text-gray-600">Merkez noktasına tıkla, basılı tutarak yarıçapı ayarla ve bırak.</p>
-                                </div>
-                            </div>
-
+                           
                             <div class="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-100 text-xs text-yellow-800 flex gap-2">
                                 <i class="fas fa-info-circle mt-0.5"></i>
                                 <span><strong>İpucu:</strong> Hata yaparsan "Geri" butonunu kullanabilir veya "Temizle" ile sayfayı tamamen silebilirsin.</span>
@@ -332,8 +286,6 @@
         
         let isDrawing = false;
         let startPoint = null;
-        let polyPoints = []; 
-        let anglePoints = []; 
 
         // --- DOM ---
         const canvas = document.getElementById('geometryCanvas');
@@ -378,17 +330,12 @@
             tempShape = null;
             isDrawing = false;
             startPoint = null;
-            polyPoints = [];
-            anglePoints = [];
 
             const instructions = {
                 'point': 'Kağıda nokta koymak için tıklayın.',
                 'segment': 'Doğru parçası çizmek için sürükleyip bırakın.',
                 'line': 'Doğru çizmek için iki nokta belirleyin.',
-                'ray': 'Işın çizmek için başlangıçtan yöne doğru çekin.',
-                'polygon': 'Köşeleri tıklayın. Bitirmek için başlangıç noktasına tıklayın.',
-                'circle': 'Merkeze tıklayın, yarıçapı ayarlamak için sürükleyin.',
-                'angle': 'Sırasıyla 3 noktaya tıklayın: 1.Köşe(Merkez), 2.Kenar, 3.Kenar.'
+                'ray': 'Işın çizmek için başlangıçtan yöne doğru çekin.'
             };
             instructionText.innerHTML = instructions[tool];
             draw();
@@ -419,15 +366,6 @@
             return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
         }
 
-        function calculateAngle(center, p1, p2) {
-            const ang1 = Math.atan2(p1.y - center.y, p1.x - center.x);
-            const ang2 = Math.atan2(p2.y - center.y, p2.x - center.x);
-            let deg = (ang2 - ang1) * 180 / Math.PI;
-            if (deg < 0) deg += 360;
-            if (deg > 180) deg = 360 - deg;
-            return Math.round(deg);
-        }
-
         // Belirtilen koordinatta nokta var mı kontrol et
         function getPointAt(pos) {
             return shapes.find(s => s.type === 'point' && Math.abs(s.x - pos.x) < 1 && Math.abs(s.y - pos.y) < 1);
@@ -440,47 +378,6 @@
             if (currentTool === 'point') {
                 addPoint(pos);
             } 
-            else if (currentTool === 'angle') {
-                anglePoints.push(pos);
-                shapes.push({ type: 'temp_dot', x: pos.x, y: pos.y }); 
-                
-                if (anglePoints.length === 1) {
-                    instructionText.innerText = "Şimdi 1. kenar üzerindeki noktaya tıklayın.";
-                } else if (anglePoints.length === 2) {
-                    instructionText.innerText = "Son olarak 2. kenar üzerindeki noktaya tıklayın.";
-                } else if (anglePoints.length === 3) {
-                    const deg = calculateAngle(anglePoints[0], anglePoints[1], anglePoints[2]);
-                    shapes = shapes.filter(s => s.type !== 'temp_dot'); 
-                    shapes.push({
-                        type: 'angle',
-                        center: anglePoints[0],
-                        p1: anglePoints[1],
-                        p2: anglePoints[2],
-                        deg: deg
-                    });
-                    showInfo(`Açı Ölçümü`, `Oluşan açı: ${deg} derece.`);
-                    anglePoints = [];
-                    setTool('angle'); 
-                }
-            }
-            else if (currentTool === 'polygon') {
-                if (polyPoints.length > 0) {
-                    const startP = polyPoints[0];
-                    if (dist(pos, startP) < SNAP_THRESHOLD) {
-                        if (polyPoints.length >= 3) {
-                            shapes.push({
-                                type: 'polygon',
-                                points: [...polyPoints]
-                            });
-                            showInfo('Çokgen', `${polyPoints.length} kenarlı bir çokgen çizdiniz.`);
-                        }
-                        polyPoints = [];
-                        tempShape = null;
-                        return;
-                    }
-                }
-                polyPoints.push(pos);
-            }
             else {
                 isDrawing = true;
                 startPoint = pos;
@@ -496,16 +393,6 @@
         function handleMove(rawPos) {
             const pos = snapToGrid(rawPos);
 
-            if (currentTool === 'polygon' && polyPoints.length > 0) {
-                tempShape = {
-                    type: 'poly_ghost',
-                    start: polyPoints[polyPoints.length - 1],
-                    end: pos
-                };
-                draw();
-                return;
-            }
-
             if (!isDrawing) return;
             tempShape.end = pos;
             draw();
@@ -520,45 +407,29 @@
                 return;
             }
 
-            if (currentTool === 'circle') {
-                shapes.push({
-                    type: 'circle',
-                    center: tempShape.start,
-                    radiusP: tempShape.end,
-                    r: dist(tempShape.start, tempShape.end)
-                });
-                
-                // Merkezde zaten nokta yoksa ekle
-                if (!getPointAt(tempShape.start)) {
-                     shapes.push({ type: 'point', x: tempShape.start.x, y: tempShape.start.y, label: getNextLabel() });
-                }
-
-                showInfo('Çember', 'Merkeze eşit uzaklıktaki noktalar kümesi.');
+            // Başlangıç Noktası Kontrolü
+            let startP = getPointAt(tempShape.start);
+            let p1Label;
+            if (startP) {
+                p1Label = startP.label; // Mevcut etiketi kullan
+            } else {
+                p1Label = getNextLabel();
+                shapes.push({ type: 'point', x: tempShape.start.x, y: tempShape.start.y, label: p1Label });
             }
-            else {
-                // Başlangıç Noktası Kontrolü
-                let startP = getPointAt(tempShape.start);
-                let p1Label;
-                if (startP) {
-                    p1Label = startP.label; // Mevcut etiketi kullan
-                } else {
-                    p1Label = getNextLabel();
-                    shapes.push({ type: 'point', x: tempShape.start.x, y: tempShape.start.y, label: p1Label });
-                }
 
-                // Bitiş Noktası Kontrolü
-                let endP = getPointAt(tempShape.end);
-                let p2Label;
-                if (endP) {
-                    p2Label = endP.label; // Mevcut etiketi kullan
-                } else {
-                    p2Label = getNextLabel();
-                    shapes.push({ type: 'point', x: tempShape.end.x, y: tempShape.end.y, label: p2Label });
-                }
-
-                shapes.push({ ...tempShape, labels: [p1Label, p2Label] });
-                if(currentTool === 'segment') showInfo('Doğru Parçası', `Uzunluğu ölçülebilen parça. [${p1Label}${p2Label}]`);
+            // Bitiş Noktası Kontrolü
+            let endP = getPointAt(tempShape.end);
+            let p2Label;
+            if (endP) {
+                p2Label = endP.label; // Mevcut etiketi kullan
+            } else {
+                p2Label = getNextLabel();
+                shapes.push({ type: 'point', x: tempShape.end.x, y: tempShape.end.y, label: p2Label });
             }
+
+            shapes.push({ ...tempShape, labels: [p1Label, p2Label] });
+            if(currentTool === 'segment') showInfo('Doğru Parçası', `Uzunluğu ölçülebilen parça. [${p1Label}${p2Label}]`);
+            
 
             isDrawing = false;
             tempShape = null;
@@ -605,81 +476,10 @@
             ctx.lineCap = 'round';
             ctx.fillStyle = '#1e40af';
 
-            if (s.type === 'circle') {
-                ctx.beginPath();
-                let r = s.r;
-                if (isPreview) r = dist(s.start, s.end);
-                ctx.arc(s.center ? s.center.x : s.start.x, s.center ? s.center.y : s.start.y, r, 0, 2 * Math.PI);
-                ctx.strokeStyle = isPreview ? 'rgba(59, 130, 246, 0.6)' : '#2563eb';
-                ctx.stroke();
-                if(isPreview) {
-                    ctx.beginPath();
-                    ctx.moveTo(s.start.x, s.start.y);
-                    ctx.lineTo(s.end.x, s.end.y);
-                    ctx.setLineDash([5, 5]);
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                    ctx.setLineDash([]);
-                }
-                return;
-            }
-
-            if (s.type === 'polygon') {
-                ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
-                ctx.beginPath();
-                ctx.moveTo(s.points[0].x, s.points[0].y);
-                for(let i=1; i<s.points.length; i++) ctx.lineTo(s.points[i].x, s.points[i].y);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-                ctx.fillStyle = '#1e40af';
-                s.points.forEach(p => {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, 3, 0, 2*Math.PI);
-                    ctx.fill();
-                });
-                return;
-            }
-            
-            if (s.type === 'poly_ghost') {
-                ctx.beginPath();
-                ctx.moveTo(s.start.x, s.start.y);
-                ctx.lineTo(s.end.x, s.end.y);
-                ctx.setLineDash([5, 5]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-                return;
-            }
-
-            if (s.type === 'angle') {
-                ctx.save();
-                ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)'; 
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(s.p1.x, s.p1.y);
-                ctx.lineTo(s.center.x, s.center.y);
-                ctx.lineTo(s.p2.x, s.p2.y);
-                ctx.stroke();
-                
-                const radius = 30;
-                const startAngle = Math.atan2(s.p1.y - s.center.y, s.p1.x - s.center.x);
-                const endAngle = Math.atan2(s.p2.y - s.center.y, s.p2.x - s.center.x);
-                ctx.beginPath();
-                ctx.arc(s.center.x, s.center.y, radius, startAngle, endAngle, false); 
-                ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
-                ctx.lineTo(s.center.x, s.center.y);
-                ctx.fill();
-                ctx.font = "bold 14px sans-serif";
-                ctx.fillStyle = "#b45309";
-                ctx.fillText(s.deg + "°", s.center.x + 10, s.center.y - 10);
-                ctx.restore();
-                return;
-            }
-            
-            if (s.type === 'point' || s.type === 'temp_dot') {
+            if (s.type === 'point') {
                 ctx.beginPath();
                 ctx.arc(s.x, s.y, POINT_RADIUS, 0, Math.PI * 2);
-                ctx.fillStyle = (s.type === 'temp_dot') ? '#f59e0b' : '#1d4ed8';
+                ctx.fillStyle = '#1d4ed8';
                 ctx.fill();
                 if (s.label) {
                     ctx.font = "bold 16px sans-serif";
@@ -724,7 +524,7 @@
                 const unitY = dy/d;
 
                 if (s.type === 'ray') {
-                     drawArrow(s.start.x, s.start.y, s.end.x + unitX * 25, s.end.y + unitY * 25);
+                      drawArrow(s.start.x, s.start.y, s.end.x + unitX * 25, s.end.y + unitY * 25);
                 } else if (s.type === 'line') {
                     drawArrow(s.start.x, s.start.y, s.end.x + unitX * 25, s.end.y + unitY * 25);
                     drawArrow(s.end.x, s.end.y, s.start.x - unitX * 25, s.start.y - unitY * 25);
@@ -735,36 +535,11 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const layers = {
-                bottom: shapes.filter(s => ['circle', 'polygon', 'angle'].includes(s.type)),
                 mid: shapes.filter(s => ['segment', 'line', 'ray'].includes(s.type)),
-                top: shapes.filter(s => ['point', 'temp_dot'].includes(s.type))
+                top: shapes.filter(s => ['point'].includes(s.type))
             };
-            layers.bottom.forEach(s => drawShape(s));
             layers.mid.forEach(s => drawShape(s));
             if (tempShape) drawShape(tempShape, true);
-            if (polyPoints.length > 0) {
-                polyPoints.forEach(p => {
-                    ctx.beginPath();
-                    ctx.arc(p.x, p.y, 4, 0, 2*Math.PI);
-                    ctx.fillStyle = '#3b82f6';
-                    ctx.fill();
-                });
-                if (polyPoints.length > 1) {
-                    ctx.beginPath();
-                    ctx.moveTo(polyPoints[0].x, polyPoints[0].y);
-                    for(let i=1; i<polyPoints.length; i++) ctx.lineTo(polyPoints[i].x, polyPoints[i].y);
-                    ctx.strokeStyle = '#3b82f6';
-                    ctx.stroke();
-                }
-            }
-            if (anglePoints.length > 0) {
-                anglePoints.forEach(p => {
-                     ctx.beginPath();
-                     ctx.arc(p.x, p.y, 4, 0, 2*Math.PI);
-                     ctx.fillStyle = '#f59e0b';
-                     ctx.fill();
-                });
-            }
             layers.top.forEach(s => drawShape(s));
         }
 
@@ -772,12 +547,9 @@
             if (shapes.length > 0) {
                 const last = shapes[shapes.length - 1];
                 if (!last) return;
-                if (last.type === 'point' || last.type === 'angle' || last.type === 'polygon') {
+                if (last.type === 'point') {
                     shapes.pop();
                     if(last.label) alphabetIndex--;
-                } else if (last.type === 'circle') {
-                    shapes.pop(); shapes.pop();
-                    alphabetIndex--;
                 } else {
                     shapes.pop(); shapes.pop(); shapes.pop(); 
                     alphabetIndex -= 2;
@@ -789,8 +561,6 @@
         function clearCanvas() {
             shapes = [];
             alphabetIndex = 0;
-            polyPoints = [];
-            anglePoints = [];
             setTool('point');
             infoBox.classList.add('hidden');
         }
