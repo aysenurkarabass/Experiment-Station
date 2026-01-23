@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geleceğin Sen - Bilim Araştırma Merkezleri Simülasyonu</title>
+    
+    <!-- React ve ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel (JSX Derleyicisi) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Animasyon Tanımları */
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in-up {
+            animation: fade-in-up 0.5s ease-out forwards;
+        }
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(-5%); }
+            50% { transform: translateY(5%); }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 3s infinite ease-in-out;
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 8s linear infinite;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- İkon Bileşenleri (SVG) ---
+        const Icon = ({ path, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {path}
+            </svg>
+        );
+
+        const Icons = {
+            Briefcase: (props) => <Icon path={<><rect width="20" height="14" x="2" y="6" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></>} {...props} />,
+            MessageSquare: (props) => <Icon path={<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>} {...props} />,
+            Award: (props) => <Icon path={<><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></>} {...props} />,
+            Star: (props) => <Icon path={<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>} {...props} />,
+            Atom: (props) => <Icon path={<><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z"/><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z"/></>} {...props} />,
+            Radio: (props) => <Icon path={<><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></>} {...props} />,
+            Rocket: (props) => <Icon path={<><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-9.56 1.55 1.55 0 0 1 2.25 2.24c-2.4 2.4-2.4 5.66-3 8.32H5.5"/><path d="m15 12 3-3c2.66-.6 5.92-.6 8.32 3a1.55 1.55 0 0 1 2.25 2.25c-4.48 4.48-8.81 2.62-9.57 2"/></>} {...props} />,
+            ChevronRight: (props) => <Icon path={<path d="m9 18 6-6-6-6"/>} {...props} />,
+            CheckCircle: (props) => <Icon path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>} {...props} />,
+            User: (props) => <Icon path={<><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>} {...props} />,
+            Zap: (props) => <Icon path={<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>} {...props} />,
+            Globe: (props) => <Icon path={<><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>} {...props} />,
+            Pickaxe: (props) => <Icon path={<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>} {...props} />,
+            ArrowLeft: (props) => <Icon path={<><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></>} {...props} />,
+            Info: (props) => <Icon path={<><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>} {...props} />,
+            GraduationCap: (props) => <Icon path={<><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 0 6-1 6-1v-4l-6-1z"/></>} {...props} />,
+            Cpu: (props) => <Icon path={<><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><path d="M9 1v3" /><path d="M15 1v3" /><path d="M9 20v3" /><path d="M15 20v3" /><path d="M20 9h3" /><path d="M20 14h3" /><path d="M1 9h3" /><path d="M1 14h3" /></>} {...props} />,
+            BookOpen: (props) => <Icon path={<><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>} {...props} />,
+            Activity: (props) => <Icon path={<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>} {...props} />,
+            Microscope: (props) => <Icon path={<><path d="M6 18h8" /><path d="M3 22h18" /><path d="M14 22a7 7 0 1 0 0-14h-1" /><path d="M9 14h2" /><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z" /><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3" /></>} {...props} />,
+            Map: (props) => <Icon path={<><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" /></>} {...props} />
+        };
+
+        const CAREER_PATHS = [
+            { id: 'academic', title: 'Akademik Kariyer', icon: <Icons.GraduationCap size={32} />, color: 'bg-blue-100 text-blue-800 border-blue-200', desc: 'Üniversite ve enstitülerde öğretim üyesi veya araştırmacı olarak kariyer yaparlar.' },
+            { id: 'it', title: 'Bilgi Teknolojileri', icon: <Icons.Cpu size={32} />, color: 'bg-cyan-100 text-cyan-800 border-cyan-200', desc: 'Yazılım geliştirme, sistem analizi, veri bilimi, yapay zekâ gibi alanlarda araştırmacı, teknik personel olarak görev yaparlar.' },
+            { id: 'education', title: 'Eğitim Alanı', icon: <Icons.BookOpen size={32} />, color: 'bg-green-100 text-green-800 border-green-200', desc: 'Ortaöğretim kurumlarında fizik öğretmenliği yaparlar.' },
+            { id: 'medical', title: 'Medikal Fizik', icon: <Icons.Activity size={32} />, color: 'bg-pink-100 text-pink-800 border-pink-200', desc: 'Radyoloji, nükleer tıp, radyoterapi gibi alanlarda araştırmacı, uzman olarak görev yaparlar.' },
+            { id: 'rnd', title: 'Araştırma Geliştirme (AR-GE)', icon: <Icons.Microscope size={32} />, color: 'bg-purple-100 text-purple-800 border-purple-200', desc: 'Savunma, enerji, malzeme bilimi alanlarında araştırmacı veya teknik personel olarak görev yaparlar.' }
+        ];
+
+        // Kurum Verileri ve Çok Aşamalı Diyaloglar
+        const INSTITUTIONS = {
+          tubitak: {
+            id: 'tubitak',
+            name: 'TÜBİTAK',
+            fullName: 'Türkiye Bilimsel ve Teknolojik Araştırma Kurumu',
+            role: 'Ulusal Bilim Politikası',
+            icon: <Icons.Rocket size={32} />,
+            color: 'from-red-600 to-red-400',
+            bgImage: 'bg-red-950',
+            description: 'Türkiye\'nin bilim ve teknoloji politikalarını belirleyen öncü kurum.',
+            detailedInfo: { mission: "Türkiye'de bilim ve teknolojiyi teşvik etmek.", fields: "Bilimsel projeler, AR-GE, Bilim Olimpiyatları.", physicsRel: "MAM, SAGE ve UZAY enstitülerinde mekanik, optik, balistik." },
+            avatarColor: 'bg-red-100 text-red-800',
+            mentorName: 'Dr. Ahmet',
+            dialogue: {
+              intro: "Selamlar Genç Araştırmacı! TÜBİTAK standındasın. Seninle tanışmak güzel.",
+              steps: [
+                 {
+                    id: 1,
+                    options: [
+                        { text: "Burada tam olarak ne tür projeler var?", response: "SAGE'de savunma sistemleri, UZAY'da uydu teknolojileri ve MAM'da malzeme bilimi üzerine çalışıyoruz. Yani fiziğin her hali var!" },
+                        { text: "Lise öğrencileri için ne yapıyorsunuz?", response: "Bilim Olimpiyatları düzenliyor, proje yarışmaları yapıyor ve başarılı öğrencilere burs veriyoruz. Araştırmacı ruhunu erken yaşta destekliyoruz." }
+                    ]
+                 },
+                 {
+                    id: 2,
+                    options: [
+                        { text: "Derslerdeki 'Kuvvet ve Hareket' burada işime yarar mı?", response: "Kesinlikle! Bir füzenin aerodinamiğini hesaplarken Newton'un yasalarını, uyduları yörüngeye oturturken kütle çekim kanunlarını kullanıyoruz." },
+                        { text: "Fizik bilmek neden bu kadar önemli?", response: "Çünkü doğayı anlamadan teknolojiyi geliştiremezsin. Termodinamik bilmeden roket motoru, elektromanyetizma bilmeden radar yapamazsın." }
+                    ]
+                 },
+                 {
+                    id: 3,
+                    options: [
+                        { text: "Gelecekte burada çalışmak için hangi bölümü seçmeliyim?", response: "Fizik, Fizik Mühendisliği, Havacılık ve Uzay Mühendisliği gibi bölümler harika bir başlangıç olur." },
+                        { text: "Kendimi şimdiden nasıl geliştirebilirim?", response: "İngilizce öğren, kodlama (Python/C++) çalış ve TÜBİTAK proje yarışmalarına katıl. Merakını asla kaybetme!" }
+                    ]
+                 }
+              ],
+              closing: "Soruların çok yerindeydi. Senin için özel bir kariyer yol haritası hazırladım. İncelemek ister misin?",
+              finalAction: "Kariyer Planımı Oluştur"
+            }
+          },
+          tenmak: {
+            id: 'tenmak',
+            name: 'TENMAK',
+            fullName: 'Türkiye Enerji, Nükleer ve Maden Araştırma Kurumu',
+            role: 'Enerji & Nükleer',
+            icon: <Icons.Zap size={32} />,
+            color: 'from-yellow-600 to-orange-500',
+            bgImage: 'bg-orange-950',
+            description: 'Enerji, maden ve nükleer teknoloji alanında araştırmalar yapar.',
+            detailedInfo: { mission: "Enerji, maden ve nükleer teknoloji araştırmaları.", fields: "Bor, Nükleer Enerji, Radyasyon güvenliği.", physicsRel: "Yüksek enerji fiziği, nükleer fisyon/füzyon." },
+            avatarColor: 'bg-yellow-100 text-yellow-800',
+            mentorName: 'Müh. Canan',
+            dialogue: {
+              intro: "Merhaba! TENMAK standına hoş geldin. Enerjinin geleceğini konuşmaya ne dersin?",
+              steps: [
+                 {
+                    id: 1,
+                    options: [
+                        { text: "Nükleer enerji denince aklıma sadece santraller geliyor.", response: "Haklısın ama biz sadece elektrik üretmiyoruz. Tıpta kanser tedavisinde kullanılan radyoizotopları da üretiyoruz. Bor madenini teknolojiye dönüştürüyoruz." },
+                        { text: "Türkiye'de parçacık fiziği çalışılıyor mu?", response: "Evet! Türkiye'nin ilk Parçacık Hızlandırıcısı tesisini işletiyoruz. Maddenin en derin sırlarını burada araştırıyoruz." }
+                    ]
+                 },
+                 {
+                    id: 2,
+                    options: [
+                        { text: "Atom fiziği dersi gerçek hayatta nerede?", response: "Tam olarak burada! Radyasyonun maddeyle etkileşimi, fisyon tepkimeleri ve çekirdek fiziği bizim günlük işimiz." },
+                        { text: "Bor madeni fizikle nasıl alakalı?", response: "Bor, nükleer reaktörlerde nötronları yutmak (kontrol etmek) için kullanılır. Bu da Malzeme Fiziği ve Atom Fiziği bilgisi gerektirir." }
+                    ]
+                 },
+                 {
+                    id: 3,
+                    options: [
+                        { text: "Burada çalışmak için ne okumalıyım?", response: "Nükleer Enerji Mühendisliği, Fizik Mühendisliği veya Kimya Mühendisliği bölümleri seni buraya hazırlar." },
+                        { text: "Lisede neye odaklanmalıyım?", response: "Matematik ve Fizik derslerine sıkı sarıl. Özellikle modern fizik ve atom fiziği ünitelerini dikkatli dinle." }
+                    ]
+                 }
+              ],
+              closing: "Enerji dolu bir zihnin var! Senin için bu alanda ilerlemeni sağlayacak bir plan çıkardım.",
+              finalAction: "Yol Haritamı Göster"
+            }
+          },
+          aselsan: {
+            id: 'aselsan',
+            name: 'ASELSAN',
+            fullName: 'Askeri Elektronik Sanayi',
+            role: 'Savunma Elektroniği',
+            icon: <Icons.Radio size={32} />,
+            color: 'from-blue-700 to-blue-500',
+            bgImage: 'bg-blue-950',
+            description: 'TSK\'nın haberleşme ve elektronik ihtiyaçlarını karşılar.',
+            detailedInfo: { mission: "TSK'nın haberleşme ihtiyaçlarını karşılamak.", fields: "Radar, elektronik harp, aviyonik.", physicsRel: "Elektromanyetik dalgalar, optik, yarı iletkenler." },
+            avatarColor: 'bg-blue-100 text-blue-800',
+            mentorName: 'Müh. Defne',
+            dialogue: {
+              intro: "Selam! ASELSAN standındasın. Teknolojinin sınırlarını zorlamaya hazır mısın?",
+              steps: [
+                 {
+                    id: 1,
+                    options: [
+                        { text: "Sadece telsiz mi yapıyorsunuz?", response: "Hayır, çok daha fazlası! Uçakların aviyonik sistemlerinden, gemilerin radarlarına, tankların atış kontrol sistemlerinden insansız araçlara kadar her şeyi tasarlıyoruz." },
+                        { text: "Mühendisleriniz neler yapıyor?", response: "Bir kısmı sahada sistemleri test ederken, bir kısmı laboratuvarda mikroçip tasarlıyor. Fizikçilerimiz ise yeni sensör teknolojileri geliştiriyor." }
+                    ]
+                 },
+                 {
+                    id: 2,
+                    options: [
+                        { text: "Optik ünitesi savunma sanayinde kullanılıyor mu?", response: "Kesinlikle. Termal kameralar, gece görüş dürbünleri ve lazer mesafe ölçerler tamamen Optik prensiplerine (kırılma, yansıma) dayanır." },
+                        { text: "Elektrik ve Manyetizma neden önemli?", response: "Çünkü tüm radar ve haberleşme sistemleri 'Elektromanyetik Dalgalar' ile çalışır. Maxwell denklemlerini bilmeden radar yapamazsın!" }
+                    ]
+                 },
+                 {
+                    id: 3,
+                    options: [
+                        { text: "İleride ASELSAN mühendisi olmak istiyorum.", response: "Harika hedef! Elektrik-Elektronik, Bilgisayar, Makine Mühendisliği veya Fizik bölümlerini hedeflemelisin." },
+                        { text: "Şimdiden ne yapabilirim?", response: "TEKNOFEST yarışmalarına katılmanı öneririm. Takım çalışmasını ve proje geliştirmeyi orada öğrenirsin." }
+                    ]
+                 }
+              ],
+              closing: "Geleceğin savunma teknolojilerini tasarlayacak potansiyelin var. İşte sana özel kariyer rotası.",
+              finalAction: "Kariyer Planımı İndir"
+            }
+          },
+           mta: {
+            id: 'mta',
+            name: 'MTA',
+            fullName: 'Maden Tetkik ve Arama GM',
+            role: 'Yer Bilimleri',
+            icon: <Icons.Pickaxe size={32} />,
+            color: 'from-stone-600 to-stone-400',
+            bgImage: 'bg-stone-900',
+            description: 'Yeraltı kaynaklarını arar ve yer kabuğunu inceler.',
+            detailedInfo: { mission: "Maden kaynaklarını aramak, jeolojik haritalar.", fields: "Maden arama, jeofizik, fay hatları.", physicsRel: "Sismik dalgalar, manyetizma, jeofizik." },
+            avatarColor: 'bg-stone-200 text-stone-800',
+            mentorName: 'Jeofizikçi Erol',
+            dialogue: {
+              intro: "Hoş geldin! MTA'dasın. Yerin altındaki gizemli dünyayı keşfetmeye ne dersin?",
+              steps: [
+                 {
+                    id: 1,
+                    options: [
+                        { text: "Sürekli kazı mı yapıyorsunuz?", response: "Kazı en son aşama! Önce uydulardan, uçaklardan ve yer yüzeyinden ölçümler yaparak yerin altının haritasını çıkarıyoruz." },
+                        { text: "Hangi madenleri arıyorsunuz?", response: "Altın, bakır, bor, kömür... Ayrıca sıcak su kaynakları (jeotermal) ve deprem üreten fay hatlarını da inceliyoruz." }
+                    ]
+                 },
+                 {
+                    id: 2,
+                    options: [
+                        { text: "Yeri kazmadan altını nasıl görüyorsunuz?", response: "Fizik sayesinde! Ses dalgaları (Sismik) gönderip yansımasını dinliyoruz. Veya manyetik alan değişimlerini ölçüyoruz. Tıpkı tıbbi ultrason gibi." },
+                        { text: "Depremlerle fiziğin ilgisi ne?", response: "Deprem aslında bir enerji boşalmasıdır. Dalgalar (P ve S dalgaları), sürtünme kuvveti ve gerilme fiziği konuları işimizin temelidir." }
+                    ]
+                 },
+                 {
+                    id: 3,
+                    options: [
+                        { text: "Hangi mesleği seçmeliyim?", response: "Jeofizik Mühendisliği, Jeoloji Mühendisliği veya Maden Mühendisliği tam sana göre." },
+                        { text: "Doğayı seviyorum, uygun muyum?", response: "Kesinlikle. Bizim ofisimiz dağlar, ovalar ve denizler. Arazi şartlarına uyumlu ve meraklı olmalısın." }
+                    ]
+                 }
+              ],
+              closing: "Yerin derinliklerine inmek cesaret ister. Senin için bu maceraya hazırlık planı çıkardım.",
+              finalAction: "Planı Görüntüle"
+            }
+          },
+          tua: {
+            id: 'tua',
+            name: 'TUA',
+            fullName: 'Türkiye Uzay Ajansı',
+            role: 'Milli Uzay Programı',
+            icon: <Icons.Atom size={32} />, 
+            color: 'from-cyan-600 to-blue-400',
+            bgImage: 'bg-slate-900',
+            description: 'Türkiye\'nin uzay politikalarını ve stratejilerini belirler.',
+            detailedInfo: { mission: "Milli Uzay Programı hedefleri.", fields: "Uydu, fırlatma sistemleri, uzay hukuku.", physicsRel: "Yörünge mekaniği, roket itki sistemleri, astrofizik." },
+            avatarColor: 'bg-cyan-100 text-cyan-900',
+            mentorName: 'Astronot Adayı',
+            dialogue: {
+              intro: "İstikbal Göklerdedir! TUA'ya hoş geldin. Yıldızlara yolculuk burada başlıyor.",
+              steps: [
+                 {
+                    id: 1,
+                    options: [
+                        { text: "Türkiye'nin uzay hedefi nedir?", response: "Ay'a sert iniş yapmak, yerli uydu markası oluşturmak ve bir Türk vatandaşını uzaya göndermek en büyük hedeflerimiz." },
+                        { text: "Sadece astronotlar mı çalışır?", response: "Hayır! Roket mühendisleri, astrofizikçiler, uzay hukukçuları ve yazılımcılar kocaman bir ekip olarak çalışıyoruz." }
+                    ]
+                 },
+                 {
+                    id: 2,
+                    options: [
+                        { text: "Roketler uzaya nasıl çıkıyor?", response: "Newton'un 3. Yasası: Etki-Tepki! Yakıtı aşağıya büyük bir hızla püskürterek yukarı doğru itki sağlıyoruz. Yerçekimini yenmek saf fiziktir." },
+                        { text: "Yerçekimsiz ortamda su neden süzülüyor?", response: "Aslında yerçekimi yok olmuyor, Uluslararası Uzay İstasyonu sürekli düşüyor (serbest düşme). Bu yüzden her şey havada asılı gibi görünüyor." }
+                    ]
+                 },
+                 {
+                    id: 3,
+                    options: [
+                        { text: "Ben de uzay çalışmalarına katılmak istiyorum.", response: "Havacılık ve Uzay Mühendisliği, Fizik, Astronomi ve Uzay Bilimleri bölümlerini araştırmalısın." },
+                        { text: "Zor bir alan mı?", response: "Zor ama heyecan verici. Matematik, Fizik ve İngilizce bu işin alfabesi. Pes etmemek en önemli kural." }
+                    ]
+                 }
+              ],
+              closing: "Gözlerin hep yukarıda olsun. İşte seni yıldızlara taşıyacak kariyer yol haritası.",
+              finalAction: "Yol Haritamı Al"
+            }
+          },
+          cern: {
+            id: 'cern',
+            name: 'CERN',
+            fullName: 'Avrupa Nükleer Araştırma Merkezi',
+            role: 'Parçacık Fiziği',
+            icon: <Icons.Atom size={32} />,
+            color: 'from-indigo-600 to-purple-600',
+            bgImage: 'bg-indigo-950',
+            description: 'Evrenin oluşumunu ve maddenin temel taşlarını inceler.',
+            detailedInfo: { mission: "Maddenin yapısını anlamak.", fields: "Hızlandırıcılar, antimadde, karanlık madde.", physicsRel: "Yüksek enerji fiziği, kuantum, özel görelilik." },
+            avatarColor: 'bg-indigo-100 text-indigo-800',
+            mentorName: 'Prof. Elena',
+            dialogue: {
+              intro: "CERN'e hoş geldin. Burası bilimin sınır noktası. Evrenin doğumunu anlamaya çalışıyoruz.",
+              steps: [
+                 {
+                    id: 1,
+                    options: [
+                        { text: "Neden yerin altındasınız?", response: "Büyük Hadron Çarpıştırıcısı (LHC) 27 km uzunluğunda! Ayrıca kozmik ışınlardan korunmak için yerin 100 metre altındayız." },
+                        { text: "Antimadde diye bir şey gerçekten var mı?", response: "Evet! Hatta burada üretiyoruz ama çok az miktarda ve çok kısa süre saklayabiliyoruz. Melekler ve Şeytanlar filmindeki gibi değil :)" }
+                    ]
+                 },
+                 {
+                    id: 2,
+                    options: [
+                        { text: "Parçacıkları nasıl hızlandırıyorsunuz?", response: "Elektrik alanla hızlandırıp, devasa mıknatıslarla (Manyetik Alan) yönlendiriyoruz. Burada Elektromanyetizma dersinin zirvesini yaşıyoruz." },
+                        { text: "Işık hızına çıkabiliyor muyuz?", response: "Işık hızının %99.999999'una kadar çıkıyoruz ama kütlesi olan hiçbir şeyi tam ışık hızına ulaştıramayız (Einstein, Özel Görelilik)." }
+                    ]
+                 },
+                 {
+                    id: 3,
+                    options: [
+                        { text: "Burada çalışmak hayalim.", response: "Harika! Fizik, Matematik veya Bilgisayar Mühendisliği okuyup yüksek lisans yapmalısın. İngilizce şart." },
+                        { text: "Sadece teorik fizik mi?", response: "Hayır, dünyanın en büyük verisini işliyoruz. Yazılım ve veri analizi de çok önemli." }
+                    ]
+                 }
+              ],
+              closing: "Evrenin sırlarını çözecek nesil sizsiniz. İşte CERN yolculuğun için bir rehber.",
+              finalAction: "Rehberi İncele"
+            }
+          },
+          nasa: {
+            id: 'nasa',
+            name: 'NASA',
+            fullName: 'Ulusal Havacılık ve Uzay Dairesi',
+            role: 'Uzay Keşfi (ABD)',
+            icon: <Icons.Globe size={32} />,
+            color: 'from-blue-800 to-red-600',
+            bgImage: 'bg-black',
+            description: 'ABD\'nin uzay programı çalışmalarından sorumlu kurum.',
+            detailedInfo: { mission: "Evreni keşfetmek, yaşam aramak.", fields: "Mars keşfi, James Webb, Artemis.", physicsRel: "Astrofizik, akışkanlar mekaniği, optik." },
+            avatarColor: 'bg-blue-100 text-blue-900',
+            mentorName: 'Dr. Mike',
+            dialogue: {
+              intro: "NASA'ya hoş geldin. Mars'a insan gönderme planlarımızdan haberin var mı?",
+              steps: [
+                 {
+                    id: 1,
+                    options: [
+                        { text: "Mars'a ne zaman gidiyoruz?", response: "Artemis programıyla önce Ay'a üs kurup, oradan Mars'a sıçramayı planlıyoruz. 2030'ların sonu gibi hedeflerimiz var." },
+                        { text: "Uzaylılar var mı?", response: "Henüz bulamadık ama evren çok büyük. James Webb teleskobu ile öte gezegenlerin atmosferinde yaşam izi arıyoruz." }
+                    ]
+                 },
+                 {
+                    id: 2,
+                    options: [
+                        { text: "Mars'a gitmek neden 7 ay sürüyor?", response: "En kısa yol düz çizgi değildir! Hohmann Transferi denilen eliptik bir yörünge izleriz. Bu, enerji tasarrufu için gerekli bir fizik kuralıdır." },
+                        { text: "Roketler atmosfere girerken neden yanıyor?", response: "Hava sürtünmesi yüzünden. Kinetik enerji ısı enerjisine dönüşür. Isı kalkanları bu yüzden çok önemlidir." }
+                    ]
+                 },
+                 {
+                    id: 3,
+                    options: [
+                        { text: "NASA'da çalışmak için Amerikan vatandaşı mı olmalıyım?", response: "Devlet memuru olmak için evet ama uluslararası projelerde (ESA, JAXA gibi) işbirliği yapıyoruz. Bilim evrenseldir." },
+                        { text: "Hangi alana yönelmeliyim?", response: "Astrofizik, Biyoloji (Astro-biyoloji), Jeoloji veya Mühendislik. Uzayda herkese yer var." }
+                    ]
+                 }
+              ],
+              closing: "Belki de Mars'a ilk ayak basan insan sen olursun? İşte hazırlık planın.",
+              finalAction: "Planı Al"
+            }
+          },
+          esa: {
+            id: 'esa',
+            name: 'ESA',
+            fullName: 'Avrupa Uzay Ajansı',
+            role: 'Avrupa\'nın Uzay Kapısı',
+            icon: <Icons.Globe size={32} />,
+            color: 'from-blue-500 to-teal-400',
+            bgImage: 'bg-slate-800',
+            description: 'Avrupa ülkelerinin uzay araştırmaları ve teknolojileri merkezi.',
+            detailedInfo: { mission: "Avrupa'nın uzay kapasitesini geliştirmek.", fields: "Ariane roketleri, Copernicus, Galileo.", physicsRel: "Uydu iletişimi, atmosfer fiziği, iklim." },
+            avatarColor: 'bg-teal-100 text-teal-900',
+            mentorName: 'Dr. Hans',
+            dialogue: {
+              intro: "ESA standındasın. Biz Dünya'yı uzaydan izleyerek gezegenimizi koruyoruz.",
+              steps: [
+                 {
+                    id: 1,
+                    options: [
+                        { text: "Dünyayı neden izliyorsunuz?", response: "İklim değişikliği, orman yangınları ve buzulların erimesini Copernicus uydularıyla takip ediyoruz. Dünyanın doktoru gibiyiz." },
+                        { text: "Navigasyon uydularını siz mi yapıyorsunuz?", response: "Evet, Galileo sistemi Avrupa'nın GPS'idir. Santimetre hassasiyetinde konum belirleyebiliyoruz." }
+                    ]
+                 },
+                 {
+                    id: 2,
+                    options: [
+                        { text: "Konum belirleme fizikle nasıl oluyor?", response: "Işığın (sinyalin) hızını bildiğimiz için, uydudan gelen sinyalin süresini ölçüp mesafeyi hesaplıyoruz (x = v.t)." },
+                        { text: "Roketler neden ekvator yakınından fırlatılır?", response: "Dünya'nın dönüş hızından (Açısal Hız) yararlanmak için. Ekvatorda çizgisel hız en fazladır, bu bize bedava hız kazandırır." }
+                    ]
+                 },
+                 {
+                    id: 3,
+                    options: [
+                        { text: "ESA'da staj imkanı var mı?", response: "Üniversite öğrencileri için 'Young Graduate Trainee' programlarımız var. Şimdiden derslerine odaklan." },
+                        { text: "Hangi dilleri bilmeliyim?", response: "İngilizce ana dilimiz ama Fransızca veya Almanca da avantaj sağlar. Çok kültürlü bir ortamdayız." }
+                    ]
+                 }
+              ],
+              closing: "Dünyanın ve uzayın geleceği için çalışmaya var mısın? İşte yol haritan.",
+              finalAction: "Yol Haritamı Göster"
+            }
+          }
+        };
+
+        // --- Ana Uygulama Bileşeni ---
+        function CareerFairSimulation() {
+          const [stage, setStage] = useState('welcome'); // Başlangıç aşaması welcome oldu
+          const [studentName, setStudentName] = useState('');
+          const [badges, setBadges] = useState(['Mekanik Ustası', 'Enerji Uzmanı']);
+          const [selectedInstitution, setSelectedInstitution] = useState(null);
+          const [chatHistory, setChatHistory] = useState([]);
+          const [typing, setTyping] = useState(false);
+          const [chatStep, setChatStep] = useState(0); 
+          const chatEndRef = useRef(null);
+
+          const startSimulation = (name) => {
+              if (name.trim()) {
+                  setStudentName(name.trim());
+                  setStage('lobby');
+              }
+          };
+
+          const enterFair = () => setStage('fair');
+          const viewCareerPaths = () => setStage('careerPaths');
+
+          const selectBooth = (instId) => {
+            const inst = INSTITUTIONS[instId];
+            setSelectedInstitution(inst);
+            setStage('info'); 
+          };
+
+          const startChat = () => {
+             setStage('chat');
+             setChatStep(0);
+             
+             // İsim ile kişiselleştirilmiş karşılama
+             let introText = selectedInstitution.dialogue.intro;
+             if (studentName) {
+                // Basit ve doğal bir hitap ekleme
+                if (introText.includes("Selamlar")) {
+                    introText = introText.replace("Selamlar", `Selamlar ${studentName}`);
+                } else if (introText.includes("Merhaba")) {
+                    introText = introText.replace("Merhaba", `Merhaba ${studentName}`);
+                } else if (introText.includes("Selam")) {
+                    introText = introText.replace("Selam", `Selam ${studentName}`);
+                } else {
+                    introText = `${studentName}, ` + introText.charAt(0).toLowerCase() + introText.slice(1);
+                }
+             }
+
+             setChatHistory([{ type: 'mentor', text: introText }]);
+          };
+
+          const handleUserOption = (option) => {
+            setChatHistory(prev => [...prev, { type: 'user', text: option.text }]);
+            setTyping(true);
+            setChatStep(prev => prev + 1); 
+
+            setTimeout(() => {
+              setChatHistory(prev => [...prev, { type: 'mentor', text: option.response }]);
+              setTyping(false);
+              
+              if (chatStep + 1 >= selectedInstitution.dialogue.steps.length) {
+                  setTimeout(() => {
+                     setChatHistory(prev => [...prev, { type: 'system_action', text: selectedInstitution.dialogue.closing }]);
+                  }, 1000);
+              }
+            }, 1500);
+          };
+
+          const finalizeSimulation = () => {
+            setChatHistory(prev => [...prev, { type: 'user', text: selectedInstitution.dialogue.finalAction }]);
+            setTimeout(() => {
+              setStage('success');
+            }, 1000);
+          };
+
+          const scrollChat = () => {
+            chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          };
+
+          useEffect(() => {
+            scrollChat();
+          }, [chatHistory, typing]);
+
+          // --- UI Bileşenleri ---
+          const PassportHeader = () => (
+            <div className="bg-slate-800 text-white p-3 shadow-lg flex justify-between items-center border-b border-slate-700 sticky top-0 z-50">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-auto flex items-center justify-center">
+                    <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="Logo" className="h-full w-auto object-contain" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold tracking-wider text-slate-400">PASAPORT</h1>
+                  <p className="text-base text-slate-300">Öğrenci: {studentName || 'Misafir Öğrenci'}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {badges.map((b, i) => (
+                  <div key={i} className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center border border-slate-600 text-white opacity-80" title={b}>
+                    <Icons.CheckCircle size={14} />
+                  </div>
+                ))}
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center border border-dashed ${stage === 'success' ? 'bg-purple-600 border-purple-400 animate-pulse' : 'border-slate-500 bg-slate-800'}`}>
+                   {stage === 'success' ? <Icons.Award size={14} className="text-white" /> : <div className="w-1.5 h-1.5 rounded-full bg-slate-600"></div>}
+                </div>
+              </div>
+            </div>
+          );
+
+          // NEW: WELCOME VIEW
+          const WelcomeView = () => {
+            const [inputValue, setInputValue] = useState('');
+            
+            return (
+                <div className="flex flex-col items-center justify-center flex-1 bg-gradient-to-br from-slate-900 to-blue-900 text-white p-8">
+                    <div className="mb-8 animate-bounce-slow">
+                        <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center border-4 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.5)] p-4">
+                            <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="Logo" className="w-full h-full object-contain" />
+                        </div>
+                    </div>
+                    <h1 className="text-4xl font-bold mb-4 text-center">Simülasyona Hoş Geldin</h1>
+                    <p className="text-blue-200 mb-8 text-center max-w-md">Kariyer yolculuğuna başlamadan önce pasaportunu hazırlayalım. Lütfen adını gir.</p>
+                    
+                    <div className="w-full max-w-xs flex flex-col gap-4">
+                        <input 
+                            type="text" 
+                            placeholder="Adın ve Soyadın" 
+                            className="w-full px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-blue-300/50 focus:outline-none focus:border-blue-400 focus:bg-white/20 transition-all text-center font-medium"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && startSimulation(inputValue)}
+                        />
+                        <button 
+                            onClick={() => startSimulation(inputValue)}
+                            disabled={!inputValue.trim()}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed rounded-lg font-bold shadow-lg transition-all transform hover:scale-105"
+                        >
+                            Pasaportumu Oluştur
+                        </button>
+                    </div>
+                </div>
+            );
+          };
+
+          // 1. LOBBY
+          const LobbyView = () => (
+            <div className="flex flex-col items-center justify-center flex-1 text-center p-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+              <div className="mb-6 p-4 bg-purple-500/20 rounded-full animate-pulse">
+                <Icons.Briefcase size={64} className="text-purple-400" />
+              </div>
+              <h2 className="text-3xl font-bold mb-4">Hoş Geldin, {studentName}!</h2>
+              <p className="max-w-md text-slate-300 mb-8">
+                Dünyanın ve Türkiye'nin en prestijli bilim merkezleri seni bekliyor. 
+                Önce kariyer alanlarını tanı, sonra kurumları keşfet ve <strong>Vizyoner Rozeti</strong>'ni kazan.
+              </p>
+              
+              <div className="flex flex-col md:flex-row gap-4 w-full max-w-lg">
+                <button 
+                    onClick={viewCareerPaths} 
+                    className="flex-1 px-6 py-4 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold text-lg hover:-translate-y-1 transition-all border border-slate-600 flex flex-col items-center gap-2 group"
+                >
+                    <div className="p-3 bg-slate-600 group-hover:bg-slate-500 rounded-full"><Icons.Info size={24} className="text-blue-400" /></div>
+                    <span>Kariyer Rehberi</span>
+                    <span className="text-xs text-slate-400 font-normal">Fizik nerelerde kullanılır?</span>
+                </button>
+
+                <button 
+                    onClick={enterFair} 
+                    className="flex-1 px-6 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-xl font-bold text-lg hover:-translate-y-1 transition-all shadow-lg shadow-purple-500/30 flex flex-col items-center gap-2 group"
+                >
+                     <div className="p-3 bg-white/20 rounded-full"><Icons.ChevronRight size={24} className="text-white" /></div>
+                    <span>Fuara Giriş Yap</span>
+                    <span className="text-xs text-white/70 font-normal">Kurumları ziyaret et</span>
+                </button>
+              </div>
+            </div>
+          );
+
+          // CAREER PATHS VIEW
+          const CareerPathsView = () => (
+             <div className="flex-1 bg-slate-50 p-6 flex flex-col">
+                 <div className="max-w-6xl mx-auto w-full">
+                    <div className="flex items-center gap-4 mb-8">
+                        <button onClick={() => setStage('lobby')} className="p-2 bg-white rounded-full hover:bg-slate-100 shadow-sm border border-slate-200">
+                             <Icons.ArrowLeft size={20} className="text-slate-600" />
+                        </button>
+                        <div>
+                             <h2 className="text-2xl font-bold text-slate-800">Fizik Biliminin Kariyer Olanakları</h2>
+                             <p className="text-slate-600 text-sm">Fizik eğitimi alan bireylerin çalışabileceği temel alanlar.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {CAREER_PATHS.map((path) => (
+                            <div key={path.id} className={`bg-white p-6 rounded-xl border-l-4 shadow-sm hover:shadow-md transition-shadow ${path.color}`}>
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="p-3 rounded-lg bg-white/50 backdrop-blur-sm border border-white/50">
+                                        {path.icon}
+                                    </div>
+                                </div>
+                                <h3 className="text-lg font-bold mb-2 text-slate-800">{path.title}</h3>
+                                <p className="text-sm text-slate-600 leading-relaxed">{path.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-12 flex justify-center">
+                        <button 
+                            onClick={enterFair}
+                            className="bg-slate-900 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition-transform flex items-center gap-2"
+                        >
+                            Bilgileri Aldım, Fuara Geç <Icons.ChevronRight size={20} />
+                        </button>
+                    </div>
+                 </div>
+             </div>
+          );
+
+          // 2. FAIR (GRID)
+          const FairView = () => (
+            <div className="p-4 bg-slate-100 min-h-full flex-1">
+              <div className="max-w-6xl mx-auto">
+                 <div className="flex items-center gap-4 mb-6">
+                     <button onClick={() => setStage('lobby')} className="p-2 bg-white rounded-full hover:bg-slate-100 shadow-sm border border-slate-200">
+                          <Icons.ArrowLeft size={20} className="text-slate-600" />
+                     </button>
+                     <div className="text-center flex-1 pr-10">
+                         <h2 className="text-2xl font-bold text-slate-800">Bilim ve Araştırma Merkezleri</h2>
+                         <p className="text-sm text-slate-600">Detaylı bilgi almak ve yetkiliyle görüşmek için bir kurum seç.</p>
+                     </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-8">
+                  {Object.values(INSTITUTIONS).map((inst) => (
+                    <div 
+                      key={inst.id}
+                      onClick={() => selectBooth(inst.id)}
+                      className="group cursor-pointer bg-white rounded-lg shadow hover:shadow-xl transition-all duration-300 overflow-hidden border border-slate-200 hover:-translate-y-1 flex flex-col h-full"
+                    >
+                      <div className={`h-24 bg-gradient-to-br ${inst.color} flex items-center justify-center text-white relative overflow-hidden`}>
+                        <div className="absolute inset-0 bg-black opacity-10 group-hover:opacity-0 transition-opacity"></div>
+                        <div className="transform group-hover:scale-110 transition-transform duration-500 drop-shadow-lg">
+                          {inst.icon}
+                        </div>
+                      </div>
+                      <div className="p-4 flex flex-col flex-1">
+                        <h3 className="text-lg font-bold text-slate-800 leading-tight mb-1">{inst.name}</h3>
+                        <p className="text-xs font-semibold text-blue-600 mb-2">{inst.role}</p>
+                        <p className="text-xs text-slate-500 line-clamp-3">{inst.description}</p>
+                        <div className="mt-auto pt-3 flex items-center text-xs text-purple-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                          İncele <Icons.ChevronRight size={14} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+
+          // 3. INFO VIEW
+          const InfoView = () => {
+            if (!selectedInstitution) return null;
+            const inst = selectedInstitution;
+
+            return (
+                <div className="flex-1 bg-slate-50 flex flex-col">
+                    <div className={`h-40 bg-gradient-to-r ${inst.color} p-6 text-white flex flex-col justify-end relative shadow-lg`}>
+                        <button onClick={() => setStage('fair')} className="absolute top-4 left-4 bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
+                            <Icons.ArrowLeft size={24} />
+                        </button>
+                        <div className="flex items-end gap-4">
+                            <div className="p-3 bg-white/20 backdrop-blur rounded-xl shadow-inner border border-white/30">
+                                {inst.icon}
+                            </div>
+                            <div>
+                                <h2 className="text-3xl font-bold">{inst.name}</h2>
+                                <p className="text-white/90 text-sm font-light">{inst.fullName}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 p-6 max-w-4xl mx-auto w-full space-y-6">
+                        {/* Bilgi Kartları */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                                <div className="flex items-center gap-2 mb-3 text-blue-600">
+                                    <Icons.Info size={20} />
+                                    <h3 className="font-bold">Kurumun Görevi</h3>
+                                </div>
+                                <p className="text-slate-600 text-sm leading-relaxed">{inst.detailedInfo.mission}</p>
+                            </div>
+
+                             <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                                <div className="flex items-center gap-2 mb-3 text-purple-600">
+                                    <Icons.Briefcase size={20} />
+                                    <h3 className="font-bold">Çalışma Alanları</h3>
+                                </div>
+                                <p className="text-slate-600 text-sm leading-relaxed">{inst.detailedInfo.fields}</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-indigo-50 p-5 rounded-xl border border-indigo-100">
+                            <div className="flex items-center gap-2 mb-3 text-indigo-700">
+                                <Icons.Atom size={20} />
+                                <h3 className="font-bold">Fizik Bilimi İle İlişkisi</h3>
+                            </div>
+                            <p className="text-slate-700 text-sm leading-relaxed">{inst.detailedInfo.physicsRel}</p>
+                        </div>
+
+                        <div className="flex justify-center pt-4 pb-8">
+                            <button 
+                                onClick={startChat}
+                                className="bg-slate-900 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl hover:bg-slate-800 hover:scale-105 transition-all flex items-center gap-2"
+                            >
+                                <Icons.MessageSquare size={20} />
+                                Mentor ile Görüş
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )
+          }
+
+          // 4. CHAT VIEW
+          const ChatView = () => {
+            if (!selectedInstitution) return null;
+            const inst = selectedInstitution;
+            const currentOptions = inst.dialogue.steps[chatStep]?.options;
+
+            return (
+              <div className={`flex flex-col flex-1 ${inst.bgImage} relative overflow-hidden`}>
+                <div className="absolute inset-0 bg-black/60 z-0"></div>
+                
+                <div className="relative z-10 p-4 bg-white/10 backdrop-blur-md border-b border-white/10 text-white flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                     <button onClick={() => setStage('info')} className="hover:bg-white/20 p-1 rounded"><Icons.ArrowLeft size={20} /></button>
+                     <div>
+                       <h3 className="font-bold">{inst.name} Sohbet Odası</h3>
+                       <div className="flex items-center gap-1 text-[10px] text-green-300 uppercase tracking-wider">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Çevrimiçi: {inst.mentorName}
+                       </div>
+                     </div>
+                  </div>
+                  <div className="text-xs text-white/50">Adım {Math.min(chatStep + 1, 3)}/3</div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10 scroll-smooth scrollbar-hide">
+                  {chatHistory.map((msg, index) => {
+                    const isMentor = msg.type === 'mentor';
+                    const isAction = msg.type === 'system_action';
+                    
+                    if (isAction) {
+                        return (
+                            <div key={index} className="flex justify-center my-6 animate-fade-in-up">
+                                <button 
+                                    onClick={finalizeSimulation}
+                                    className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-green-500/50 transition-all flex items-center gap-2"
+                                >
+                                    {inst.dialogue.finalAction} <Icons.Map size={18} />
+                                </button>
+                            </div>
+                        )
+                    }
+
+                    return (
+                      <div key={index} className={`flex ${isMentor ? 'justify-start' : 'justify-end'} animate-fade-in-up`}>
+                        <div className={`max-w-[85%] rounded-2xl p-4 shadow-lg ${isMentor ? 'bg-white text-slate-800 rounded-tl-none' : 'bg-blue-600 text-white rounded-tr-none'}`}>
+                          {isMentor && <p className="text-xs font-bold text-slate-500 mb-1">{inst.mentorName}</p>}
+                          <p className="text-sm leading-relaxed">
+                             {msg.text.split('**').map((part, i) => 
+                                i % 2 === 1 ? <strong key={i} className={isMentor ? "text-purple-600 font-bold" : "font-bold text-yellow-300"}>{part}</strong> : part
+                             )}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {typing && (
+                     <div className="flex justify-start animate-pulse">
+                        <div className="bg-white/50 text-slate-800 rounded-2xl p-3 rounded-tl-none">
+                           <span className="text-xs">Yazıyor...</span>
+                        </div>
+                     </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                {!chatHistory.some(m => m.type === 'system_action') && !typing && currentOptions && (
+                  <div className="p-4 bg-white z-20 border-t border-slate-200">
+                     <p className="text-xs text-slate-500 mb-2 uppercase font-bold tracking-wider">Sorulacak Soruyu Seç:</p>
+                     <div className="flex flex-col gap-2">
+                        {currentOptions.map((opt, i) => (
+                           <button 
+                             key={i} 
+                             onClick={() => handleUserOption(opt)}
+                             className="text-left p-3 rounded-lg border border-slate-200 hover:bg-blue-50 hover:border-blue-300 transition-colors text-slate-700 text-sm font-medium flex items-center gap-2 group"
+                           >
+                             <Icons.MessageSquare size={16} className="text-slate-400 group-hover:text-blue-500" />
+                             {opt.text}
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+                )}
+              </div>
+            );
+          };
+
+          // 5. SUCCESS VIEW
+          const SuccessView = () => (
+            <div className="flex flex-col items-center justify-center flex-1 bg-slate-900 text-white text-center p-8 relative overflow-hidden">
+              <div className="absolute inset-0 pointer-events-none">
+                  {[...Array(20)].map((_, i) => (
+                     <div key={i} className="absolute w-2 h-2 bg-yellow-400 rounded-full animate-ping" style={{ 
+                        top: `${Math.random() * 100}%`, 
+                        left: `${Math.random() * 100}%`, 
+                        animationDuration: `${Math.random() * 2 + 1}s` 
+                     }}></div>
+                  ))}
+              </div>
+
+              <div className="mb-8 relative">
+                <div className="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center shadow-2xl shadow-purple-500/50 animate-bounce-slow">
+                   <Icons.Map size={48} className="text-white" />
+                </div>
+                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center border-4 border-slate-900 animate-spin-slow">
+                   <Icons.Star size={20} className="text-yellow-900" />
+                </div>
+              </div>
+
+              <h1 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                KARİYER YOL HARİTASI OLUŞTURULDU!
+              </h1>
+              <p className="text-slate-300 mb-8 max-w-lg text-sm">
+                Tebrikler {studentName}! {selectedInstitution?.name} mentoru ile görüşmeni tamamladın. Fizik bilginle geleceğe ışık tutuyorsun.
+              </p>
+
+              <div className="bg-white text-slate-800 p-6 rounded-lg w-full max-w-sm shadow-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500 relative overflow-hidden">
+                 {/* Decorative Background Pattern */}
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-slate-100 rounded-full -mr-10 -mt-10 opacity-50"></div>
+                 
+                 <div className="flex items-center gap-4 border-b border-slate-200 pb-4 mb-4 relative z-10">
+                     <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                         <Icons.User size={24} className="text-purple-600" />
+                     </div>
+                     <div className="text-left">
+                         <h3 className="font-bold text-base text-purple-900">KARİYER PLANLAMASI</h3>
+                         <p className="text-xs text-slate-500">Öğrenci: {studentName}</p>
+                     </div>
+                 </div>
+                 
+                 <div className="space-y-3 relative z-10">
+                    <div className="flex items-center gap-3 p-2 bg-slate-50 rounded border border-slate-100">
+                        <Icons.CheckCircle size={16} className="text-green-500" />
+                        <div className="text-left">
+                            <p className="text-[10px] text-slate-500 font-bold uppercase">Hedef Kurum</p>
+                            <p className="text-xs font-bold">{selectedInstitution?.name}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-2 bg-slate-50 rounded border border-slate-100">
+                        <Icons.CheckCircle size={16} className="text-green-500" />
+                        <div className="text-left">
+                            <p className="text-[10px] text-slate-500 font-bold uppercase">Önerilen Bölümler</p>
+                            <p className="text-xs font-bold">Fizik, Mühendislik</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-2 bg-purple-50 rounded border border-purple-100">
+                        <Icons.Award size={16} className="text-purple-600" />
+                        <div className="text-left">
+                            <p className="text-[10px] text-purple-500 font-bold uppercase">Kazanılan Statü</p>
+                            <p className="text-xs font-bold text-purple-700">VİZYONER ADAYI</p>
+                        </div>
+                    </div>
+                 </div>
+              </div>
+              
+              <button onClick={() => window.location.reload()} className="mt-8 text-slate-400 hover:text-white underline text-xs z-10">
+                Simülasyonu Yeniden Başlat
+              </button>
+            </div>
+          );
+
+          return (
+            <div className="flex flex-col min-h-screen">
+              {stage !== 'welcome' && <PassportHeader />}
+              <main className="flex-1 flex flex-col">
+                {stage === 'welcome' && <WelcomeView />}
+                {stage === 'lobby' && <LobbyView />}
+                {stage === 'careerPaths' && <CareerPathsView />}
+                {stage === 'fair' && <FairView />}
+                {stage === 'info' && <InfoView />}
+                {stage === 'chat' && <ChatView />}
+                {stage === 'success' && <SuccessView />}
+              </main>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<CareerFairSimulation />);
+    </script>
+</body>
+</html>
