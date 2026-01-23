@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geleceğin Mimarları: Bilim Serüveni</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18.2.0/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js" crossorigin></script>
+    
+    <!-- Babel (JSX Derleyicisi) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Özel Kaydırma Çubuğu ve Animasyonlar için Ek Stiller */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #06b6d4; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #0891b2; 
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICON BİLEŞENLERİ (Harici bağımlılığı kaldırmak için) ---
+        
+        const IconBase = ({ children, className, size = 24, ...props }) => (
+            <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width={size} 
+                height={size} 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                className={className} 
+                {...props}
+            >
+                {children}
+            </svg>
+        );
+
+        const Microscope = (props) => (
+            <IconBase {...props}><path d="M6 18h8" /><path d="M3 22h18" /><path d="M14 22a7 7 0 1 0 0-14h-1" /><path d="M9 14h2" /><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z" /><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3" /></IconBase>
+        );
+        const Brain = (props) => (
+            <IconBase {...props}><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z" /><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" /></IconBase>
+        );
+        const Search = (props) => (
+            <IconBase {...props}><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></IconBase>
+        );
+        const CheckCircle = (props) => (
+            <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></IconBase>
+        );
+        const XCircle = (props) => (
+            <IconBase {...props}><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" /></IconBase>
+        );
+        const ArrowRight = (props) => (
+            <IconBase {...props}><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></IconBase>
+        );
+        const Award = (props) => (
+            <IconBase {...props}><circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" /></IconBase>
+        );
+        const RotateCcw = (props) => (
+            <IconBase {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></IconBase>
+        );
+        const Star = (props) => (
+            <IconBase {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></IconBase>
+        );
+        const Zap = (props) => (
+            <IconBase {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></IconBase>
+        );
+        const Globe = (props) => (
+            <IconBase {...props}><circle cx="12" cy="12" r="10" /><line x1="2" x2="22" y1="12" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></IconBase>
+        );
+        const Radio = (props) => (
+            <IconBase {...props}><circle cx="12" cy="12" r="2" /><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14" /></IconBase>
+        );
+        const Scale = (props) => (
+            <IconBase {...props}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" /><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" /><path d="M7 21h10" /><path d="M12 3v18" /><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" /></IconBase>
+        );
+        const Cpu = (props) => (
+            <IconBase {...props}><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><path d="M15 2v2" /><path d="M15 20v2" /><path d="M2 15h2" /><path d="M2 9h2" /><path d="M20 15h2" /><path d="M20 9h2" /><path d="M9 2v2" /><path d="M9 20v2" /></IconBase>
+        );
+        const Eye = (props) => (
+            <IconBase {...props}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" /><circle cx="12" cy="12" r="3" /></IconBase>
+        );
+        const Activity = (props) => (
+            <IconBase {...props}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></IconBase>
+        );
+        const Telescope = (props) => (
+            <IconBase {...props}><path d="m8 7 1.8 2" /><path d="m9 6 3 3" /><path d="m10.1 13.6 5.5-6.6a2.8 2.8 0 1 1 3.9 4l-6.6 5.5" /><path d="m15 12 6 6" /><path d="m3.4 15.6 1.8 1.8" /><path d="m2 18 2 2" /><path d="M4 16c-1.1 0-2 1-2 2s1 2 2 2 2-1 2-2" /><path d="m19.3 12.8 2.5 2.5" /></IconBase>
+        );
+        const Atom = (props) => (
+            <IconBase {...props}><circle cx="12" cy="12" r="1" /><path d="M20.2 20.2c2.04-2.03.02-7.36-4.5-11.9-4.54-4.52-9.87-6.54-11.9-4.5-2.04 2.03-.02 7.36 4.5 11.9 4.54 4.52 9.87 6.54 11.9 4.5Z" /><path d="M15.7 15.7c4.52-4.54 6.54-9.87 4.5-11.9-2.03-2.04-7.36-.02-11.9 4.5-4.52 4.54-6.54 9.87-4.5 11.9 2.03 2.04 7.36.02 11.9-4.5Z" /></IconBase>
+        );
+        const Lightbulb = (props) => (
+            <IconBase {...props}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2.4 1.5-3.8 0-3.3-2.7-6-6-6S6 4.7 6 8c0 1.4.5 2.8 1.5 3.8.8.8 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></IconBase>
+        );
+        const CheckSquare = (props) => (
+            <IconBase {...props}><polyline points="9 11 12 14 22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></IconBase>
+        );
+        const AlertCircle = (props) => (
+            <IconBase {...props}><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></IconBase>
+        );
+        const ArrowBigRight = (props) => (
+            <IconBase {...props}><path d="M6 9h6V5l7 7-7 7v-4H6V9z" /></IconBase>
+        );
+
+        // --- UYGULAMA KODU ---
+
+        const App = () => {
+            const [stage, setStage] = useState('intro'); // intro, traits, quiz, complete
+            const [traitScore, setTraitScore] = useState(0);
+            const [selectedTraits, setSelectedTraits] = useState([]);
+            const [traitsChecked, setTraitsChecked] = useState(false);
+            const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
+            const [quizScore, setQuizScore] = useState(0);
+            const [showConfetti, setShowConfetti] = useState(false);
+            
+            // Quiz State'leri
+            const [currentOptions, setCurrentOptions] = useState([]); // Şıkları sabitlemek için
+            const [isQuestionAnswered, setIsQuestionAnswered] = useState(false); // Cevap verildi mi?
+            const [selectedAnswerId, setSelectedAnswerId] = useState(null); // Hangi şık seçildi?
+            const [answerStatus, setAnswerStatus] = useState(null); // 'correct' | 'wrong'
+
+            // --- VERİLER ---
+
+            // Aşama 1: Özellikler Havuzu
+            const traitsData = [
+                { id: 1, text: "Meraklı", isCorrect: true },
+                { id: 2, text: "Önyargılı", isCorrect: false },
+                { id: 3, text: "Evrensel Düşünen", isCorrect: true },
+                { id: 4, text: "Aceleci", isCorrect: false },
+                { id: 5, text: "Açık Fikirli", isCorrect: true },
+                { id: 6, text: "Eleştiriye Açık", isCorrect: true },
+                { id: 7, text: "Duygusal Karar Veren", isCorrect: false },
+                { id: 8, text: "Objektif", isCorrect: true },
+                { id: 9, text: "Sorgulayıcı", isCorrect: true },
+                { id: 10, text: "Ezberci", isCorrect: false },
+                { id: 11, text: "Çalışkan", isCorrect: true },
+                { id: 12, text: "Azimli", isCorrect: true },
+                { id: 13, text: "Kararlı", isCorrect: true },
+                { id: 14, text: "Sabırlı", isCorrect: true },
+                { id: 15, text: "Benmerkezci", isCorrect: false },
+            ];
+
+            // Aşama 2: Bilim İnsanları ve Sorular
+            const scientistsData = [
+                {
+                id: 'galileo',
+                name: 'Galileo Galilei',
+                clue: "Jüpiter'in uydularını gözlemledim ve Dünya'nın döndüğünü savundum.",
+                keyTrait: 'Gözlemci & Sorgulayıcı',
+                invention: 'Teleskop Geliştirimi',
+                icon: <Telescope className="text-yellow-400" />
+                },
+                {
+                id: 'kepler',
+                name: 'Johannes Kepler',
+                clue: "Gezegenlerin Güneş etrafında eliptik yörüngelerle döndüğünü matematiksel olarak ispatladım.",
+                keyTrait: 'Analitik & Sabırlı',
+                invention: 'Gezegen Hareket Yasaları',
+                icon: <Globe className="text-blue-400" />
+                },
+                {
+                id: 'newton',
+                name: 'Isaac Newton',
+                clue: "Elma hikayesiyle bilinirim ama asıl işim evrensel kütle çekimini ve hareket yasalarını yazmaktır.",
+                keyTrait: 'Meraklı & Dikkatli',
+                invention: 'Yerçekimi Kanunu',
+                icon: <Lightbulb className="text-amber-400" />
+                },
+                {
+                id: 'heysem',
+                name: 'İbn-i Heysem',
+                clue: "Görme olayının gözden çıkan ışınlarla değil, cisme çarpan ışıkla olduğunu kanıtladım.",
+                keyTrait: 'Eleştirel & Deneyci',
+                invention: 'Karanlık Oda (Camera Obscura)',
+                icon: <Eye className="text-emerald-400" />
+                },
+                {
+                id: 'einstein',
+                name: 'Albert Einstein',
+                clue: "Zamanın ve mekanın göreceli olduğunu söyledim. E=mc² en ünlü denklemimdir.",
+                keyTrait: 'Evrensel Düşünen & Hayal Gücü Geniş',
+                invention: 'İzafiyet Teorisi',
+                icon: <Atom className="text-purple-400" />
+                },
+                {
+                id: 'hazini',
+                name: 'El-Hazini',
+                clue: "Maddelerin yoğunluklarını ve ağırlıklarını çok hassas ölçen bir terazi geliştirdim.",
+                keyTrait: 'Objektif & Hassas',
+                invention: 'Hikmet Terazisi',
+                icon: <Scale className="text-teal-400" />
+                },
+                {
+                id: 'faraday',
+                name: 'Michael Faraday',
+                clue: "Elektrikle manyetizma arasındaki ilişkiyi buldum, modern elektrik motorlarının babasıyım.",
+                keyTrait: 'Azimli & Deneyci',
+                invention: 'Elektromanyetik İndüksiyon',
+                icon: <Zap className="text-yellow-300" />
+                },
+                {
+                id: 'maxwell',
+                name: 'James Clerk Maxwell',
+                clue: "Elektrik, manyetizma ve ışığın aynı şeyin farklı tezahürleri olduğunu denklemlerle gösterdim.",
+                keyTrait: 'Birleştirici & Açık Fikirli',
+                invention: 'Elektromanyetik Teori',
+                icon: <Activity className="text-indigo-400" />
+                },
+                {
+                id: 'hawking',
+                name: 'Stephen Hawking',
+                clue: "Fiziksel engellere rağmen evrenin sırlarını, özellikle kara delikleri çözmeye adandım.",
+                keyTrait: 'Kararlı & Azimli',
+                invention: 'Hawking Işıması',
+                icon: <Brain className="text-pink-400" />
+                },
+                {
+                id: 'cezeri',
+                name: 'El-Cezeri',
+                clue: "Sibernetiğin kurucusuyum. Suyla çalışan saatler ve insansı otomatlar tasarladım.",
+                keyTrait: 'Üretken & Çalışkan',
+                invention: 'Otomatlar / Filli Su Saati',
+                icon: <Cpu className="text-orange-400" />
+                },
+                {
+                id: 'tesla',
+                name: 'Nikola Tesla',
+                clue: "Elektriğin kablosuz taşınabileceğini hayal ettim, alternatif akımı (AC) geliştirdim.",
+                keyTrait: 'Vizyoner & Tutkulu',
+                invention: 'Alternatif Akım / Tesla Bobini',
+                icon: <Zap className="text-cyan-400" />
+                },
+                {
+                id: 'curie',
+                name: 'Marie Curie',
+                clue: "Radyoaktivite üzerine çalıştım, Nobel ödülünü iki farklı alanda kazanan ilk kişiyim.",
+                keyTrait: 'Sabırlı & Fedakar',
+                invention: 'Radyum ve Polonyum',
+                icon: <Radio className="text-rose-400" />
+                }
+            ];
+
+            // --- MANTIK ---
+
+            // Şıkları Oluştur ve Sabitle (Effect)
+            useEffect(() => {
+                if (stage === 'quiz') {
+                    const current = scientistsData[currentQuizIndex];
+                    const others = scientistsData.filter(s => s.id !== current.id);
+                    const randomWrong = others.sort(() => 0.5 - Math.random()).slice(0, 3);
+                    const options = [current, ...randomWrong].sort(() => 0.5 - Math.random());
+                    
+                    setCurrentOptions(options);
+                    setIsQuestionAnswered(false);
+                    setSelectedAnswerId(null);
+                    setAnswerStatus(null);
+                }
+            }, [currentQuizIndex, stage]);
+
+            // Aşama 1: Özellik Seçimi
+            const toggleTrait = (traitId) => {
+                if (traitsChecked) return; 
+
+                if (selectedTraits.includes(traitId)) {
+                setSelectedTraits(selectedTraits.filter(id => id !== traitId));
+                } else {
+                setSelectedTraits([...selectedTraits, traitId]);
+                }
+            };
+
+            const checkTraits = () => {
+                const correctSelections = traitsData.filter(t => selectedTraits.includes(t.id) && t.isCorrect).length;
+                setTraitScore(correctSelections);
+                setTraitsChecked(true);
+            };
+
+            const finishTraitsPhase = () => {
+                setStage('quiz');
+            };
+
+            // Aşama 2: Cevap Kontrolü
+            const handleQuizAnswer = (selectedScientist) => {
+                if (isQuestionAnswered) return; // Zaten cevaplandıysa işlem yapma
+
+                const currentQuestion = scientistsData[currentQuizIndex];
+                setSelectedAnswerId(selectedScientist.id);
+                setIsQuestionAnswered(true);
+                
+                if (selectedScientist.id === currentQuestion.id) {
+                setAnswerStatus('correct');
+                setQuizScore(prev => prev + 1);
+                } else {
+                setAnswerStatus('wrong');
+                }
+            };
+
+            // Aşama 2: Sonraki Soruya Geçiş
+            const handleNextQuestion = () => {
+                if (currentQuizIndex < scientistsData.length - 1) {
+                setCurrentQuizIndex(prev => prev + 1);
+                } else {
+                setStage('complete');
+                setShowConfetti(true);
+                }
+            };
+
+            // --- EKRANLAR ---
+
+            const IntroScreen = () => (
+                <div className="text-center space-y-8 animate-in zoom-in duration-500 max-w-2xl mx-auto px-6">
+                <div className="bg-cyan-500/10 p-6 rounded-full inline-block mb-4 border border-cyan-400/30">
+                    <Microscope size={64} className="text-cyan-400" />
+                </div>
+                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-500">
+                    GELECEĞİN MİMARLARI
+                </h1>
+                <p className="text-xl text-slate-300 leading-relaxed">
+                    Bilim üssüne hoş geldin Çözüm Uzmanı adayı! <br/>
+                    Rozetini kazanmak için iki aşamalı bir testten geçmelisin.
+                </p>
+                
+                <div className="grid md:grid-cols-2 gap-4 text-left bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                    <div className="flex items-start gap-3">
+                    <div className="bg-blue-500/20 p-2 rounded text-blue-300 font-bold">1</div>
+                    <div>
+                        <h3 className="text-white font-bold">Karakter Analizi</h3>
+                        <p className="text-sm text-slate-400">Bilim insanlarının sahip olması gereken temel özellikleri seç ve kontrol et.</p>
+                    </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                    <div className="bg-purple-500/20 p-2 rounded text-purple-300 font-bold">2</div>
+                    <div>
+                        <h3 className="text-white font-bold">Keşif Eşleştirmesi</h3>
+                        <p className="text-sm text-slate-400">12 büyük bilim insanını eserleri ve özellikleri ile tanı.</p>
+                    </div>
+                    </div>
+                </div>
+
+                <button 
+                    onClick={() => setStage('traits')}
+                    className="bg-cyan-600 hover:bg-cyan-500 text-white text-lg font-bold py-4 px-12 rounded-full shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all hover:scale-105 flex items-center gap-2 mx-auto"
+                >
+                    Simülasyonu Başlat <ArrowRight />
+                </button>
+                </div>
+            );
+
+            const TraitsPhase = () => {
+                const totalCorrectTraits = traitsData.filter(t => t.isCorrect).length;
+
+                return (
+                <div className="max-w-5xl mx-auto px-4 w-full">
+                    <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold text-white mb-2">Aşama 1: Bilimsel Tutum Analizi</h2>
+                    <p className="text-slate-400">
+                        Aşağıdaki kelime havuzundan bilim insanına <span className="text-cyan-400 font-bold">yakışan</span> özellikleri seç.
+                        <br />
+                        {traitsChecked && <span className="text-sm text-slate-500 mt-2 block">Sonuçların aşağıda renklendirilmiştir.</span>}
+                    </p>
+                    
+                    {traitsChecked && (
+                        <div className="mt-4 bg-slate-800/50 inline-block px-6 py-2 rounded-lg border border-slate-700">
+                            <span className="text-slate-300 text-sm font-bold uppercase tracking-wider">Skor: </span>
+                            <span className="text-2xl font-black text-cyan-400 ml-2">{traitScore} / {totalCorrectTraits}</span>
+                        </div>
+                    )}
+                    </div>
+
+                    <div className="flex flex-wrap justify-center gap-4 mb-10">
+                    {traitsData.map((trait) => {
+                        const isSelected = selectedTraits.includes(trait.id);
+                        let buttonStyle = "bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700"; 
+                        let icon = null;
+
+                        if (!traitsChecked) {
+                        if (isSelected) {
+                            buttonStyle = "bg-cyan-600 text-white border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]";
+                        }
+                        } else {
+                        if (trait.isCorrect) {
+                            if (isSelected) {
+                            buttonStyle = "bg-green-600 text-white border-green-400 ring-2 ring-green-400";
+                            icon = <CheckCircle className="inline mr-2 w-4 h-4" />;
+                            } else {
+                            buttonStyle = "bg-slate-800 text-yellow-400 border-yellow-500 border-dashed opacity-80";
+                            icon = <AlertCircle className="inline mr-2 w-4 h-4" />;
+                            }
+                        } else {
+                            if (isSelected) {
+                            buttonStyle = "bg-red-600 text-white border-red-400 opacity-90";
+                            icon = <XCircle className="inline mr-2 w-4 h-4" />;
+                            } else {
+                            buttonStyle = "bg-slate-900 text-slate-600 border-slate-800 opacity-50";
+                            }
+                        }
+                        }
+
+                        return (
+                        <button
+                            key={trait.id}
+                            onClick={() => toggleTrait(trait.id)}
+                            disabled={traitsChecked}
+                            className={`px-6 py-3 rounded-xl font-bold text-sm md:text-base transition-all transform duration-200 border
+                            ${buttonStyle}
+                            ${!traitsChecked && 'hover:scale-105 active:scale-95'}
+                            `}
+                        >
+                            {icon}
+                            {trait.text}
+                        </button>
+                        );
+                    })}
+                    </div>
+
+                    <div className="text-center pb-8">
+                        {!traitsChecked ? (
+                            <button 
+                            onClick={checkTraits}
+                            disabled={selectedTraits.length === 0}
+                            className="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white text-lg font-bold py-3 px-10 rounded-full shadow-lg flex items-center gap-2 mx-auto transition-all"
+                            >
+                            <CheckSquare /> Kontrol Et
+                            </button>
+                        ) : (
+                            <button 
+                            onClick={finishTraitsPhase}
+                            className="bg-green-600 hover:bg-green-500 text-white text-lg font-bold py-3 px-10 rounded-full shadow-lg flex items-center gap-2 mx-auto animate-bounce"
+                            >
+                            2. Aşamaya Geç <ArrowRight />
+                            </button>
+                        )}
+                    </div>
+                </div>
+                );
+            };
+
+            const QuizPhase = () => {
+                const currentQ = scientistsData[currentQuizIndex];
+
+                return (
+                <div className="max-w-4xl mx-auto px-4 w-full">
+                    <div className="flex justify-between items-end mb-6 border-b border-slate-700 pb-4">
+                        <div>
+                            <h2 className="text-2xl font-bold text-white">Aşama 2: Kim Bu Bilim İnsanı?</h2>
+                            <p className="text-slate-400 text-sm">İpucunu oku ve doğru kişiyi bul.</p>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-4xl font-black text-cyan-500">{currentQuizIndex + 1}</span>
+                            <span className="text-slate-600 text-xl">/{scientistsData.length}</span>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8 items-stretch">
+                    {/* Soru Kartı */}
+                    <div className="bg-slate-800/80 p-8 rounded-2xl border-2 border-cyan-500/30 flex flex-col justify-center relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Brain size={120} />
+                        </div>
+                        
+                        <div className="mb-6">
+                            <span className="bg-cyan-900 text-cyan-300 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider mb-2 inline-block">
+                                İpucu & Keşif
+                            </span>
+                            <p className="text-2xl text-white font-medium leading-relaxed">
+                                "{currentQ.clue}"
+                            </p>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-3 text-slate-300 bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                                <Search className="text-yellow-400 shrink-0" size={20} />
+                                <div>
+                                    <span className="text-xs text-slate-500 uppercase block font-bold">Öne Çıkan Özellik</span>
+                                    <span className="text-sm font-semibold">{currentQ.keyTrait}</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 text-slate-300 bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                                <Star className="text-purple-400 shrink-0" size={20} />
+                                <div>
+                                    <span className="text-xs text-slate-500 uppercase block font-bold">Büyük Eser / İcat</span>
+                                    <span className="text-sm font-semibold">{currentQ.invention}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Cevap Şıkları ve Next Butonu */}
+                    <div className="flex flex-col gap-4">
+                        <div className="grid gap-4 flex-grow">
+                            {currentOptions.map((opt) => {
+                            const isSelected = selectedAnswerId === opt.id;
+                            const isCorrect = opt.id === currentQ.id;
+                            
+                            // Stillendirme
+                            let buttonClass = "bg-slate-800 border-slate-700 hover:border-cyan-400 hover:bg-slate-750";
+                            
+                            if (isQuestionAnswered) {
+                                if (isCorrect) {
+                                    buttonClass = "bg-green-600 border-green-500 text-white ring-2 ring-green-400 shadow-lg scale-105 z-10"; // Her durumda doğruyu göster
+                                } else if (isSelected && !isCorrect) {
+                                    buttonClass = "bg-red-600 border-red-500 text-white opacity-90"; // Yanlış seçimi göster
+                                } else {
+                                    buttonClass = "bg-slate-800 border-slate-700 opacity-40 grayscale"; // Diğerlerini sönükleştir
+                                }
+                            }
+
+                            return (
+                                <button
+                                    key={opt.id}
+                                    onClick={() => handleQuizAnswer(opt)}
+                                    disabled={isQuestionAnswered}
+                                    className={`p-4 rounded-xl border-2 text-left transition-all flex items-center gap-4 relative group
+                                        ${buttonClass}
+                                    `}
+                                >
+                                    <div className={`p-3 rounded-full bg-slate-900 border border-slate-700 transition-colors
+                                        ${isQuestionAnswered && isCorrect ? 'bg-green-800 border-green-400' : ''}
+                                    `}>
+                                        {opt.icon}
+                                    </div>
+                                    <div>
+                                        <span className="block font-bold text-lg text-slate-200 group-hover:text-white">{opt.name}</span>
+                                    </div>
+                                    
+                                    {/* Sonuç İkonu */}
+                                    {isQuestionAnswered && isCorrect && <CheckCircle className="absolute right-4 text-white" size={24} />}
+                                    {isQuestionAnswered && isSelected && !isCorrect && <XCircle className="absolute right-4 text-white" size={24} />}
+                                </button>
+                            )
+                            })}
+                        </div>
+
+                        {/* Sonraki Soru Butonu (Sadece cevaplanınca görünür) */}
+                        {isQuestionAnswered && (
+                            <button 
+                                onClick={handleNextQuestion}
+                                className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl font-bold text-xl shadow-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-300"
+                            >
+                                {currentQuizIndex < scientistsData.length - 1 ? 'Sonraki Soru' : 'Sonuçları Gör'} 
+                                <ArrowBigRight size={24} fill="currentColor" />
+                            </button>
+                        )}
+                    </div>
+                    </div>
+                </div>
+                );
+            };
+
+            const CompleteScreen = () => (
+                <div className="text-center max-w-2xl mx-auto px-4 animate-in zoom-in duration-500">
+                <div className="relative inline-block mb-8">
+                    <div className="absolute inset-0 bg-yellow-500 blur-3xl opacity-20 rounded-full animate-pulse"></div>
+                    <Award size={120} className="relative text-yellow-400 drop-shadow-2xl mx-auto" />
+                </div>
+
+                <h1 className="text-4xl font-bold text-white mb-2">Görev Tamamlandı!</h1>
+                <p className="text-xl text-cyan-300 mb-8">
+                    Bilimsel tutumları içselleştirdin ve tarihe yön verenleri tanıdın.
+                </p>
+
+                <div className="bg-slate-800 border border-cyan-500/30 p-8 rounded-2xl shadow-xl mb-8">
+                    <h3 className="text-slate-400 text-sm uppercase tracking-widest font-bold mb-4">Simülasyon Karnesi</h3>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-slate-900 p-4 rounded-xl">
+                            <div className="text-3xl font-black text-green-400">{traitScore}/10</div>
+                            <div className="text-xs text-slate-500 uppercase">Seçilen Özellikler</div>
+                        </div>
+                        <div className="bg-slate-900 p-4 rounded-xl">
+                            <div className="text-3xl font-black text-blue-400">{quizScore}/12</div>
+                            <div className="text-xs text-slate-500 uppercase">Eşleştirme Puanı</div>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-6 flex flex-wrap justify-center gap-2">
+                        {['Meraklı', 'Objektif', 'Çalışkan', 'Sorgulayıcı', 'Azimli', 'Kararlı', 'Sabırlı', 'Evrensel'].map(tag => (
+                            <span key={tag} className="text-[10px] bg-cyan-900/50 text-cyan-200 border border-cyan-800 px-2 py-1 rounded-full">
+                                #{tag}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+
+                <button 
+                    onClick={() => window.location.reload()}
+                    className="text-slate-500 hover:text-white flex items-center justify-center gap-2 mx-auto transition-colors"
+                >
+                    <RotateCcw size={16} /> Simülasyonu Yeniden Başlat
+                </button>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500 selection:text-white flex flex-col relative overflow-hidden">
+                {/* Background FX */}
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+                <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-cyan-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+                {/* Main Content */}
+                <div className="relative z-10 container mx-auto flex flex-col flex-grow py-8">
+                    {/* Header - Only show if not complete */}
+                    {stage !== 'complete' && (
+                        <header className="flex justify-between items-center px-6 mb-8 border-b border-slate-800 pb-4">
+                            <div className="flex items-center gap-4">
+                                <img src="https://ogrenci.e12.com.tr/logo/tr/logo.svg" alt="Logo" className="h-8" />
+                                <div className="h-6 w-px bg-slate-700 hidden sm:block"></div> {/* Separator */}
+                                <div className="flex items-center gap-2 text-cyan-400 font-bold tracking-wider">
+                                    <Microscope size={20} className="hidden sm:block" />
+                                    <span>GELECEĞİN MİMARLARI</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <div className={`h-2 w-12 rounded-full transition-colors ${stage === 'traits' ? 'bg-cyan-400' : 'bg-slate-700'}`}></div>
+                                <div className={`h-2 w-12 rounded-full transition-colors ${stage === 'quiz' ? 'bg-cyan-400' : 'bg-slate-700'}`}></div>
+                            </div>
+                        </header>
+                    )}
+
+                    <main className="flex-grow flex items-center justify-center">
+                        {stage === 'intro' && <IntroScreen />}
+                        {stage === 'traits' && <TraitsPhase />}
+                        {stage === 'quiz' && <QuizPhase />}
+                        {stage === 'complete' && <CompleteScreen />}
+                    </main>
+                </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
